@@ -413,6 +413,25 @@
         .modo-mobile .semester-grid {
             grid-template-columns: 1fr;
         }
+        /* ===== BUG #11: Media query para telas < 400px ===== */
+        @media (max-width: 400px) {
+            .modo-clasica .semester-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .modal .opt-list {
+                grid-template-columns: 1fr;
+            }
+            .aluno-header h2 {
+                font-size: 14px;
+            }
+            .header h1 {
+                font-size: 14px;
+            }
+            .header-actions button {
+                font-size: 9px;
+                padding: 3px 8px;
+            }
+        }
 
         .semester-card {
             border: 2px solid #e0e0e0;
@@ -796,20 +815,23 @@
             background: #c62828;
         }
 
+        /* ===== BUG #9: Toast centralizado ===== */
         .toast {
             position: fixed;
-            bottom: 20px;
-            right: 20px;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
             background: #333;
             color: white;
-            padding: 10px 18px;
+            padding: 12px 24px;
             border-radius: 8px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
             opacity: 0;
             transition: opacity 0.3s;
             z-index: 9999;
             max-width: 90%;
-            font-size: 13px;
+            font-size: 14px;
+            text-align: center;
         }
         .toast.show {
             opacity: 1;
@@ -1225,12 +1247,12 @@
                 <small>BMAT / BCET - Bacharelado em Matemática</small>
             </h1>
             <div class="header-actions">
-                <button class="btn-toggle-version" id="btnToggleVersion" onclick="alternarVersao()">📱 Mobile</button>
-                <button class="btn-pdf" onclick="gerarPDFVisual()">📄 PDF</button>
-                <button class="btn-info" onclick="exportAllData()">📤</button>
-                <button class="btn-warning" onclick="document.getElementById('importInput').click()">📥</button>
+                <button class="btn-toggle-version" id="btnToggleVersion" onclick="alternarVersao()" aria-label="Alternar entre versão Mobile e Clássica">📱 Mobile</button>
+                <button class="btn-pdf" onclick="gerarPDFVisual()" aria-label="Gerar PDF do fluxograma atual">📄 PDF</button>
+                <button class="btn-info" onclick="exportAllData()" aria-label="Exportar todos os dados em JSON">📤</button>
+                <button class="btn-warning" onclick="document.getElementById('importInput').click()" aria-label="Importar dados de arquivo JSON">📥</button>
                 <input type="file" id="importInput" style="display:none" accept=".json" onchange="importAllData(event)">
-                <button class="btn-danger" onclick="clearAllData()">🗑️</button>
+                <button class="btn-danger" onclick="clearAllData()" aria-label="Apagar todos os dados">🗑️</button>
             </div>
         </div>
 
@@ -1242,11 +1264,11 @@
                 </div>
 
                 <div class="curso-selector">
-                    <button id="cursoBMAT" class="active" onclick="selecionarCurso('bmat')">
+                    <button id="cursoBMAT" class="active" onclick="selecionarCurso('bmat')" aria-label="Selecionar curso BMAT">
                         📐 BMAT
                         <span class="badge-curso">PPC 2013</span>
                     </button>
-                    <button id="cursoBCET" onclick="selecionarCurso('bcet')">
+                    <button id="cursoBCET" onclick="selecionarCurso('bcet')" aria-label="Selecionar curso BCET - Matemática">
                         📘 BCET - Mat.
                         <span class="badge-curso">PPC 2025</span>
                     </button>
@@ -1256,16 +1278,16 @@
 
                 <div class="add-aluno-form">
                     <div class="row">
-                        <input type="text" id="newAlunoNome" placeholder="Nome..." onkeypress="if(event.key==='Enter') addAlunoCompleto()">
+                        <input type="text" id="newAlunoNome" placeholder="Nome..." onkeypress="if(event.key==='Enter') addAlunoCompleto()" aria-label="Nome do aluno">
                     </div>
                     <div class="row">
-                        <input type="text" id="newAlunoMatricula" placeholder="Matrícula (opcional)..." style="flex:0.6;" onkeypress="if(event.key==='Enter') addAlunoCompleto()">
-                        <button onclick="addAlunoCompleto()" style="flex:1;">+</button>
+                        <input type="text" id="newAlunoMatricula" placeholder="Matrícula (opcional)..." style="flex:0.6;" onkeypress="if(event.key==='Enter') addAlunoCompleto()" aria-label="Matrícula do aluno">
+                        <button onclick="addAlunoCompleto()" aria-label="Adicionar aluno">+</button>
                     </div>
                 </div>
 
                 <div style="margin-top:6px;">
-                    <button class="btn-primary" style="width:100%;padding:6px;font-size:12px;" onclick="addMultipleAlunos()">📋 Adicionar múltiplos</button>
+                    <button class="btn-primary" style="width:100%;padding:6px;font-size:12px;" onclick="addMultipleAlunos()" aria-label="Adicionar múltiplos alunos">📋 Adicionar múltiplos</button>
                 </div>
 
                 <div class="import-area" onclick="document.getElementById('pdfImport').click()">
@@ -1387,17 +1409,29 @@
         // ============================================================
         // SELEÇÃO DE CURSO - COM RECÁLCULO DE EQUIVALÊNCIAS E LIMPEZA
         // ============================================================
+        // ===== BUG #14: aluno.curso não atualizado =====
         function selecionarCurso(curso) {
+            // Verifica se há dados que podem ser perdidos
+            if (alunoAtivoId && alunos[alunoAtivoId]) {
+                const aluno = alunos[alunoAtivoId];
+                const progressoKeys = Object.keys(aluno.progresso || {});
+                if (progressoKeys.length > 0) {
+                    if (!confirm(`⚠️ Ao trocar o curso, algumas disciplinas podem ser removidas. Deseja continuar?`)) {
+                        return;
+                    }
+                }
+            }
+
             cursoAtivo = curso;
             document.getElementById('cursoBMAT').className = curso === 'bmat' ? 'active' : '';
             document.getElementById('cursoBCET').className = curso === 'bcet' ? 'active' : '';
 
             if (alunoAtivoId && alunos[alunoAtivoId]) {
                 const aluno = alunos[alunoAtivoId];
+                
+                // ===== BUG #14: Atualiza aluno.curso =====
+                aluno.curso = curso;
 
-                // ============================================================
-                // 🔧 CORREÇÃO: Remove disciplinas que não pertencem ao curso atual
-                // ============================================================
                 const curriculo = getCurriculo();
                 const codigosDoCurso = new Set();
                 const optSlotsDoCurso = new Set();
@@ -1438,8 +1472,7 @@
                 renderFluxograma(alunoAtivoId);
             }
             saveData();
-            showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`,
-                'info');
+            showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`, 'info');
         }
 
         // ============================================================
@@ -1760,6 +1793,11 @@
             "GCET200": "GCET200",
             "GCET673": "GCET673",
             "GCET675": "GCET675"
+        };
+
+        // ===== BUG #12: Mapa centralizado de códigos obsoletos =====
+        const MAPA_CODIGOS_OBSOLETOS = {
+            "GCETAN": "GCET678"
         };
 
         const NOMES_DISCIPLINAS_BMAT = {
@@ -2187,16 +2225,34 @@
             return prereqs[codigoHistorico] || [];
         }
 
+        // ===== BUG #5: Correção de isOptativa =====
         function isOptativa(codigoHistorico) {
+            if (!codigoHistorico) return false;
+            
+            // Remove sufixos .P, .T, etc.
+            let codigoBase = codigoHistorico.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
+            
+            // Aplica mapa de códigos obsoletos
+            if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
+                codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
+            }
+            
             if (cursoAtivo === 'bmat') {
-                const interno = getCodigoInterno(codigoHistorico);
+                // Para BMAT, verifica no mapa de optativas internas
                 const optativas = getOptativasInternas();
-                return optativas[interno] || false;
+                return !!optativas[codigoBase];
             }
-            for (const opt of OPTATIVAS_BCET) {
-                if (opt.codigo === codigoHistorico) return true;
+            
+            if (cursoAtivo === 'bcet') {
+                // Para BCET, verifica na lista de optativas
+                for (const opt of OPTATIVAS_BCET) {
+                    if (opt.codigo === codigoBase) return true;
+                }
+                // Os slots de optativa também são considerados
+                if (codigoBase === 'OPT_BCET_1' || codigoBase === 'OPT_BCET_2') return true;
+                return false;
             }
-            if (codigoHistorico === 'OPT_BCET_1' || codigoHistorico === 'OPT_BCET_2') return true;
+            
             return false;
         }
 
@@ -2243,6 +2299,14 @@
             }
             updateAlunoCount();
             saveData();
+            
+            // ===== BUG #13: Fechar modal com Escape =====
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeOptModal();
+                    fecharModalQuebra();
+                }
+            });
         }
 
         function aplicarVersao() {
@@ -2391,7 +2455,7 @@
                         <span class="aluno-name">${aluno.nome}${matriculaStr}${cursoStr}</span>
                         <span class="aluno-progress">${done}/${total} (${pct}%)</span>
                         <div class="aluno-actions">
-                            <button onclick="event.stopPropagation();deleteAluno('${id}')" class="btn-del" title="Remover">✕</button>
+                            <button onclick="event.stopPropagation();deleteAluno('${id}')" class="btn-del" title="Remover" aria-label="Remover aluno">✕</button>
                         </div>
                     `;
                 div.onclick = () => selectAluno(id);
@@ -2433,8 +2497,7 @@
                 }
 
                 const todasOcorrencias = [];
-                const regex =
-                    /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
+                const regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
 
                 let match;
                 while ((match = regex.exec(textoCompleto)) !== null) {
@@ -2464,9 +2527,13 @@
 
                 const agrupado = {};
                 for (const occ of todasOcorrencias) {
-                    let codigoBase = occ.codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/,
-                    '');
-                    if (codigoBase === 'GCETAN') codigoBase = 'GCET678';
+                    let codigoBase = occ.codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
+                    
+                    // ===== BUG #12: Aplica mapa de códigos obsoletos =====
+                    if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
+                        codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
+                    }
+                    
                     if (!agrupado[codigoBase]) {
                         agrupado[codigoBase] = {
                             codigo: codigoBase,
@@ -2479,228 +2546,22 @@
                 }
 
                 const aluno = alunos[alunoAtivoId];
-                const equivalenciasAplicadas = [];
+                
+                // ===== BUG #4: Unifica lógica de equivalências =====
+                // Aplica todas as equivalências em um único bloco
+                const equivalenciasAplicadas = aplicarEquivalencias(aluno, agrupado);
+                
+                // ===== BUG #7: Contagem correta de optativas =====
+                // Lista de optativas cursadas
+                const optativasCursadas = [];
+                const optativasSlots = ['OPT_BCET_1', 'OPT_BCET_2', 'OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
 
                 // ============================================================
-                // 1. EQUIVALÊNCIAS ANTIGO → NOVO (aluno no BCET)
+                // DETERMINAR STATUS FINAL
                 // ============================================================
-                if (cursoAtivo === 'bcet') {
-                    // Duplas
-                    const equivDuplas = {
-                        "GCET095": ["GCET821", "GCET825"],
-                        "GCET099": ["GCET822", "GCET826"],
-                        "GCET102": ["GCET823", "GCET827"],
-                        "GCET106": ["GCET824", "GCET828"],
-                        "GCET066": ["GCET988", "GCET989"],
-                        "GCET176": ["GCET1050", "GCET1056"],
-                        "GCET717": ["GCET1025", "GCET1026"],
-                        "GCET729": ["GCET1030", "GCET1031"]
-                    };
-                    for (const [original, substitutas] of Object.entries(equivDuplas)) {
-                        const statusOriginal = agrupado[original]?.situacoes || [];
-                        const temAPROriginal = statusOriginal.some(s => s === 'APR' || s === 'DISP' || s ===
-                        'DISPCN');
-                        if (temAPROriginal) {
-                            for (const sub of substitutas) {
-                                if (!aluno.equiv) aluno.equiv = {};
-                                aluno.equiv[sub] = { via: original };
-                                aluno.progresso[sub] = 'done';
-                                equivalenciasAplicadas.push({ original, substituta: sub, tipo: 'antigo→novo' });
-                            }
-                        }
-                    }
-                    // Simples
-                    const equivSimples = {
-                        "GCET146": "GCET987",
-                        "GCET147": "GCET992",
-                        "GCET148": "GCET993",
-                        "GCET149": "GCET1046",
-                        "GCET061": "GCET986",
-                        "GCET065": "GCET991",
-                        "GCET175": "GCET1044",
-                        "GCET172": "GCET1048",
-                        "GCET178": "GCET1052",
-                        "GCET173": "GCET1049",
-                        "GCET179": "GCET1054",
-                        "GCET663": "GCET1051",
-                        "GCET667": "GCET1058",
-                        "GCET670": "GCET1059",
-                        "GCET666": "GCET1057",
-                        "GCET174": "GCET1063",
-                        "GCET200": "GCET1061",
-                        "GCET201": "GCET1062",
-                        "GCET673": "GCET1045",
-                        "GCET059": "GCET994",
-                        "GCET150": "GCET985",
-                        "GCET168": "GCET1040",
-                        "GCET169": "GCET1041",
-                        "GCET218": "GCET1064",
-                        "GCET236": "GCET1065",
-                        "GCET702": "GCET1008",
-                        "GCET701": "GCET1009",
-                        "GCET231": "GCET1009",
-                        "GCET502": "GCET1010",
-                        "GCET235": "GCET1012",
-                        "GCET515": "GCET1013",
-                        "GCET226.T": "GCET1014",
-                        "GCET226.P": "GCET1015",
-                        "GCET514": "GCET1016",
-                        "GCET528": "GCET1018",
-                        "GCET509": "GCET1027",
-                        "GCET232": "GCET1028",
-                        "GCET527": "GCET1029",
-                        "GCET230": "GCET1023",
-                        "GCET103": "GCET999",
-                        "GCET100": "GCET1021",
-                        "GCET104": "GCET1034",
-                        "GCET028": "GCET1036",
-                        "GCET166": "GCET1037",
-                        "GCET241": "GCET1066",
-                        "GCET115": "GCET1038",
-                        "GCET171": "GCET1039",
-                        "GCET243": "GCET1067",
-                        "GCET057": "GCET1003",
-                        "GCET105": "GCET1004",
-                        "GCET217": "GCET1004",
-                        "GCET285": "GCET1001"
-                    };
-                    for (const [original, substituta] of Object.entries(equivSimples)) {
-                        const statusOriginal = agrupado[original]?.situacoes || [];
-                        const temAPROriginal = statusOriginal.some(s => s === 'APR' || s === 'DISP' || s ===
-                            'DISPCN');
-                        if (temAPROriginal) {
-                            if (!aluno.equiv) aluno.equiv = {};
-                            aluno.equiv[substituta] = { via: original };
-                            aluno.progresso[substituta] = 'done';
-                            equivalenciasAplicadas.push({ original, substituta, tipo: 'antigo→novo' });
-                        }
-                    }
-                }
-
-                // ============================================================
-                // 2. EQUIVALÊNCIAS NOVO → ANTIGO (aluno no BMAT)
-                // ============================================================
-                if (cursoAtivo === 'bmat') {
-                    // Duplas
-                    const equivDuplas = {
-                        "GCET095": ["GCET821", "GCET825"],
-                        "GCET099": ["GCET822", "GCET826"],
-                        "GCET102": ["GCET823", "GCET827"],
-                        "GCET106": ["GCET824", "GCET828"],
-                        "GCET066": ["GCET988", "GCET989"],
-                        "GCET176": ["GCET1050", "GCET1056"],
-                        "GCET717": ["GCET1025", "GCET1026"],
-                        "GCET729": ["GCET1030", "GCET1031"]
-                    };
-                    for (const [original, substitutas] of Object.entries(equivDuplas)) {
-                        const todasCursadas = substitutas.every(sub => {
-                            const status = agrupado[sub]?.situacoes || [];
-                            return status.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
-                        });
-                        if (todasCursadas) {
-                            if (!aluno.equiv) aluno.equiv = {};
-                            aluno.equiv[original] = { via: substitutas.join(' + ') };
-                            aluno.progresso[original] = 'done';
-                            equivalenciasAplicadas.push({ original, substituta: substitutas.join(' + '),
-                                tipo: 'novo→antigo' });
-                        }
-                    }
-                    // Simples
-                    const equivSimples = {
-                        "GCET146": "GCET987",
-                        "GCET147": "GCET992",
-                        "GCET148": "GCET993",
-                        "GCET149": "GCET1046",
-                        "GCET061": "GCET986",
-                        "GCET065": "GCET991",
-                        "GCET175": "GCET1044",
-                        "GCET172": "GCET1048",
-                        "GCET178": "GCET1052",
-                        "GCET173": "GCET1049",
-                        "GCET179": "GCET1054",
-                        "GCET663": "GCET1051",
-                        "GCET667": "GCET1058",
-                        "GCET670": "GCET1059",
-                        "GCET666": "GCET1057",
-                        "GCET174": "GCET1063",
-                        "GCET200": "GCET1061",
-                        "GCET201": "GCET1062",
-                        "GCET673": "GCET1045",
-                        "GCET059": "GCET994",
-                        "GCET150": "GCET985",
-                        "GCET168": "GCET1040",
-                        "GCET169": "GCET1041",
-                        "GCET218": "GCET1064",
-                        "GCET236": "GCET1065",
-                        "GCET702": "GCET1008",
-                        "GCET701": "GCET1009",
-                        "GCET231": "GCET1009",
-                        "GCET502": "GCET1010",
-                        "GCET235": "GCET1012",
-                        "GCET515": "GCET1013",
-                        "GCET226.T": "GCET1014",
-                        "GCET226.P": "GCET1015",
-                        "GCET514": "GCET1016",
-                        "GCET528": "GCET1018",
-                        "GCET509": "GCET1027",
-                        "GCET232": "GCET1028",
-                        "GCET527": "GCET1029",
-                        "GCET230": "GCET1023",
-                        "GCET103": "GCET999",
-                        "GCET100": "GCET1021",
-                        "GCET104": "GCET1034",
-                        "GCET028": "GCET1036",
-                        "GCET166": "GCET1037",
-                        "GCET241": "GCET1066",
-                        "GCET115": "GCET1038",
-                        "GCET171": "GCET1039",
-                        "GCET243": "GCET1067",
-                        "GCET057": "GCET1003",
-                        "GCET105": "GCET1004",
-                        "GCET217": "GCET1004",
-                        "GCET285": "GCET1001"
-                    };
-                    const equivSimplesInverso = {};
-                    for (const [antigo, novo] of Object.entries(equivSimples)) {
-                        equivSimplesInverso[novo] = antigo;
-                    }
-                    for (const [novo, antigo] of Object.entries(equivSimplesInverso)) {
-                        const statusNovo = agrupado[novo]?.situacoes || [];
-                        const temAPRNovo = statusNovo.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
-                        if (temAPRNovo) {
-                            if (!aluno.equiv) aluno.equiv = {};
-                            aluno.equiv[antigo] = { via: novo };
-                            aluno.progresso[antigo] = 'done';
-                            equivalenciasAplicadas.push({ original: antigo, substituta: novo, tipo: 'novo→antigo' });
-                        }
-                    }
-                }
-
-                // ============================================================
-                // 3. EQUIVALÊNCIA GCET815 → GCET161 (TCC)
-                // ============================================================
-                const statusGCET815 = agrupado["GCET815"]?.situacoes || [];
-                if (statusGCET815.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN')) {
-                    if (!aluno.equiv) aluno.equiv = {};
-                    aluno.equiv["GCET161"] = { via: "GCET815" };
-                    aluno.progresso["GCET161"] = 'done';
-                    equivalenciasAplicadas.push({ original: "GCET815", substituta: "GCET161", tipo: "TCC" });
-                }
-                const statusGCET161 = agrupado["GCET161"]?.situacoes || [];
-                if (statusGCET161.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN')) {
-                    if (!aluno.equiv) aluno.equiv = {};
-                    aluno.equiv["GCET815"] = { via: "GCET161" };
-                    aluno.progresso["GCET815"] = 'done';
-                    equivalenciasAplicadas.push({ original: "GCET161", substituta: "GCET815", tipo: "TCC" });
-                }
-
-                // ============================================================
-                // 4. DETERMINAR STATUS FINAL
-                // ============================================================
-                let countAPR = 0,
-                    countMATR = 0,
-                    countREP = 0;
+                let countAPR = 0, countMATR = 0, countREP = 0;
                 for (const [codigo, info] of Object.entries(agrupado)) {
+                    // Verifica se já foi marcado por equivalência
                     if (aluno.progresso[codigo] === 'done' && aluno.equiv && aluno.equiv[codigo]) continue;
 
                     const temAPR = info.situacoes.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
@@ -2708,18 +2569,36 @@
                     const temREP = info.situacoes.some(s => s === 'REP' || s === 'REPF' || s === 'REPMF');
 
                     let statusFinal = 'not-started';
-                    if (temAPR) { statusFinal = 'done';
-                        countAPR++; } else if (temMATR) { statusFinal = 'pending';
-                        countMATR++; } else if (temREP) { statusFinal = 'not-started';
-                        countREP++; }
-
-                    if (isOptativa(codigo) && statusFinal === 'done') {
-                        const slot = encontrarSlotOptativa(alunoAtivoId);
-                        if (slot) aluno.optativas[slot] = codigo;
+                    if (temAPR) { 
+                        statusFinal = 'done'; 
+                        countAPR++; 
+                    } else if (temMATR) { 
+                        statusFinal = 'pending'; 
+                        countMATR++; 
+                    } else if (temREP) { 
+                        statusFinal = 'not-started'; 
+                        countREP++; 
                     }
-                    if (!aluno.progresso[codigo] || aluno.progresso[codigo] !== 'done' || !aluno.equiv || !aluno
-                        .equiv[codigo]) {
+
+                    // ===== BUG #5: Reconhecimento correto de optativas =====
+                    if (isOptativa(codigo) && statusFinal === 'done') {
+                        optativasCursadas.push(codigo);
+                    }
+                    
+                    if (!aluno.progresso[codigo] || aluno.progresso[codigo] !== 'done' || !aluno.equiv || !aluno.equiv[codigo]) {
                         aluno.progresso[codigo] = statusFinal;
+                    }
+                }
+
+                // ===== BUG #3: Preencher optativas corretamente =====
+                // Preenche os slots na ordem correta
+                const slotsDisponiveis = optativasSlots.filter(slot => !aluno.optativas[slot]);
+                for (let i = 0; i < Math.min(optativasCursadas.length, slotsDisponiveis.length); i++) {
+                    const slot = slotsDisponiveis[i];
+                    const codigo = optativasCursadas[i];
+                    aluno.optativas[slot] = codigo;
+                    if (aluno.progresso[codigo] !== 'done') {
+                        aluno.progresso[codigo] = 'done';
                     }
                 }
 
@@ -2731,19 +2610,21 @@
 
                 let listaHtml = '<div class="disciplines-list">';
                 if (equivalenciasAplicadas.length > 0) {
-                    listaHtml +=
-                        `<div class="equiv" style="color:#4a148c;font-weight:bold;">🔗 EQUIVALÊNCIAS APLICADAS:</div>`;
+                    listaHtml += `<div class="equiv" style="color:#4a148c;font-weight:bold;">🔗 EQUIVALÊNCIAS APLICADAS:</div>`;
                     for (const eq of equivalenciasAplicadas) {
                         const emoji = eq.tipo === 'antigo→novo' ? '📘' : eq.tipo === 'novo→antigo' ? '📐' : '📄';
-                        listaHtml +=
-                            `<div class="equiv" style="font-size:11px;padding:2px 0;">  ${emoji} ${eq.original} → ${eq.substituta} (${eq.tipo})</div>`;
+                        listaHtml += `<div class="equiv" style="font-size:11px;padding:2px 0;">  ${emoji} ${eq.original} → ${eq.substituta} (${eq.tipo})</div>`;
                     }
+                }
+                if (optativasCursadas.length > 0) {
+                    listaHtml += `<div class="info" style="color:#2e7d32;font-weight:bold;">📌 OPTATIVAS IDENTIFICADAS: ${optativasCursadas.join(', ')}</div>`;
                 }
                 listaHtml += '</div>';
 
                 preview.innerHTML = `
                         <div class="success">✅ Disciplinas processadas para <strong>${aluno.nome}</strong>!</div>
                         ${equivalenciasAplicadas.length > 0 ? `<div class="info">🔗 ${equivalenciasAplicadas.length} equivalência(s) aplicada(s)</div>` : ''}
+                        ${optativasCursadas.length > 0 ? `<div class="info">📌 ${optativasCursadas.length} optativa(s) identificada(s)</div>` : ''}
                         <div class="info">📚 ${countAPR} disciplinas CURSADAS</div>
                         <div class="info">🟡 ${countMATR} disciplinas em ANDAMENTO</div>
                         <div class="info">⏭️ ${countREP} reprovações IGNORADAS</div>
@@ -2762,13 +2643,165 @@
             event.target.value = '';
         }
 
-        function encontrarSlotOptativa(alunoId) {
-            const slots = ['OPT_BCET_1', 'OPT_BCET_2', 'OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
-            const aluno = alunos[alunoId];
-            for (const slot of slots) {
-                if (!aluno.optativas[slot]) return slot;
+        // ===== BUG #4: Função unificada para aplicar equivalências =====
+        function aplicarEquivalencias(aluno, agrupado) {
+            const equivalenciasAplicadas = [];
+            
+            // ============================================================
+            // EQUIVALÊNCIAS DUPLAS (1 antiga → 2 novas)
+            // ============================================================
+            const equivDuplas = {
+                "GCET095": ["GCET821", "GCET825"],
+                "GCET099": ["GCET822", "GCET826"],
+                "GCET102": ["GCET823", "GCET827"],
+                "GCET106": ["GCET824", "GCET828"],
+                "GCET066": ["GCET988", "GCET989"],
+                "GCET176": ["GCET1050", "GCET1056"],
+                "GCET717": ["GCET1025", "GCET1026"],
+                "GCET729": ["GCET1030", "GCET1031"]
+            };
+
+            // ============================================================
+            // EQUIVALÊNCIAS SIMPLES (1 antiga → 1 nova)
+            // ============================================================
+            const equivSimples = {
+                "GCET146": "GCET987",
+                "GCET147": "GCET992",
+                "GCET148": "GCET993",
+                "GCET149": "GCET1046",
+                "GCET061": "GCET986",
+                "GCET065": "GCET991",
+                "GCET175": "GCET1044",
+                "GCET172": "GCET1048",
+                "GCET178": "GCET1052",
+                "GCET173": "GCET1049",
+                "GCET179": "GCET1054",
+                "GCET663": "GCET1051",
+                "GCET667": "GCET1058",
+                "GCET670": "GCET1059",
+                "GCET666": "GCET1057",
+                "GCET174": "GCET1063",
+                "GCET200": "GCET1061",
+                "GCET201": "GCET1062",
+                "GCET673": "GCET1045",
+                "GCET059": "GCET994",
+                "GCET150": "GCET985",
+                "GCET168": "GCET1040",
+                "GCET169": "GCET1041",
+                "GCET218": "GCET1064",
+                "GCET236": "GCET1065",
+                "GCET702": "GCET1008",
+                "GCET701": "GCET1009",
+                "GCET231": "GCET1009",
+                "GCET502": "GCET1010",
+                "GCET235": "GCET1012",
+                "GCET515": "GCET1013",
+                "GCET226.T": "GCET1014",
+                "GCET226.P": "GCET1015",
+                "GCET514": "GCET1016",
+                "GCET528": "GCET1018",
+                "GCET509": "GCET1027",
+                "GCET232": "GCET1028",
+                "GCET527": "GCET1029",
+                "GCET230": "GCET1023",
+                "GCET103": "GCET999",
+                "GCET100": "GCET1021",
+                "GCET104": "GCET1034",
+                "GCET028": "GCET1036",
+                "GCET166": "GCET1037",
+                "GCET241": "GCET1066",
+                "GCET115": "GCET1038",
+                "GCET171": "GCET1039",
+                "GCET243": "GCET1067",
+                "GCET057": "GCET1003",
+                "GCET105": "GCET1004",
+                "GCET217": "GCET1004",
+                "GCET285": "GCET1001"
+            };
+
+            // Mapeamento inverso (nova → antiga) para BMAT
+            const equivSimplesInverso = {};
+            for (const [antigo, novo] of Object.entries(equivSimples)) {
+                equivSimplesInverso[novo] = antigo;
             }
-            return 'OPT5';
+
+            // ============================================================
+            // APLICAR EQUIVALÊNCIAS
+            // ============================================================
+
+            // 1. ANTIGO → NOVO (aluno no BCET)
+            if (cursoAtivo === 'bcet') {
+                // Duplas
+                for (const [original, substitutas] of Object.entries(equivDuplas)) {
+                    const statusOriginal = agrupado[original]?.situacoes || [];
+                    const temAPROriginal = statusOriginal.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
+                    if (temAPROriginal) {
+                        for (const sub of substitutas) {
+                            if (!aluno.equiv) aluno.equiv = {};
+                            aluno.equiv[sub] = { via: original };
+                            aluno.progresso[sub] = 'done';
+                            equivalenciasAplicadas.push({ original, substituta: sub, tipo: 'antigo→novo' });
+                        }
+                    }
+                }
+                // Simples
+                for (const [original, substituta] of Object.entries(equivSimples)) {
+                    const statusOriginal = agrupado[original]?.situacoes || [];
+                    const temAPROriginal = statusOriginal.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
+                    if (temAPROriginal) {
+                        if (!aluno.equiv) aluno.equiv = {};
+                        aluno.equiv[substituta] = { via: original };
+                        aluno.progresso[substituta] = 'done';
+                        equivalenciasAplicadas.push({ original, substituta, tipo: 'antigo→novo' });
+                    }
+                }
+            }
+
+            // 2. NOVO → ANTIGO (aluno no BMAT)
+            if (cursoAtivo === 'bmat') {
+                // Duplas
+                for (const [original, substitutas] of Object.entries(equivDuplas)) {
+                    const todasCursadas = substitutas.every(sub => {
+                        const status = agrupado[sub]?.situacoes || [];
+                        return status.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
+                    });
+                    if (todasCursadas) {
+                        if (!aluno.equiv) aluno.equiv = {};
+                        aluno.equiv[original] = { via: substitutas.join(' + ') };
+                        aluno.progresso[original] = 'done';
+                        equivalenciasAplicadas.push({ original, substituta: substitutas.join(' + '), tipo: 'novo→antigo' });
+                    }
+                }
+                // Simples
+                for (const [novo, antigo] of Object.entries(equivSimplesInverso)) {
+                    const statusNovo = agrupado[novo]?.situacoes || [];
+                    const temAPRNovo = statusNovo.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
+                    if (temAPRNovo) {
+                        if (!aluno.equiv) aluno.equiv = {};
+                        aluno.equiv[antigo] = { via: novo };
+                        aluno.progresso[antigo] = 'done';
+                        equivalenciasAplicadas.push({ original: antigo, substituta: novo, tipo: 'novo→antigo' });
+                    }
+                }
+            }
+
+            // 3. TCC - GCET815 ↔ GCET161
+            const statusGCET815 = agrupado["GCET815"]?.situacoes || [];
+            if (statusGCET815.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN')) {
+                if (!aluno.equiv) aluno.equiv = {};
+                aluno.equiv["GCET161"] = { via: "GCET815" };
+                aluno.progresso["GCET161"] = 'done';
+                equivalenciasAplicadas.push({ original: "GCET815", substituta: "GCET161", tipo: "TCC" });
+            }
+            const statusGCET161 = agrupado["GCET161"]?.situacoes || [];
+            if (statusGCET161.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN')) {
+                if (!aluno.equiv) aluno.equiv = {};
+                aluno.equiv["GCET815"] = { via: "GCET161" };
+                aluno.progresso["GCET815"] = 'done';
+                equivalenciasAplicadas.push({ original: "GCET161", substituta: "GCET815", tipo: "TCC" });
+            }
+
+            return equivalenciasAplicadas;
         }
 
         // ============================================================
@@ -2809,7 +2842,7 @@
         }
 
         // ============================================================
-        // TOGGLE DISCIPLINA - CORRIGIDO (permite alternar status da optativa)
+        // TOGGLE DISCIPLINA
         // ============================================================
         function toggleDiscipline(alunoId, codigo) {
             const aluno = alunos[alunoId];
@@ -2868,7 +2901,7 @@
         }
 
         // ============================================================
-        // MODAL DE OPTATIVAS - CORRIGIDO (com listas específicas para OPT1/OPT2)
+        // MODAL DE OPTATIVAS
         // ============================================================
         function abrirModalOptativa(alunoId, optCodigo) {
             const aluno = alunos[alunoId];
@@ -2887,17 +2920,12 @@
             };
             const optLabel = labels[optCodigo] || 'Optativa';
 
-            // 🔧 Define quais optativas mostrar baseado no slot
             let optativasDisponiveis;
             if (cursoAtivo === 'bmat' && optCodigo === 'OPT1') {
-                // OPT1 (6º Semestre) - 9 optativas específicas
                 optativasDisponiveis = OPTATIVAS_BMAT_OPT1;
-            } else if (cursoAtivo === 'bmat' && (optCodigo === 'OPT2' || optCodigo === 'OPT3' || optCodigo === 'OPT4' ||
-                    optCodigo === 'OPT5')) {
-                // OPT2, OPT3, OPT4, OPT5 (7º e 8º Semestres) - 21 optativas
+            } else if (cursoAtivo === 'bmat' && (optCodigo === 'OPT2' || optCodigo === 'OPT3' || optCodigo === 'OPT4' || optCodigo === 'OPT5')) {
                 optativasDisponiveis = OPTATIVAS_BMAT_OUTRAS;
             } else {
-                // BCET ou outros casos
                 optativasDisponiveis = getOptativasDisponiveis();
             }
 
@@ -2922,7 +2950,6 @@
                 list.appendChild(div);
             }
 
-            // Se já há uma optativa selecionada, mostra o status atual
             const optAtual = aluno.optativas[optCodigo];
             if (optAtual) {
                 const statusAtual = aluno.progresso[optAtual] || 'pending';
@@ -2934,9 +2961,7 @@
             document.getElementById('optModal').classList.add('show');
         }
 
-        // ============================================================
-        // SELECIONAR OPTATIVA - COM VALIDAÇÃO DE REPETIÇÃO
-        // ============================================================
+        // ===== BUG #3: Selecionar optativa com re-render completo =====
         function selecionarOptativa(codigo) {
             if (!modalContexto) return;
             const { alunoId, optCodigo } = modalContexto;
@@ -2989,6 +3014,7 @@
             }
 
             closeOptModal();
+            // ===== BUG #3: Força re-render completo =====
             recalcularEquivalencias(alunoId);
             renderFluxograma(alunoId);
             renderAlunoList();
@@ -3138,8 +3164,7 @@
 
             const curriculo = getCurriculo();
             for (const semestre of curriculo) {
-                html +=
-                    `<div class="semester-card"><div class="semester-title ${semestre.cls}">${semestre.nome}</div>`;
+                html += `<div class="semester-card"><div class="semester-title ${semestre.cls}">${semestre.nome}</div>`;
                 for (const disc of semestre.disciplinas) {
                     if (disc.isOptativa) {
                         html += renderOptativa(alunoId, disc);
@@ -3150,6 +3175,7 @@
                 html += `</div>`;
             }
 
+            // ===== BUG #6: Disciplinas extras - verifica equivalências =====
             const extras = getDisciplinasExtras(alunoId);
             if (extras.length > 0) {
                 html += `
@@ -3163,8 +3189,11 @@
                                 let finalClass = statusClass;
                                 if (isEquiv && status === 'done') finalClass = 'equiv-done';
                                 if (isQuebra) finalClass = 'quebra';
+                                // ===== BUG #1: Permite toggle nas extras =====
                                 return `
-                                        <div class="discipline ${finalClass}" style="cursor:default;border-color:#ff6f00;color:#333;">
+                                        <div class="discipline ${finalClass}" 
+                                             onclick="toggleDiscipline('${alunoId}','${d.codigo}')"
+                                             style="border-color:#ff6f00;">
                                             <span class="code">${d.codigo}</span> ${getNomeDisciplina(d.codigo) || d.codigo}
                                             <span class="hours">${d.ch || '68h'}</span>
                                             ${isEquiv ? '<span class="equiv-badge">🔗 Equiv.</span>' : ''}
@@ -3361,6 +3390,7 @@
                 `;
         }
 
+        // ===== BUG #6: getDisciplinasExtras com verificação de equivalência =====
         function getDisciplinasExtras(alunoId) {
             const aluno = alunos[alunoId];
             if (!aluno) return [];
@@ -3381,7 +3411,10 @@
                 if (codigo.startsWith('OPT_BCET')) continue;
                 if (codigosDoCurso.has(codigo)) continue;
                 if (isOptativa(codigo)) continue;
-
+                
+                // ===== BUG #6: Verifica se o código tem equivalência =====
+                if (aluno.equiv && aluno.equiv[codigo]) continue;
+                
                 extras.push({
                     codigo: codigo,
                     ch: '68h'
@@ -3394,6 +3427,7 @@
         // ============================================================
         // UTILITÁRIOS
         // ============================================================
+        // ===== BUG #7: Contagem correta de disciplinas =====
         function getTotalDisciplinas(alunoId) {
             const aluno = alunos[alunoId];
             if (!aluno) return 0;
@@ -3402,9 +3436,10 @@
             for (const sem of curriculo) {
                 for (const disc of sem.disciplinas) {
                     if (disc.isOptativa) {
+                        // Só conta se a optativa foi selecionada
                         const optCod = aluno.optativas[disc.codigo];
                         if (optCod) count++;
-                        else count++;
+                        // Se não foi selecionada, não conta (não ocupa espaço)
                     } else {
                         count++;
                     }
@@ -3425,6 +3460,7 @@
                     if (disc.isOptativa) {
                         const optCod = aluno.optativas[disc.codigo];
                         if (optCod && (aluno.progresso[optCod] || 'not-started') === status) count++;
+                        // Optativa não selecionada só conta como 'not-started' se for o status procurado
                         else if (!optCod && status === 'not-started') count++;
                     } else {
                         const isEquiv = aluno.equiv && aluno.equiv[disc.codigo];
@@ -3528,6 +3564,32 @@
                     `;
             }
 
+            // ===== BUG #8: Adiciona Disciplinas Extras no PDF =====
+            const extras = getDisciplinasExtras(alunoAtivoId);
+            let extrasHtml = '';
+            if (extras.length > 0) {
+                extrasHtml = `
+                        <div class="pdf-extras">
+                            <div class="title">📋 Disciplinas Extras</div>
+                            <div class="list">
+                                ${extras.map(d => {
+                                    const status = getStatusDisplay(d.codigo, aluno);
+                                    let statusClass = status === 'done' ? 'done' : 'not-started';
+                                    if (aluno.equiv && aluno.equiv[d.codigo]) statusClass = 'equiv-done';
+                                    if (aluno.quebras && aluno.quebras[d.codigo]) statusClass = 'quebra';
+                                    return `
+                                        <div class="pdf-disc ${statusClass}">
+                                            <span class="code">${d.codigo}</span>
+                                            ${getNomeDisciplina(d.codigo) || d.codigo}
+                                            <span class="hours">${d.ch || '68h'}</span>
+                                        </div>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+            }
+
             const cursoLabel = aluno.curso === 'bcet' ? 'BCET - Itinerário Matemática (PPC 2025)' : 'BMAT (PPC 2013)';
 
             const pdfHtml = `
@@ -3563,7 +3625,7 @@
                         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:10px;">
                             ${semestresHtml}
                         </div>
-
+                        ${extrasHtml}
                         <div style="text-align:center;margin-top:10px;padding-top:6px;border-top:1px solid #e0e0e0;font-size:8px;color:#999;">
                             Relatório gerado automaticamente · BMAT/UFRB
                             <br>${new Date().toLocaleString('pt-BR')}
@@ -3612,7 +3674,7 @@
                     pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
                     pdf.save(
                         `relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`
-                        );
+                    );
 
                     showToast('📄 PDF gerado com sucesso!', 'success');
                 }).catch(err => {
