@@ -1306,1130 +1306,519 @@
 
     <script>
         // ============================================================
-        // VARIÁVEIS GLOBAIS
-        // ============================================================
-        let alunos = {};
-        let nextId = 1;
-        let alunoAtivoId = null;
-        let versaoAtual = 'clasica';
-        let cursoAtivo = 'bmat';
-        let modalContexto = null;
-        let quebraContexto = null;
-
-        // ============================================================
-        // MAPA DE CÓDIGOS OBSOLETOS
-        // ============================================================
-        const MAPA_CODIGOS_OBSOLETOS = {
-            "GCETAN": "GCET678"
-        };
-
-        // ============================================================
-        // OPTATIVAS DO BMAT
-        // ============================================================
-        const OPTATIVAS_BMAT_OPT1 = [
-            { codigo: "GCET152", nome: "Cálculo Numérico II", pre: "GCET059" },
-            { codigo: "GCET153", nome: "Equações Diferenciais", pre: "Nenhum" },
-            { codigo: "GCET155", nome: "Álgebra III", pre: "GCET178" },
-            { codigo: "GCET184", nome: "Métodos Matemáticos", pre: "Nenhum" },
-            { codigo: "GCET194", nome: "Funções Analíticas", pre: "GCET147" },
-            { codigo: "GCET200", nome: "Tópicos Especiais em Matemática I", pre: "Nenhum" },
-            { codigo: "GCET201", nome: "Tópicos Especiais em Matemática II", pre: "Nenhum" },
-            { codigo: "GCET218", nome: "Desenho Técnico", pre: "Nenhum" },
-            { codigo: "GCET508", nome: "Matemática Discreta", pre: "Nenhum" }
-        ];
-
-        const OPTATIVAS_BMAT_OUTRAS = [
-            { codigo: "GCET152", nome: "Cálculo Numérico II", pre: "GCET059" },
-            { codigo: "GCET155", nome: "Álgebra III", pre: "GCET178" },
-            { codigo: "GCET194", nome: "Funções Analíticas", pre: "GCET147" },
-            { codigo: "GCET200", nome: "Tópicos Especiais em Matemática I", pre: "Nenhum" },
-            { codigo: "GCET201", nome: "Tópicos Especiais em Matemática II", pre: "Nenhum" },
-            { codigo: "GCET218", nome: "Desenho Técnico I", pre: "Nenhum" },
-            { codigo: "GCET665", nome: "Análise Funcional", pre: "GCET175, GCET180" },
-            { codigo: "GCET666", nome: "Geometria Não Euclidiana", pre: "GCET176" },
-            { codigo: "GCET667", nome: "História da Matemática", pre: "GCET174" },
-            { codigo: "GCET668", nome: "Introdução às Curvas Algébricas", pre: "GCET178" },
-            { codigo: "GCET669", nome: "Introdução aos Sistemas Dinâmicos", pre: "GCET148, GCET179, GCET189" },
-            { codigo: "GCET670", nome: "Matemática Financeira", pre: "Nenhum" },
-            { codigo: "GCET671", nome: "Modelagem e Simulação Matemática", pre: "GCET152" },
-            { codigo: "GCET672", nome: "Otimização de Sistemas", pre: "GCET152" },
-            { codigo: "GCET673", nome: "Teoria dos Números", pre: "GCET178" },
-            { codigo: "GCET674", nome: "Tópicos de Álgebra", pre: "GCET178" },
-            { codigo: "GCET675", nome: "Tópicos de Análise", pre: "GCET173" },
-            { codigo: "GCET676", nome: "Tópicos de Geometria", pre: "GCET177" },
-            { codigo: "GCETIMC", nome: "Introdução à Matemática Computacional", pre: "GCET174" },
-            { codigo: "GCETMD", nome: "Matemática Discreta", pre: "GCET174" },
-            { codigo: "GCF247", nome: "Língua Brasileira de Sinais - LIBRAS", pre: "Nenhum" }
-        ];
-
-        // ============================================================
-        // OPTATIVAS DO BCET - PPC 2025
-        // ============================================================
-        const OPTATIVAS_BCET = [
-            { codigo: "GCET1055", nome: "Biomatemática", pre: "GCET993" },
-            { codigo: "GCET1056", nome: "Geometria Espacial", pre: "GCET1050" },
-            { codigo: "GCET1057", nome: "Geometria Não Euclidiana", pre: "GCET1050, GCET1044" },
-            { codigo: "GCET1058", nome: "História da Matemática", pre: "GCET987, GCET1050" },
-            { codigo: "GCET1059", nome: "Matemática Financeira", pre: "GCET987" },
-            { codigo: "GCET1060", nome: "Programação Linear", pre: "GCET991" },
-            { codigo: "GCET1061", nome: "Tópicos Especiais de Matemática I", pre: "Nenhum" },
-            { codigo: "GCET1062", nome: "Tópicos Especiais de Matemática II", pre: "Nenhum" },
-            { codigo: "GCET1063", nome: "Fundamentos de Lógica e Teoria dos Conjuntos", pre: "Nenhum" },
-            { codigo: "GCF247", nome: "Libras", pre: "Nenhum" }
-        ];
-
-        // ============================================================
-        // ===== BUG #13 CORRIGIDO: Tabela de equivalências baseada no PPC =====
-        // ============================================================
-        // Optativas BMAT → Optativas BCET (PPC p. 211-214)
-        const OPTATIVAS_BMAT_PARA_BCET = {
-            "GCET200": "GCET1061",  // Tópicos Especiais de Matemática I
-            "GCET201": "GCET1062",  // Tópicos Especiais de Matemática II
-            "GCET218": "GCET1064",  // Desenho Técnico e Expressão Gráfica I
-            "GCET673": "GCET1045",  // Teoria dos Números
-            "GCET666": "GCET1057",  // Geometria Não Euclidiana
-            "GCET667": "GCET1058",  // História da Matemática
-            "GCET670": "GCET1059",  // Matemática Financeira
-        };
-
-        // Optativas BMAT → Obrigatórias BCET (PPC p. 211-214)
-        const OPTATIVAS_BMAT_PARA_OBRIGATORIAS_BCET = {
-            "GCET152": "GCET994",   // Cálculo Numérico (obrigatória)
-            "GCET155": "GCET1044",  // Álgebra Linear II (obrigatória)
-            "GCET194": "GCET1054",  // Funções de Uma Variável Complexa I (obrigatória)
-        };
-
-        // Optativas BMAT sem equivalência no BCET
-        const OPTATIVAS_BMAT_SEM_EQUIVALENCIA = [
-            "GCET508", "GCET665", "GCET668", "GCET669",
-            "GCET671", "GCET672", "GCET674", "GCET675",
-            "GCET676", "GCETIMC", "GCETMD"
-        ];
-
-        // ============================================================
-        // DADOS DO CURRÍCULO BMAT (PPC 2013)
+        // 1. CONFIGURAÇÃO CENTRALIZADA
         // ============================================================
 
-        const PREREQUISITOS_INTERNOS_BMAT = {
-            "GCET146": [],
-            "GCET095": [],
-            "GCET061": [],
-            "GCET150": [],
-            "GCET066": [],
-            "GCCA283": [],
-            "GCET147": ["GCET146"],
-            "GCET099": ["GCET095"],
-            "GCET065": [],
-            "GCET151": ["GCET150"],
-            "GCCA235": [],
-            "GCCA310": [],
-            "GCET148": ["GCET147"],
-            "GCET102": ["GCET099"],
-            "GCET060": ["GCET147"],
-            "GCET059": ["GCET065", "GCET147", "GCET151"],
-            "GCET174": ["GCET065"],
-            "GCET149": ["GCET148"],
-            "GCET106": ["GCET102"],
-            "GCET172": ["GCET148", "GCET175"],
-            "GCET175": ["GCET061"],
-            "GCET510": [],
-            "GCET173": ["GCET148", "GCET175"],
-            "GCET176": ["GCET061"],
-            "GCET178": ["GCET172"],
-            "GCET511": [],
-            "GCET663": ["GCET148", "GCET060"],
-            "GCET161": ["GCCA283"],
-            "GCET177": ["GCET149", "GCET178"],
-            "GCET179": ["GCET147"],
-            "GCET180": ["GCET172", "GCET173"],
-            "GCET189": ["GCET173"],
-            "GCET660": ["GCET180"],
-            "GCET661": ["GCET148"],
-            "GCET678": [],
-            "GCET677": ["GCCA283"],
-            "GCET152": ["GCET059"],
-            "GCET155": ["GCET178"],
-            "GCET194": ["GCET147"],
-            "GCET200": [],
-            "GCET201": [],
-            "GCET218": [],
-            "GCET665": ["GCET175", "GCET180"],
-            "GCET666": ["GCET176"],
-            "GCET667": ["GCET174"],
-            "GCET668": ["GCET178"],
-            "GCET669": ["GCET148", "GCET179", "GCET189"],
-            "GCET670": [],
-            "GCET671": ["GCET152"],
-            "GCET672": ["GCET152"],
-            "GCET673": ["GCET178"],
-            "GCET674": ["GCET178"],
-            "GCET675": ["GCET173"],
-            "GCET676": ["GCET177"],
-            "GCETIMC": ["GCET174"],
-            "GCETMD": ["GCET174"],
-            "GCF247": []
-        };
+        const CONFIG = {
+            // === MAPA DE CÓDIGOS OBSOLETOS ===
+            codigosObsoletos: {
+                'GCETAN': 'GCET678'
+            },
 
-        const CODIGO_HISTORICO_BMAT = {
-            "GCET146": "GCET146",
-            "GCET147": "GCET147",
-            "GCET148": "GCET148",
-            "GCET149": "GCET149",
-            "GCET095": "GCET095",
-            "GCET099": "GCET099",
-            "GCET102": "GCET102",
-            "GCET106": "GCET106",
-            "GCET061": "GCET061",
-            "GCET065": "GCET065",
-            "GCET175": "GCET175",
-            "GCET172": "GCET172",
-            "GCET178": "GCET178",
-            "GCET173": "GCET173",
-            "GCET174": "GCET174",
-            "GCET150": "GCET150",
-            "GCET151": "GCET151",
-            "GCET059": "GCET059",
-            "GCET060": "GCET060",
-            "GCET066": "GCET066",
-            "GCET510": "GCET510",
-            "GCET511": "GCET511",
-            "GCET176": "GCET176",
-            "GCET177": "GCET177",
-            "GCET179": "GCET179",
-            "GCET180": "GCET180",
-            "GCET189": "GCET189",
-            "GCET660": "GCET660",
-            "GCET661": "GCET661",
-            "GCET663": "GCET663",
-            "GCET161": "GCET161",
-            "GCET677": "GCET677",
-            "GCET678": "GCET678",
-            "GCCA235": "GCCA235",
-            "GCCA283": "GCCA283",
-            "GCCA310": "GCCA310",
-            "GCET815": "GCET161",
-            "GCET821": "GCET821",
-            "GCET822": "GCET822",
-            "GCET823": "GCET823",
-            "GCET825": "GCET825",
-            "GCET826": "GCET826",
-            "GCET827": "GCET827",
-            "GCET824": "GCET824",
-            "GCET828": "GCET828",
-            "GCET200": "GCET200",
-            "GCET673": "GCET673",
-            "GCET675": "GCET675"
-        };
-
-        const MAPEAMENTO_CODIGOS_BMAT = {
-            "GCET146": "GCET146",
-            "GCET147": "GCET147",
-            "GCET148": "GCET148",
-            "GCET149": "GCET149",
-            "GCET095": "GCET095",
-            "GCET099": "GCET099",
-            "GCET102": "GCET102",
-            "GCET106": "GCET106",
-            "GCET061": "GCET061",
-            "GCET065": "GCET065",
-            "GCET175": "GCET175",
-            "GCET172": "GCET172",
-            "GCET178": "GCET178",
-            "GCET173": "GCET173",
-            "GCET174": "GCET174",
-            "GCET150": "GCET150",
-            "GCET151": "GCET151",
-            "GCET059": "GCET059",
-            "GCET060": "GCET060",
-            "GCET066": "GCET066",
-            "GCET510": "GCET510",
-            "GCET511": "GCET511",
-            "GCET176": "GCET176",
-            "GCET177": "GCET177",
-            "GCET179": "GCET179",
-            "GCET180": "GCET180",
-            "GCET189": "GCET189",
-            "GCET660": "GCET660",
-            "GCET661": "GCET661",
-            "GCET663": "GCET663",
-            "GCET161": "GCET161",
-            "GCET677": "GCET677",
-            "GCET678": "GCET678",
-            "GCCA235": "GCCA235",
-            "GCCA283": "GCCA283",
-            "GCCA310": "GCCA310",
-            "GCET815": "GCET161",
-            "GCET821": "GCET821",
-            "GCET822": "GCET822",
-            "GCET823": "GCET823",
-            "GCET825": "GCET825",
-            "GCET826": "GCET826",
-            "GCET827": "GCET827",
-            "GCET824": "GCET824",
-            "GCET828": "GCET828",
-            "GCET200": "GCET200",
-            "GCET673": "GCET673",
-            "GCET675": "GCET675"
-        };
-
-        const NOMES_DISCIPLINAS_BMAT = {
-            "GCET146": "Cálculo Diferencial e Integral I",
-            "GCET147": "Cálculo Diferencial e Integral II",
-            "GCET148": "Cálculo Diferencial e Integral III",
-            "GCET149": "Cálculo Diferencial e Integral IV",
-            "GCET095": "Física Geral e Experimental I",
-            "GCET099": "Física Geral e Experimental II",
-            "GCET102": "Física Geral e Experimental III",
-            "GCET106": "Física Geral e Experimental IV",
-            "GCET061": "Geometria Analítica",
-            "GCET065": "Álgebra Linear I",
-            "GCET175": "Álgebra Linear II",
-            "GCET172": "Álgebra I",
-            "GCET178": "Álgebra II",
-            "GCET173": "Análise I",
-            "GCET174": "Técnicas de Demonstração",
-            "GCET150": "Processamento de Dados I",
-            "GCET151": "Processamento de Dados II",
-            "GCET059": "Cálculo Numérico",
-            "GCET060": "Métodos Estatísticos",
-            "GCET066": "Química Geral",
-            "GCET510": "Construção de Números",
-            "GCET511": "Introdução às Curvas Planas",
-            "GCET176": "Geometria Plana e Espacial",
-            "GCET177": "Geometria Diferencial",
-            "GCET179": "Funções de Variável Complexa",
-            "GCET180": "Topologia Geral",
-            "GCET189": "Cálculo Avançado",
-            "GCET660": "Teoria da Medida e Integração",
-            "GCET661": "Equações Diferenciais Parciais",
-            "GCET663": "Probabilidade",
-            "GCET161": "Trabalho de Conclusão de Curso I (TCC)",
-            "GCET677": "TCC (BMAT)",
-            "GCET678": "Análise Numérica",
-            "GCCA235": "Fundamentos da Filosofia",
-            "GCCA283": "Metodologia da Pesquisa Científica",
-            "GCCA310": "Ética e Sustentabilidade",
-            "GCET815": "Trabalho de Conclusão de Curso (TCC antigo)",
-            "GCET821": "Física Geral e Experimental I - Teórica",
-            "GCET822": "Física Geral e Experimental II - Teórica",
-            "GCET823": "Física Geral e Experimental III - Teórica",
-            "GCET825": "Física Geral e Experimental I - Prática",
-            "GCET826": "Física Geral e Experimental II - Prática",
-            "GCET827": "Física Geral e Experimental III - Prática",
-            "GCET824": "Física IV",
-            "GCET828": "Física Experimental IV",
-            "GCET200": "Tópicos Especiais em Matemática I",
-            "GCET673": "Teoria dos Números",
-            "GCET675": "Tópicos de Análise",
-            "GCET1040": "Termodinâmica",
-            "GCET1041": "Eletromagnetismo I",
-            "GCET1064": "Desenho Técnico e Expressão Gráfica I",
-            "GCET1065": "Princípios de Orientação a Objetos",
-            "GCET1008": "Estruturas de Dados",
-            "GCET1009": "Sistemas Digitais I",
-            "GCET1010": "Engenharia de Software I",
-            "GCET1012": "Arquitetura de Computadores I",
-            "GCET1013": "Princípios de Eletrônica Analógica",
-            "GCET1014": "Circuitos Elétricos I",
-            "GCET1015": "Laboratório de Circuitos Elétricos I",
-            "GCET1016": "Banco de Dados",
-            "GCET1018": "Sistemas Embarcados",
-            "GCET1025": "Eletrônica Analógica I",
-            "GCET1026": "Laboratório de Eletrônica Analógica I",
-            "GCET1027": "Sinais e Sistemas",
-            "GCET1028": "Conversão de Energia Elétrica",
-            "GCET1029": "Sistemas Microcontrolados",
-            "GCET1030": "Eletrônica Analógica II",
-            "GCET1031": "Laboratório de Eletrônica Analógica II",
-            "GCET1023": "Circuitos Elétricos Polifásicos",
-            "GCET999": "Mecânica dos Fluidos",
-            "GCET1021": "Estática dos Sólidos",
-            "GCET1034": "Resistência dos Materiais",
-            "GCET1036": "Eletricidade",
-            "GCET1037": "Dinâmica dos Sólidos",
-            "GCET1066": "Ciência e Tecnologia dos Materiais",
-            "GCET1038": "Materiais de Construção Mecânica",
-            "GCET1039": "Transferência de Calor e Massa",
-            "GCET1067": "Comportamento Mecânico dos Materiais",
-            "GCET1003": "Geologia e Pedologia",
-            "GCET1004": "Topografia e Geodésia",
-            "GCET1001": "Desenho Arquitetônico"
-        };
-
-        const OPTATIVAS_INTERNAS_BMAT = {
-            "GCET152": true,
-            "GCET153": true,
-            "GCET155": true,
-            "GCET184": true,
-            "GCET194": true,
-            "GCET200": true,
-            "GCET201": true,
-            "GCET218": true,
-            "GCET508": true,
-            "GCET665": true,
-            "GCET666": true,
-            "GCET667": true,
-            "GCET668": true,
-            "GCET669": true,
-            "GCET670": true,
-            "GCET671": true,
-            "GCET672": true,
-            "GCET673": true,
-            "GCET674": true,
-            "GCET675": true,
-            "GCET676": true,
-            "GCETIMC": true,
-            "GCETMD": true,
-            "GCF247": true
-        };
-
-        const CURRICULO_BMAT = [{
-            nome: "1º Semestre",
-            cls: "s1",
-            disciplinas: [
-                { codigo: "GCET146", horas: "85h" },
-                { codigo: "GCET095", horas: "85h" },
-                { codigo: "GCET061", horas: "68h" },
-                { codigo: "GCET150", horas: "68h" },
-                { codigo: "GCET066", horas: "68h" },
-                { codigo: "GCCA283", horas: "68h" }
-            ]
-        }, {
-            nome: "2º Semestre",
-            cls: "s2",
-            disciplinas: [
-                { codigo: "GCET147", horas: "85h" },
-                { codigo: "GCET099", horas: "85h" },
-                { codigo: "GCET065", horas: "68h" },
-                { codigo: "GCET151", horas: "68h" },
-                { codigo: "GCCA235", horas: "68h" },
-                { codigo: "GCCA310", horas: "34h" }
-            ]
-        }, {
-            nome: "3º Semestre",
-            cls: "s3",
-            disciplinas: [
-                { codigo: "GCET148", horas: "85h" },
-                { codigo: "GCET102", horas: "85h" },
-                { codigo: "GCET060", horas: "68h" },
-                { codigo: "GCET059", horas: "68h" },
-                { codigo: "GCET174", horas: "68h" }
-            ]
-        }, {
-            nome: "4º Semestre",
-            cls: "s4",
-            disciplinas: [
-                { codigo: "GCET149", horas: "85h" },
-                { codigo: "GCET106", horas: "85h" },
-                { codigo: "GCET172", horas: "85h" },
-                { codigo: "GCET175", horas: "68h" },
-                { codigo: "GCET510", horas: "68h" }
-            ]
-        }, {
-            nome: "5º Semestre",
-            cls: "s5",
-            disciplinas: [
-                { codigo: "GCET173", horas: "85h" },
-                { codigo: "GCET176", horas: "68h" },
-                { codigo: "GCET178", horas: "68h" },
-                { codigo: "GCET511", horas: "68h" },
-                { codigo: "GCET663", horas: "68h" }
-            ]
-        }, {
-            nome: "6º Semestre",
-            cls: "s6",
-            disciplinas: [
-                { codigo: "GCET161", horas: "51h" },
-                { codigo: "GCET177", horas: "68h" },
-                { codigo: "GCET179", horas: "68h" },
-                { codigo: "GCET180", horas: "85h" },
-                { codigo: "OPT1", horas: "68h", isOptativa: true }
-            ]
-        }, {
-            nome: "7º Semestre",
-            cls: "s7",
-            disciplinas: [
-                { codigo: "GCET189", horas: "68h" },
-                { codigo: "GCET660", horas: "68h" },
-                { codigo: "GCET661", horas: "68h" },
-                { codigo: "GCET678", horas: "68h" },
-                { codigo: "OPT2", horas: "68h", isOptativa: true }
-            ]
-        }, {
-            nome: "8º Semestre",
-            cls: "s8",
-            disciplinas: [
-                { codigo: "GCET677", horas: "17h" },
-                { codigo: "OPT3", horas: "68h", isOptativa: true },
-                { codigo: "OPT4", horas: "68h", isOptativa: true },
-                { codigo: "OPT5", horas: "68h", isOptativa: true }
-            ]
-        }];
-
-        // ============================================================
-        // DADOS DO CURRÍCULO BCET (PPC 2025)
-        // ============================================================
-
-        const PREREQUISITOS_BCET = {
-            "GCCA1358": [],
-            "GCET985": [],
-            "GCET986": [],
-            "GCET987": [],
-            "GCET988": [],
-            "GCET989": ["GCET988"],
-            "GCET990": [],
-            "GCET060": ["GCET987"],
-            "GCET991": ["GCET986"],
-            "GCET992": ["GCET987"],
-            "GCET821": ["GCET987"],
-            "GCET825": [],
-            "GCET995": [],
-            "GCET1044": ["GCET991"],
-            "GCCA283": [],
-            "GCET993": ["GCET992"],
-            "GCET822": ["GCET821"],
-            "GCET826": ["GCET825"],
-            "GCET996": [],
-            "GCET1045": [],
-            "GCET1046": ["GCET992"],
-            "GCET994": ["GCET991", "GCET992"],
-            "GCET823": ["GCET822"],
-            "GCET827": ["GCET826"],
-            "GCET997": [],
-            "GCET1047": ["GCET1045"],
-            "GCET1048": ["GCET1045"],
-            "GCET1049": ["GCET993"],
-            "GCET1050": [],
-            "GCET998": [],
-            "GCET1051": ["GCET060"],
-            "GCET1052": ["GCET1048"],
-            "GCET1053": ["GCET1049"],
-            "GCET1054": ["GCET992"],
-            "GCET1055": ["GCET993"],
-            "GCET1056": ["GCET1050"],
-            "GCET1057": ["GCET1050", "GCET1044"],
-            "GCET1058": ["GCET987", "GCET1050"],
-            "GCET1059": ["GCET987"],
-            "GCET1060": ["GCET991"],
-            "GCET1061": [],
-            "GCET1062": [],
-            "GCET1063": [],
-            "GCF247": []
-        };
-
-        const NOMES_DISCIPLINAS_BCET = {
-            "GCCA1358": "Tecnologia, Sociedade e Ambiente",
-            "GCET985": "Algorítmos e Programação de Computadores",
-            "GCET986": "Geometria Analítica",
-            "GCET987": "Cálculo I",
-            "GCET988": "Química Geral Teórica",
-            "GCET989": "Química Geral Prática",
-            "GCET990": "Diversidade e Relações Étnico-raciais (EAD)",
-            "GCET060": "Métodos Estatísticos",
-            "GCET991": "Álgebra Linear I",
-            "GCET992": "Cálculo II",
-            "GCET821": "Física I",
-            "GCET825": "Física Experimental I",
-            "GCET995": "ACE I",
-            "GCET1044": "Álgebra Linear II",
-            "GCCA283": "Metodologia da Pesquisa",
-            "GCET993": "Cálculo III",
-            "GCET822": "Física II",
-            "GCET826": "Física Experimental II",
-            "GCET996": "ACE II",
-            "GCET1045": "Teoria dos Números",
-            "GCET1046": "Cálculo IV",
-            "GCET994": "Cálculo Numérico",
-            "GCET823": "Física III",
-            "GCET827": "Física Experimental III",
-            "GCET997": "ACE III",
-            "GCET1047": "Análise Combinatória",
-            "GCET1048": "Grupos e Anéis I",
-            "GCET1049": "Análise na Reta I",
-            "GCET1050": "Geometria Plana",
-            "GCET998": "ACE IV",
-            "GCET1051": "Probabilidade",
-            "GCET1052": "Grupos e Anéis II",
-            "GCET1053": "Análise na Reta II",
-            "GCET1054": "Funções de Uma Variável Complexa I",
-            "GCET1055": "Biomatemática",
-            "GCET1056": "Geometria Espacial",
-            "GCET1057": "Geometria Não Euclidiana",
-            "GCET1058": "História da Matemática",
-            "GCET1059": "Matemática Financeira",
-            "GCET1060": "Programação Linear",
-            "GCET1061": "Tópicos Especiais de Matemática I",
-            "GCET1062": "Tópicos Especiais de Matemática II",
-            "GCET1063": "Fundamentos de Lógica e Teoria dos Conjuntos",
-            "GCF247": "Libras"
-        };
-
-        const CURRICULO_BCET = [{
-            nome: "1º Semestre",
-            cls: "s1",
-            disciplinas: [
-                { codigo: "GCCA1358", horas: "34h" },
-                { codigo: "GCET985", horas: "68h" },
-                { codigo: "GCET986", horas: "68h" },
-                { codigo: "GCET987", horas: "102h" },
-                { codigo: "GCET988", horas: "34h" },
-                { codigo: "GCET989", horas: "34h" }
-            ]
-        }, {
-            nome: "2º Semestre",
-            cls: "s2",
-            disciplinas: [
-                { codigo: "GCET990", horas: "68h" },
-                { codigo: "GCET060", horas: "68h" },
-                { codigo: "GCET991", horas: "68h" },
-                { codigo: "GCET992", horas: "102h" },
-                { codigo: "GCET821", horas: "68h" },
-                { codigo: "GCET825", horas: "34h" }
-            ]
-        }, {
-            nome: "3º Semestre",
-            cls: "s3",
-            disciplinas: [
-                { codigo: "GCET995", horas: "68h" },
-                { codigo: "GCET1044", horas: "68h" },
-                { codigo: "GCCA283", horas: "68h" },
-                { codigo: "GCET993", horas: "102h" },
-                { codigo: "GCET822", horas: "68h" },
-                { codigo: "GCET826", horas: "34h" }
-            ]
-        }, {
-            nome: "4º Semestre",
-            cls: "s4",
-            disciplinas: [
-                { codigo: "GCET996", horas: "68h" },
-                { codigo: "GCET1045", horas: "68h" },
-                { codigo: "GCET1046", horas: "68h" },
-                { codigo: "GCET994", horas: "68h" },
-                { codigo: "GCET823", horas: "68h" },
-                { codigo: "GCET827", horas: "34h" }
-            ]
-        }, {
-            nome: "5º Semestre",
-            cls: "s5",
-            disciplinas: [
-                { codigo: "GCET997", horas: "68h" },
-                { codigo: "GCET1047", horas: "68h" },
-                { codigo: "GCET1048", horas: "68h" },
-                { codigo: "GCET1049", horas: "68h" },
-                { codigo: "GCET1050", horas: "68h" },
-                { codigo: "OPT_BCET_1", horas: "68h", isOptativa: true }
-            ]
-        }, {
-            nome: "6º Semestre",
-            cls: "s6",
-            disciplinas: [
-                { codigo: "GCET998", horas: "68h" },
-                { codigo: "GCET1051", horas: "68h" },
-                { codigo: "GCET1052", horas: "68h" },
-                { codigo: "GCET1053", horas: "68h" },
-                { codigo: "GCET1054", horas: "68h" },
-                { codigo: "OPT_BCET_2", horas: "68h", isOptativa: true }
-            ]
-        }];
-
-        // ============================================================
-        // FUNÇÕES AUXILIARES
-        // ============================================================
-
-        function getCurriculo() {
-            return cursoAtivo === 'bmat' ? CURRICULO_BMAT : CURRICULO_BCET;
-        }
-
-        function getPrerequisitosInternos() {
-            return cursoAtivo === 'bmat' ? PREREQUISITOS_INTERNOS_BMAT : PREREQUISITOS_BCET;
-        }
-
-        function getNomesDisciplinas() {
-            return cursoAtivo === 'bmat' ? NOMES_DISCIPLINAS_BMAT : NOMES_DISCIPLINAS_BCET;
-        }
-
-        function getOptativasInternas() {
-            return cursoAtivo === 'bmat' ? OPTATIVAS_INTERNAS_BMAT : {};
-        }
-
-        function getOptativasDisponiveis() {
-            return cursoAtivo === 'bmat' ? OPTATIVAS_BMAT_OUTRAS : OPTATIVAS_BCET;
-        }
-
-        function getMapeamentoCodigos() {
-            return cursoAtivo === 'bmat' ? MAPEAMENTO_CODIGOS_BMAT : {};
-        }
-
-        function getCodigoInterno(codigoHistorico) {
-            const mapeamento = getMapeamentoCodigos();
-            return mapeamento[codigoHistorico] || codigoHistorico;
-        }
-
-        function getNomeDisciplina(codigoHistorico) {
-            const nomes = getNomesDisciplinas();
-            return nomes[codigoHistorico] || codigoHistorico;
-        }
-
-        function getPreRequisitos(codigoHistorico) {
-            const prereqs = getPrerequisitosInternos();
-            return prereqs[codigoHistorico] || [];
-        }
-
-        // ============================================================
-        // ===== BUG #1 CORRIGIDO: isOptativa =====
-        // ============================================================
-        function isOptativa(codigoHistorico) {
-            if (!codigoHistorico) return false;
-
-            let codigoBase = normalizarCodigo(codigoHistorico);
-
-            if (cursoAtivo === 'bmat') {
-                const optativas = getOptativasInternas();
-                if (optativas[codigoBase]) return true;
-                if (alunoAtivoId && alunos[alunoAtivoId]) {
-                    const aluno = alunos[alunoAtivoId];
-                    for (const slot in aluno.optativas) {
-                        if (aluno.optativas[slot] === codigoBase) return true;
-                    }
+            // === EQUIVALÊNCIAS OFICIAIS (PPC p. 211-214) ===
+            equivalencias: {
+                simples: {
+                    'GCET146': 'GCET987', 'GCET147': 'GCET992', 'GCET148': 'GCET993',
+                    'GCET149': 'GCET1046', 'GCET061': 'GCET986', 'GCET065': 'GCET991',
+                    'GCET175': 'GCET1044', 'GCET172': 'GCET1048', 'GCET178': 'GCET1052',
+                    'GCET173': 'GCET1049', 'GCET179': 'GCET1054', 'GCET663': 'GCET1051',
+                    'GCET667': 'GCET1058', 'GCET670': 'GCET1059', 'GCET666': 'GCET1057',
+                    'GCET174': 'GCET1063', 'GCET200': 'GCET1061', 'GCET201': 'GCET1062',
+                    'GCET673': 'GCET1045', 'GCET059': 'GCET994', 'GCET150': 'GCET985',
+                    'GCET218': 'GCET1064', 'GCET815': 'GCET161', 'GCET168': 'GCET1040',
+                    'GCET169': 'GCET1041', 'GCET236': 'GCET1065', 'GCET702': 'GCET1008',
+                    'GCET701': 'GCET1009', 'GCET231': 'GCET1009', 'GCET502': 'GCET1010',
+                    'GCET235': 'GCET1012', 'GCET515': 'GCET1013', 'GCET226.T': 'GCET1014',
+                    'GCET226.P': 'GCET1015', 'GCET514': 'GCET1016', 'GCET528': 'GCET1018',
+                    'GCET509': 'GCET1027', 'GCET232': 'GCET1028', 'GCET527': 'GCET1029',
+                    'GCET230': 'GCET1023', 'GCET103': 'GCET999', 'GCET100': 'GCET1021',
+                    'GCET104': 'GCET1034', 'GCET028': 'GCET1036', 'GCET166': 'GCET1037',
+                    'GCET241': 'GCET1066', 'GCET115': 'GCET1038', 'GCET171': 'GCET1039',
+                    'GCET243': 'GCET1067', 'GCET057': 'GCET1003', 'GCET105': 'GCET1004',
+                    'GCET217': 'GCET1004', 'GCET285': 'GCET1001'
+                },
+                duplas: {
+                    'GCET095': ['GCET821', 'GCET825'],
+                    'GCET099': ['GCET822', 'GCET826'],
+                    'GCET102': ['GCET823', 'GCET827'],
+                    'GCET106': ['GCET824', 'GCET828'],
+                    'GCET066': ['GCET988', 'GCET989'],
+                    'GCET176': ['GCET1050', 'GCET1056'],
+                    'GCET717': ['GCET1025', 'GCET1026'],
+                    'GCET729': ['GCET1030', 'GCET1031']
                 }
-                return false;
-            }
+            },
 
-            if (cursoAtivo === 'bcet') {
-                for (const opt of OPTATIVAS_BCET) {
-                    if (opt.codigo === codigoBase) return true;
-                }
-                if (codigoBase === 'OPT_BCET_1' || codigoBase === 'OPT_BCET_2') return true;
-                return false;
-            }
+            // === OPTATIVAS DO BMAT ===
+            optativasBMAT: {
+                opt1: [
+                    { codigo: 'GCET152', nome: 'Cálculo Numérico II', pre: 'GCET059' },
+                    { codigo: 'GCET153', nome: 'Equações Diferenciais', pre: 'Nenhum' },
+                    { codigo: 'GCET155', nome: 'Álgebra III', pre: 'GCET178' },
+                    { codigo: 'GCET184', nome: 'Métodos Matemáticos', pre: 'Nenhum' },
+                    { codigo: 'GCET194', nome: 'Funções Analíticas', pre: 'GCET147' },
+                    { codigo: 'GCET200', nome: 'Tópicos Especiais em Matemática I', pre: 'Nenhum' },
+                    { codigo: 'GCET201', nome: 'Tópicos Especiais em Matemática II', pre: 'Nenhum' },
+                    { codigo: 'GCET218', nome: 'Desenho Técnico', pre: 'Nenhum' },
+                    { codigo: 'GCET508', nome: 'Matemática Discreta', pre: 'Nenhum' }
+                ],
+                outras: [
+                    { codigo: 'GCET152', nome: 'Cálculo Numérico II', pre: 'GCET059' },
+                    { codigo: 'GCET155', nome: 'Álgebra III', pre: 'GCET178' },
+                    { codigo: 'GCET194', nome: 'Funções Analíticas', pre: 'GCET147' },
+                    { codigo: 'GCET200', nome: 'Tópicos Especiais em Matemática I', pre: 'Nenhum' },
+                    { codigo: 'GCET201', nome: 'Tópicos Especiais em Matemática II', pre: 'Nenhum' },
+                    { codigo: 'GCET218', nome: 'Desenho Técnico I', pre: 'Nenhum' },
+                    { codigo: 'GCET665', nome: 'Análise Funcional', pre: 'GCET175, GCET180' },
+                    { codigo: 'GCET666', nome: 'Geometria Não Euclidiana', pre: 'GCET176' },
+                    { codigo: 'GCET667', nome: 'História da Matemática', pre: 'GCET174' },
+                    { codigo: 'GCET668', nome: 'Introdução às Curvas Algébricas', pre: 'GCET178' },
+                    { codigo: 'GCET669', nome: 'Introdução aos Sistemas Dinâmicos', pre: 'GCET148, GCET179, GCET189' },
+                    { codigo: 'GCET670', nome: 'Matemática Financeira', pre: 'Nenhum' },
+                    { codigo: 'GCET671', nome: 'Modelagem e Simulação Matemática', pre: 'GCET152' },
+                    { codigo: 'GCET672', nome: 'Otimização de Sistemas', pre: 'GCET152' },
+                    { codigo: 'GCET673', nome: 'Teoria dos Números', pre: 'GCET178' },
+                    { codigo: 'GCET674', nome: 'Tópicos de Álgebra', pre: 'GCET178' },
+                    { codigo: 'GCET675', nome: 'Tópicos de Análise', pre: 'GCET173' },
+                    { codigo: 'GCET676', nome: 'Tópicos de Geometria', pre: 'GCET177' },
+                    { codigo: 'GCETIMC', nome: 'Introdução à Matemática Computacional', pre: 'GCET174' },
+                    { codigo: 'GCETMD', nome: 'Matemática Discreta', pre: 'GCET174' },
+                    { codigo: 'GCF247', nome: 'Língua Brasileira de Sinais - LIBRAS', pre: 'Nenhum' }
+                ]
+            },
 
+            // === OPTATIVAS DO BCET ===
+            optativasBCET: [
+                { codigo: 'GCET1055', nome: 'Biomatemática', pre: 'GCET993' },
+                { codigo: 'GCET1056', nome: 'Geometria Espacial', pre: 'GCET1050' },
+                { codigo: 'GCET1057', nome: 'Geometria Não Euclidiana', pre: 'GCET1050, GCET1044' },
+                { codigo: 'GCET1058', nome: 'História da Matemática', pre: 'GCET987, GCET1050' },
+                { codigo: 'GCET1059', nome: 'Matemática Financeira', pre: 'GCET987' },
+                { codigo: 'GCET1060', nome: 'Programação Linear', pre: 'GCET991' },
+                { codigo: 'GCET1061', nome: 'Tópicos Especiais de Matemática I', pre: 'Nenhum' },
+                { codigo: 'GCET1062', nome: 'Tópicos Especiais de Matemática II', pre: 'Nenhum' },
+                { codigo: 'GCET1063', nome: 'Fundamentos de Lógica e Teoria dos Conjuntos', pre: 'Nenhum' },
+                { codigo: 'GCF247', nome: 'Libras', pre: 'Nenhum' }
+            ],
+
+            // === PRÉ-REQUISITOS DO BMAT ===
+            prerequisitosBMAT: {
+                'GCET146': [], 'GCET095': [], 'GCET061': [], 'GCET150': [], 'GCET066': [],
+                'GCCA283': [], 'GCET147': ['GCET146'], 'GCET099': ['GCET095'], 'GCET065': [],
+                'GCET151': ['GCET150'], 'GCCA235': [], 'GCCA310': [], 'GCET148': ['GCET147'],
+                'GCET102': ['GCET099'], 'GCET060': ['GCET147'], 'GCET059': ['GCET065', 'GCET147', 'GCET151'],
+                'GCET174': ['GCET065'], 'GCET149': ['GCET148'], 'GCET106': ['GCET102'],
+                'GCET172': ['GCET148', 'GCET175'], 'GCET175': ['GCET061'], 'GCET510': [],
+                'GCET173': ['GCET148', 'GCET175'], 'GCET176': ['GCET061'], 'GCET178': ['GCET172'],
+                'GCET511': [], 'GCET663': ['GCET148', 'GCET060'], 'GCET161': ['GCCA283'],
+                'GCET177': ['GCET149', 'GCET178'], 'GCET179': ['GCET147'],
+                'GCET180': ['GCET172', 'GCET173'], 'GCET189': ['GCET173'],
+                'GCET660': ['GCET180'], 'GCET661': ['GCET148'], 'GCET678': [],
+                'GCET677': ['GCCA283'], 'GCET152': ['GCET059'], 'GCET155': ['GCET178'],
+                'GCET194': ['GCET147'], 'GCET200': [], 'GCET201': [], 'GCET218': [],
+                'GCET665': ['GCET175', 'GCET180'], 'GCET666': ['GCET176'],
+                'GCET667': ['GCET174'], 'GCET668': ['GCET178'],
+                'GCET669': ['GCET148', 'GCET179', 'GCET189'], 'GCET670': [],
+                'GCET671': ['GCET152'], 'GCET672': ['GCET152'], 'GCET673': ['GCET178'],
+                'GCET674': ['GCET178'], 'GCET675': ['GCET173'], 'GCET676': ['GCET177'],
+                'GCETIMC': ['GCET174'], 'GCETMD': ['GCET174'], 'GCF247': []
+            },
+
+            // === PRÉ-REQUISITOS DO BCET ===
+            prerequisitosBCET: {
+                'GCCA1358': [], 'GCET985': [], 'GCET986': [], 'GCET987': [], 'GCET988': [],
+                'GCET989': ['GCET988'], 'GCET990': [], 'GCET060': ['GCET987'],
+                'GCET991': ['GCET986'], 'GCET992': ['GCET987'], 'GCET821': ['GCET987'],
+                'GCET825': [], 'GCET995': [], 'GCET1044': ['GCET991'], 'GCCA283': [],
+                'GCET993': ['GCET992'], 'GCET822': ['GCET821'], 'GCET826': ['GCET825'],
+                'GCET996': [], 'GCET1045': [], 'GCET1046': ['GCET992'],
+                'GCET994': ['GCET991', 'GCET992'], 'GCET823': ['GCET822'],
+                'GCET827': ['GCET826'], 'GCET997': [], 'GCET1047': ['GCET1045'],
+                'GCET1048': ['GCET1045'], 'GCET1049': ['GCET993'], 'GCET1050': [],
+                'GCET998': [], 'GCET1051': ['GCET060'], 'GCET1052': ['GCET1048'],
+                'GCET1053': ['GCET1049'], 'GCET1054': ['GCET992'],
+                'GCET1055': ['GCET993'], 'GCET1056': ['GCET1050'],
+                'GCET1057': ['GCET1050', 'GCET1044'], 'GCET1058': ['GCET987', 'GCET1050'],
+                'GCET1059': ['GCET987'], 'GCET1060': ['GCET991'], 'GCET1061': [],
+                'GCET1062': [], 'GCET1063': [], 'GCF247': []
+            },
+
+            // === CURRÍCULO BMAT ===
+            curriculoBMAT: [
+                { nome: '1º Semestre', cls: 's1', disciplinas: [
+                    { codigo: 'GCET146', horas: '85h' }, { codigo: 'GCET095', horas: '85h' },
+                    { codigo: 'GCET061', horas: '68h' }, { codigo: 'GCET150', horas: '68h' },
+                    { codigo: 'GCET066', horas: '68h' }, { codigo: 'GCCA283', horas: '68h' }
+                ]},
+                { nome: '2º Semestre', cls: 's2', disciplinas: [
+                    { codigo: 'GCET147', horas: '85h' }, { codigo: 'GCET099', horas: '85h' },
+                    { codigo: 'GCET065', horas: '68h' }, { codigo: 'GCET151', horas: '68h' },
+                    { codigo: 'GCCA235', horas: '68h' }, { codigo: 'GCCA310', horas: '34h' }
+                ]},
+                { nome: '3º Semestre', cls: 's3', disciplinas: [
+                    { codigo: 'GCET148', horas: '85h' }, { codigo: 'GCET102', horas: '85h' },
+                    { codigo: 'GCET060', horas: '68h' }, { codigo: 'GCET059', horas: '68h' },
+                    { codigo: 'GCET174', horas: '68h' }
+                ]},
+                { nome: '4º Semestre', cls: 's4', disciplinas: [
+                    { codigo: 'GCET149', horas: '85h' }, { codigo: 'GCET106', horas: '85h' },
+                    { codigo: 'GCET172', horas: '85h' }, { codigo: 'GCET175', horas: '68h' },
+                    { codigo: 'GCET510', horas: '68h' }
+                ]},
+                { nome: '5º Semestre', cls: 's5', disciplinas: [
+                    { codigo: 'GCET173', horas: '85h' }, { codigo: 'GCET176', horas: '68h' },
+                    { codigo: 'GCET178', horas: '68h' }, { codigo: 'GCET511', horas: '68h' },
+                    { codigo: 'GCET663', horas: '68h' }
+                ]},
+                { nome: '6º Semestre', cls: 's6', disciplinas: [
+                    { codigo: 'GCET161', horas: '51h' }, { codigo: 'GCET177', horas: '68h' },
+                    { codigo: 'GCET179', horas: '68h' }, { codigo: 'GCET180', horas: '85h' },
+                    { codigo: 'OPT1', horas: '68h', isOptativa: true }
+                ]},
+                { nome: '7º Semestre', cls: 's7', disciplinas: [
+                    { codigo: 'GCET189', horas: '68h' }, { codigo: 'GCET660', horas: '68h' },
+                    { codigo: 'GCET661', horas: '68h' }, { codigo: 'GCET678', horas: '68h' },
+                    { codigo: 'OPT2', horas: '68h', isOptativa: true }
+                ]},
+                { nome: '8º Semestre', cls: 's8', disciplinas: [
+                    { codigo: 'GCET677', horas: '17h' },
+                    { codigo: 'OPT3', horas: '68h', isOptativa: true },
+                    { codigo: 'OPT4', horas: '68h', isOptativa: true },
+                    { codigo: 'OPT5', horas: '68h', isOptativa: true }
+                ]}
+            ],
+
+            // === CURRÍCULO BCET ===
+            curriculoBCET: [
+                { nome: '1º Semestre', cls: 's1', disciplinas: [
+                    { codigo: 'GCCA1358', horas: '34h' }, { codigo: 'GCET985', horas: '68h' },
+                    { codigo: 'GCET986', horas: '68h' }, { codigo: 'GCET987', horas: '102h' },
+                    { codigo: 'GCET988', horas: '34h' }, { codigo: 'GCET989', horas: '34h' }
+                ]},
+                { nome: '2º Semestre', cls: 's2', disciplinas: [
+                    { codigo: 'GCET990', horas: '68h' }, { codigo: 'GCET060', horas: '68h' },
+                    { codigo: 'GCET991', horas: '68h' }, { codigo: 'GCET992', horas: '102h' },
+                    { codigo: 'GCET821', horas: '68h' }, { codigo: 'GCET825', horas: '34h' }
+                ]},
+                { nome: '3º Semestre', cls: 's3', disciplinas: [
+                    { codigo: 'GCET995', horas: '68h' }, { codigo: 'GCET1044', horas: '68h' },
+                    { codigo: 'GCCA283', horas: '68h' }, { codigo: 'GCET993', horas: '102h' },
+                    { codigo: 'GCET822', horas: '68h' }, { codigo: 'GCET826', horas: '34h' }
+                ]},
+                { nome: '4º Semestre', cls: 's4', disciplinas: [
+                    { codigo: 'GCET996', horas: '68h' }, { codigo: 'GCET1045', horas: '68h' },
+                    { codigo: 'GCET1046', horas: '68h' }, { codigo: 'GCET994', horas: '68h' },
+                    { codigo: 'GCET823', horas: '68h' }, { codigo: 'GCET827', horas: '34h' }
+                ]},
+                { nome: '5º Semestre', cls: 's5', disciplinas: [
+                    { codigo: 'GCET997', horas: '68h' }, { codigo: 'GCET1047', horas: '68h' },
+                    { codigo: 'GCET1048', horas: '68h' }, { codigo: 'GCET1049', horas: '68h' },
+                    { codigo: 'GCET1050', horas: '68h' },
+                    { codigo: 'OPT_BCET_1', horas: '68h', isOptativa: true }
+                ]},
+                { nome: '6º Semestre', cls: 's6', disciplinas: [
+                    { codigo: 'GCET998', horas: '68h' }, { codigo: 'GCET1051', horas: '68h' },
+                    { codigo: 'GCET1052', horas: '68h' }, { codigo: 'GCET1053', horas: '68h' },
+                    { codigo: 'GCET1054', horas: '68h' },
+                    { codigo: 'OPT_BCET_2', horas: '68h', isOptativa: true }
+                ]}
+            ],
+
+            // === NOMES DAS DISCIPLINAS (BMAT + BCET) ===
+            nomesDisciplinas: {
+                'GCET146': 'Cálculo Diferencial e Integral I',
+                'GCET147': 'Cálculo Diferencial e Integral II',
+                'GCET148': 'Cálculo Diferencial e Integral III',
+                'GCET149': 'Cálculo Diferencial e Integral IV',
+                'GCET095': 'Física Geral e Experimental I',
+                'GCET099': 'Física Geral e Experimental II',
+                'GCET102': 'Física Geral e Experimental III',
+                'GCET106': 'Física Geral e Experimental IV',
+                'GCET061': 'Geometria Analítica',
+                'GCET065': 'Álgebra Linear I',
+                'GCET175': 'Álgebra Linear II',
+                'GCET172': 'Álgebra I',
+                'GCET178': 'Álgebra II',
+                'GCET173': 'Análise I',
+                'GCET174': 'Técnicas de Demonstração',
+                'GCET150': 'Processamento de Dados I',
+                'GCET151': 'Processamento de Dados II',
+                'GCET059': 'Cálculo Numérico',
+                'GCET060': 'Métodos Estatísticos',
+                'GCET066': 'Química Geral',
+                'GCET510': 'Construção de Números',
+                'GCET511': 'Introdução às Curvas Planas',
+                'GCET176': 'Geometria Plana e Espacial',
+                'GCET177': 'Geometria Diferencial',
+                'GCET179': 'Funções de Variável Complexa',
+                'GCET180': 'Topologia Geral',
+                'GCET189': 'Cálculo Avançado',
+                'GCET660': 'Teoria da Medida e Integração',
+                'GCET661': 'Equações Diferenciais Parciais',
+                'GCET663': 'Probabilidade',
+                'GCET161': 'Trabalho de Conclusão de Curso I (TCC)',
+                'GCET677': 'TCC (BMAT)',
+                'GCET678': 'Análise Numérica',
+                'GCCA235': 'Fundamentos da Filosofia',
+                'GCCA283': 'Metodologia da Pesquisa Científica',
+                'GCCA310': 'Ética e Sustentabilidade',
+                'GCET815': 'Trabalho de Conclusão de Curso (TCC antigo)',
+                'GCET821': 'Física I',
+                'GCET822': 'Física II',
+                'GCET823': 'Física III',
+                'GCET825': 'Física Experimental I',
+                'GCET826': 'Física Experimental II',
+                'GCET827': 'Física Experimental III',
+                'GCET824': 'Física IV',
+                'GCET828': 'Física Experimental IV',
+                'GCET200': 'Tópicos Especiais em Matemática I',
+                'GCET673': 'Teoria dos Números',
+                'GCET675': 'Tópicos de Análise',
+                'GCET1040': 'Termodinâmica',
+                'GCET1041': 'Eletromagnetismo I',
+                'GCET1064': 'Desenho Técnico e Expressão Gráfica I',
+                'GCET1065': 'Princípios de Orientação a Objetos',
+                'GCET1008': 'Estruturas de Dados',
+                'GCET1009': 'Sistemas Digitais I',
+                'GCET1010': 'Engenharia de Software I',
+                'GCET1012': 'Arquitetura de Computadores I',
+                'GCET1013': 'Princípios de Eletrônica Analógica',
+                'GCET1014': 'Circuitos Elétricos I',
+                'GCET1015': 'Laboratório de Circuitos Elétricos I',
+                'GCET1016': 'Banco de Dados',
+                'GCET1018': 'Sistemas Embarcados',
+                'GCET1025': 'Eletrônica Analógica I',
+                'GCET1026': 'Laboratório de Eletrônica Analógica I',
+                'GCET1027': 'Sinais e Sistemas',
+                'GCET1028': 'Conversão de Energia Elétrica',
+                'GCET1029': 'Sistemas Microcontrolados',
+                'GCET1030': 'Eletrônica Analógica II',
+                'GCET1031': 'Laboratório de Eletrônica Analógica II',
+                'GCET1023': 'Circuitos Elétricos Polifásicos',
+                'GCET999': 'Mecânica dos Fluidos',
+                'GCET1021': 'Estática dos Sólidos',
+                'GCET1034': 'Resistência dos Materiais',
+                'GCET1036': 'Eletricidade',
+                'GCET1037': 'Dinâmica dos Sólidos',
+                'GCET1066': 'Ciência e Tecnologia dos Materiais',
+                'GCET1038': 'Materiais de Construção Mecânica',
+                'GCET1039': 'Transferência de Calor e Massa',
+                'GCET1067': 'Comportamento Mecânico dos Materiais',
+                'GCET1003': 'Geologia e Pedologia',
+                'GCET1004': 'Topografia e Geodésia',
+                'GCET1001': 'Desenho Arquitetônico',
+                'GCET985': 'Algorítmos e Programação de Computadores',
+                'GCET986': 'Geometria Analítica',
+                'GCET987': 'Cálculo I',
+                'GCET988': 'Química Geral Teórica',
+                'GCET989': 'Química Geral Prática',
+                'GCET990': 'Diversidade e Relações Étnico-raciais (EAD)',
+                'GCET1044': 'Álgebra Linear II',
+                'GCET1045': 'Teoria dos Números',
+                'GCET1046': 'Cálculo IV',
+                'GCET994': 'Cálculo Numérico',
+                'GCET997': 'ACE III',
+                'GCET1047': 'Análise Combinatória',
+                'GCET1048': 'Grupos e Anéis I',
+                'GCET1049': 'Análise na Reta I',
+                'GCET1050': 'Geometria Plana',
+                'GCET998': 'ACE IV',
+                'GCET1051': 'Probabilidade',
+                'GCET1052': 'Grupos e Anéis II',
+                'GCET1053': 'Análise na Reta II',
+                'GCET1054': 'Funções de Uma Variável Complexa I',
+                'GCET1055': 'Biomatemática',
+                'GCET1056': 'Geometria Espacial',
+                'GCET1057': 'Geometria Não Euclidiana',
+                'GCET1058': 'História da Matemática',
+                'GCET1059': 'Matemática Financeira',
+                'GCET1060': 'Programação Linear',
+                'GCET1061': 'Tópicos Especiais de Matemática I',
+                'GCET1062': 'Tópicos Especiais de Matemática II',
+                'GCET1063': 'Fundamentos de Lógica e Teoria dos Conjuntos',
+                'GCCA1358': 'Tecnologia, Sociedade e Ambiente',
+                'GCET995': 'ACE I',
+                'GCET996': 'ACE II',
+                'GCF247': 'Libras'
+            }
+        };
+
+        // ============================================================
+        // 2. LÓGICA DE NEGÓCIO (FUNÇÕES PURAS)
+        // ============================================================
+
+        // 2.1 Normalização de código
+        function normalizarCodigo(codigo) {
+            if (!codigo) return '';
+            let base = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
+            return CONFIG.codigosObsoletos[base] || base;
+        }
+
+        // 2.2 Verifica se é optativa no curso atual
+        function isOptativa(codigo, curso) {
+            const base = normalizarCodigo(codigo);
+            if (curso === 'bmat') {
+                const todas = [...CONFIG.optativasBMAT.opt1, ...CONFIG.optativasBMAT.outras];
+                return todas.some(o => o.codigo === base);
+            }
+            if (curso === 'bcet') {
+                return CONFIG.optativasBCET.some(o => o.codigo === base);
+            }
             return false;
         }
 
-        // ============================================================
-        // ===== BUG #11 CORRIGIDO: isOptativaGlobal =====
-        // ============================================================
+        // 2.3 Verifica se é optativa em qualquer curso
         function isOptativaGlobal(codigo) {
-            if (!codigo) return false;
-            const codigoBase = normalizarCodigo(codigo);
-
-            // 1. Verifica nas optativas do BMAT
-            if (OPTATIVAS_INTERNAS_BMAT[codigoBase]) return true;
-
-            // 2. Verifica nas optativas do BCET
-            for (const opt of OPTATIVAS_BCET) {
-                if (opt.codigo === codigoBase) return true;
-            }
-
-            // 3. Verifica se tem equivalência para optativa do BCET
-            const equivalencia = OPTATIVAS_BMAT_PARA_BCET[codigoBase];
-            if (equivalencia) {
-                for (const opt of OPTATIVAS_BCET) {
-                    if (opt.codigo === equivalencia) return true;
-                }
-            }
-
-            return false;
+            const base = normalizarCodigo(codigo);
+            const todas = [
+                ...CONFIG.optativasBMAT.opt1,
+                ...CONFIG.optativasBMAT.outras,
+                ...CONFIG.optativasBCET
+            ];
+            return todas.some(o => o.codigo === base);
         }
 
-        // ============================================================
-        // ===== BUG #13 CORRIGIDO: getEquivalenciaOptativa =====
-        // ============================================================
-        function getEquivalenciaOptativa(codigo) {
-            const codigoBase = normalizarCodigo(codigo);
+        // 2.4 Obtém equivalência
+        function getEquivalencia(codigo, direcao) {
+            const base = normalizarCodigo(codigo);
+            const simples = CONFIG.equivalencias.simples;
+            const duplas = CONFIG.equivalencias.duplas;
 
-            // Verifica se é optativa BMAT → optativa BCET
-            if (OPTATIVAS_BMAT_PARA_BCET[codigoBase]) {
-                return {
-                    equivalente: OPTATIVAS_BMAT_PARA_BCET[codigoBase],
-                    tipo: 'optativa_para_optativa'
-                };
+            if (direcao === 'antigo_para_novo') {
+                if (simples[base]) return { tipo: 'simples', codigo: simples[base] };
+                if (duplas[base]) return { tipo: 'dupla', codigos: duplas[base] };
+                return null;
             }
 
-            // Verifica se é optativa BMAT → obrigatória BCET
-            if (OPTATIVAS_BMAT_PARA_OBRIGATORIAS_BCET[codigoBase]) {
-                return {
-                    equivalente: OPTATIVAS_BMAT_PARA_OBRIGATORIAS_BCET[codigoBase],
-                    tipo: 'optativa_para_obrigatoria'
-                };
-            }
-
-            // Verifica se é optativa BCET → optativa BMAT (inverso)
-            for (const [bmat, bcet] of Object.entries(OPTATIVAS_BMAT_PARA_BCET)) {
-                if (bcet === codigoBase) {
-                    return {
-                        equivalente: bmat,
-                        tipo: 'optativa_para_optativa_inverso'
-                    };
+            if (direcao === 'novo_para_antigo') {
+                for (const [antigo, novo] of Object.entries(simples)) {
+                    if (novo === base) return { tipo: 'simples', codigo: antigo };
                 }
+                for (const [antigo, novos] of Object.entries(duplas)) {
+                    if (novos.includes(base)) return { tipo: 'dupla', codigo: antigo };
+                }
+                return null;
             }
 
             return null;
         }
 
-        // ============================================================
-        // FUNÇÃO normalizarCodigo
-        // ============================================================
-        function normalizarCodigo(codigo) {
-            let codigoBase = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
-            if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
-                codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
-            }
-            return codigoBase;
+        // 2.5 Obtém nome da disciplina
+        function getNomeDisciplina(codigo) {
+            return CONFIG.nomesDisciplinas[codigo] || codigo;
         }
 
-        // ============================================================
-        // FUNÇÃO disciplinaExisteNoCurriculo
-        // ============================================================
-        function disciplinaExisteNoCurriculo(codigo) {
-            if (!codigo) return false;
-
-            const codigoBase = normalizarCodigo(codigo);
-
-            const curriculo = getCurriculo();
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (disc.codigo === codigoBase) {
-                        return true;
-                    }
-                }
-            }
-
-            // Verifica se é optativa global
-            if (isOptativaGlobal(codigoBase)) return true;
-
-            // Verifica se tem equivalência
-            const equiv = getEquivalenciaOptativa(codigoBase);
-            if (equiv) return true;
-
-            return false;
+        // 2.6 Obtém pré-requisitos
+        function getPreRequisitos(codigo, curso) {
+            if (curso === 'bmat') return CONFIG.prerequisitosBMAT[codigo] || [];
+            if (curso === 'bcet') return CONFIG.prerequisitosBCET[codigo] || [];
+            return [];
         }
 
-        // ============================================================
-        // FUNÇÃO getCargaHorariaCorreta
-        // ============================================================
-        function getCargaHorariaCorreta(codigo) {
-            const codigoBase = normalizarCodigo(codigo);
-
-            const curriculo = getCurriculo();
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (disc.codigo === codigoBase) {
-                        return disc.horas || '68h';
-                    }
-                }
-            }
-            return '68h';
-        }
-
-        // ============================================================
-        // ===== BUG #4 CORRIGIDO: SELEÇÃO DE CURSO =====
-        // ============================================================
-        function selecionarCurso(curso) {
-            if (!alunoAtivoId || !alunos[alunoAtivoId]) {
-                cursoAtivo = curso;
-                document.getElementById('cursoBMAT').className = curso === 'bmat' ? 'active' : '';
-                document.getElementById('cursoBCET').className = curso === 'bcet' ? 'active' : '';
-                showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT' : 'BCET'} selecionado`, 'info');
-                return;
-            }
-
-            const aluno = alunos[alunoAtivoId];
-
-            if (!aluno.historico_completo) aluno.historico_completo = {};
-
-            for (const codigo in aluno.progresso) {
-                if (!aluno.historico_completo[codigo]) {
-                    aluno.historico_completo[codigo] = {
-                        status: aluno.progresso[codigo],
-                        origem: aluno.curso || cursoAtivo,
-                        data: new Date().toISOString()
-                    };
-                } else {
-                    aluno.historico_completo[codigo].status = aluno.progresso[codigo];
-                }
-            }
-
-            if (!aluno.historico_optativas) aluno.historico_optativas = {};
-            for (const slot in aluno.optativas) {
-                if (!aluno.historico_optativas[slot]) {
-                    aluno.historico_optativas[slot] = {
-                        codigo: aluno.optativas[slot],
-                        origem: aluno.curso || cursoAtivo,
-                        data: new Date().toISOString()
-                    };
-                }
-            }
-
-            cursoAtivo = curso;
-            document.getElementById('cursoBMAT').className = curso === 'bmat' ? 'active' : '';
-            document.getElementById('cursoBCET').className = curso === 'bcet' ? 'active' : '';
-            aluno.curso = curso;
-
-            const curriculo = getCurriculo();
-            const codigosDoCurso = new Set();
-            const optSlotsDoCurso = new Set();
-
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (disc.isOptativa) {
-                        optSlotsDoCurso.add(disc.codigo);
-                    } else {
-                        codigosDoCurso.add(disc.codigo);
-                    }
-                }
-            }
-
-            const novoProgresso = {};
-            const novasOptativas = {};
-
-            for (const codigo of codigosDoCurso) {
-                if (aluno.historico_completo[codigo]) {
-                    novoProgresso[codigo] = aluno.historico_completo[codigo].status;
-                }
-            }
-
-            for (const slot of optSlotsDoCurso) {
-                if (aluno.historico_optativas && aluno.historico_optativas[slot]) {
-                    const optCod = aluno.historico_optativas[slot].codigo;
-                    if (aluno.historico_completo && aluno.historico_completo[optCod]) {
-                        novasOptativas[slot] = optCod;
-                        novoProgresso[optCod] = aluno.historico_completo[optCod].status;
-                    }
-                }
-            }
-
-            aluno.progresso = novoProgresso;
-            aluno.optativas = novasOptativas;
-
-            recalcularEquivalencias(alunoAtivoId);
-            renderFluxograma(alunoAtivoId);
-            renderAlunoList();
-            saveData();
-
-            showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`, 'info');
-        }
-
-        // ============================================================
-        // FUNÇÃO PARA RECALCULAR EQUIVALÊNCIAS
-        // ============================================================
-        function recalcularEquivalencias(alunoId) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return;
-
-            aluno.equiv = {};
-            if (!aluno.progresso) return;
-
-            const disciplinasCursadas = Object.keys(aluno.progresso).filter(
-                cod => aluno.progresso[cod] === 'done'
-            );
-
-            const equivDuplas = {
-                "GCET095": ["GCET821", "GCET825"],
-                "GCET099": ["GCET822", "GCET826"],
-                "GCET102": ["GCET823", "GCET827"],
-                "GCET106": ["GCET824", "GCET828"],
-                "GCET066": ["GCET988", "GCET989"],
-                "GCET176": ["GCET1050", "GCET1056"],
-                "GCET717": ["GCET1025", "GCET1026"],
-                "GCET729": ["GCET1030", "GCET1031"]
+        // 2.7 Processa disciplinas do histórico
+        function processarHistorico(disciplinasPDF, cursoAtual) {
+            const resultado = {
+                disciplinas: {},
+                optativas: [],
+                equivalencias: {}
             };
 
-            const equivSimples = {
-                "GCET146": "GCET987",
-                "GCET147": "GCET992",
-                "GCET148": "GCET993",
-                "GCET149": "GCET1046",
-                "GCET061": "GCET986",
-                "GCET065": "GCET991",
-                "GCET175": "GCET1044",
-                "GCET172": "GCET1048",
-                "GCET178": "GCET1052",
-                "GCET173": "GCET1049",
-                "GCET179": "GCET1054",
-                "GCET663": "GCET1051",
-                "GCET667": "GCET1058",
-                "GCET670": "GCET1059",
-                "GCET666": "GCET1057",
-                "GCET174": "GCET1063",
-                "GCET200": "GCET1061",
-                "GCET201": "GCET1062",
-                "GCET673": "GCET1045",
-                "GCET059": "GCET994",
-                "GCET150": "GCET985",
-                "GCET168": "GCET1040",
-                "GCET169": "GCET1041",
-                "GCET218": "GCET1064",
-                "GCET236": "GCET1065",
-                "GCET702": "GCET1008",
-                "GCET701": "GCET1009",
-                "GCET231": "GCET1009",
-                "GCET502": "GCET1010",
-                "GCET235": "GCET1012",
-                "GCET515": "GCET1013",
-                "GCET226.T": "GCET1014",
-                "GCET226.P": "GCET1015",
-                "GCET514": "GCET1016",
-                "GCET528": "GCET1018",
-                "GCET509": "GCET1027",
-                "GCET232": "GCET1028",
-                "GCET527": "GCET1029",
-                "GCET230": "GCET1023",
-                "GCET103": "GCET999",
-                "GCET100": "GCET1021",
-                "GCET104": "GCET1034",
-                "GCET028": "GCET1036",
-                "GCET166": "GCET1037",
-                "GCET241": "GCET1066",
-                "GCET115": "GCET1038",
-                "GCET171": "GCET1039",
-                "GCET243": "GCET1067",
-                "GCET057": "GCET1003",
-                "GCET105": "GCET1004",
-                "GCET217": "GCET1004",
-                "GCET285": "GCET1001"
-            };
-
-            const equivSimplesInverso = {};
-            for (const [antigo, novo] of Object.entries(equivSimples)) {
-                equivSimplesInverso[novo] = antigo;
+            const agrupado = {};
+            for (const disc of disciplinasPDF) {
+                const base = normalizarCodigo(disc.codigo);
+                if (!agrupado[base]) agrupado[base] = { situacoes: [], semestre: disc.semestre };
+                agrupado[base].situacoes.push(disc.situacao);
             }
 
-            if (cursoAtivo === 'bcet') {
-                for (const [original, substitutas] of Object.entries(equivDuplas)) {
-                    if (disciplinasCursadas.includes(original)) {
-                        for (const sub of substitutas) {
-                            if (!aluno.equiv) aluno.equiv = {};
-                            aluno.equiv[sub] = { via: original };
-                            aluno.progresso[sub] = 'done';
+            for (const [codigo, info] of Object.entries(agrupado)) {
+                const temAprovacao = info.situacoes.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
+                const temMatricula = info.situacoes.some(s => s === 'MATR');
+
+                if (temAprovacao) {
+                    resultado.disciplinas[codigo] = { status: 'done', origem: 'historico' };
+
+                    // Verifica equivalência (antigo → novo)
+                    const equiv = getEquivalencia(codigo, 'antigo_para_novo');
+                    if (equiv) {
+                        if (equiv.tipo === 'simples') {
+                            resultado.disciplinas[equiv.codigo] = { status: 'done', origem: 'equivalencia' };
+                            resultado.equivalencias[equiv.codigo] = { via: codigo };
+                        } else if (equiv.tipo === 'dupla') {
+                            for (const sub of equiv.codigos) {
+                                resultado.disciplinas[sub] = { status: 'done', origem: 'equivalencia' };
+                                resultado.equivalencias[sub] = { via: codigo };
+                            }
                         }
                     }
-                }
-                for (const [original, substituta] of Object.entries(equivSimples)) {
-                    if (disciplinasCursadas.includes(original)) {
-                        if (!aluno.equiv) aluno.equiv = {};
-                        aluno.equiv[substituta] = { via: original };
-                        aluno.progresso[substituta] = 'done';
+
+                    // Verifica se é optativa
+                    if (isOptativa(codigo, cursoAtual) || isOptativaGlobal(codigo)) {
+                        if (!resultado.optativas.includes(codigo)) {
+                            resultado.optativas.push(codigo);
+                        }
                     }
+
+                } else if (temMatricula) {
+                    resultado.disciplinas[codigo] = { status: 'pending', origem: 'historico' };
                 }
             }
 
-            if (cursoAtivo === 'bmat') {
-                for (const [original, substitutas] of Object.entries(equivDuplas)) {
-                    const todasCursadas = substitutas.every(sub => disciplinasCursadas.includes(sub));
-                    if (todasCursadas) {
-                        if (!aluno.equiv) aluno.equiv = {};
-                        aluno.equiv[original] = { via: substitutas.join(' + ') };
-                        aluno.progresso[original] = 'done';
-                    }
-                }
-                for (const [novo, antigo] of Object.entries(equivSimplesInverso)) {
-                    if (disciplinasCursadas.includes(novo)) {
-                        if (!aluno.equiv) aluno.equiv = {};
-                        aluno.equiv[antigo] = { via: novo };
-                        aluno.progresso[antigo] = 'done';
-                    }
-                }
-            }
-
-            if (disciplinasCursadas.includes("GCET815")) {
-                if (!aluno.equiv) aluno.equiv = {};
-                aluno.equiv["GCET161"] = { via: "GCET815" };
-                aluno.progresso["GCET161"] = 'done';
-            }
-            if (disciplinasCursadas.includes("GCET161")) {
-                if (!aluno.equiv) aluno.equiv = {};
-                aluno.equiv["GCET815"] = { via: "GCET161" };
-                aluno.progresso["GCET815"] = 'done';
-            }
-
-            saveData();
+            return resultado;
         }
 
-        // ============================================================
-        // TOGGLE DISCIPLINE
-        // ============================================================
-        function toggleDiscipline(alunoId, codigo) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return;
-            if (!aluno.progresso) aluno.progresso = {};
+        // 2.8 Aloca optativas
+        function alocarOptativas(optativasCursadas, slotsExistentes, slotsDisponiveis) {
+            const resultado = { ...slotsExistentes };
+            const jaAlocadas = new Set(Object.values(slotsExistentes));
+            const disponiveis = optativasCursadas.filter(c => !jaAlocadas.has(c));
 
-            if (!aluno.historico_completo) aluno.historico_completo = {};
+            // Prioridade: GCET200, GCET218, GCET673, GCET675 primeiro
+            const prioridade = { 'GCET200': 1, 'GCET218': 2, 'GCET673': 3, 'GCET675': 4 };
+            disponiveis.sort((a, b) => (prioridade[a] || 99) - (prioridade[b] || 99));
 
-            if (aluno.equiv && aluno.equiv[codigo]) {
-                showToast('⚠️ Disciplina cursada por equivalência', 'info');
-                return;
+            for (let i = 0; i < Math.min(disponiveis.length, slotsDisponiveis.length); i++) {
+                resultado[slotsDisponiveis[i]] = disponiveis[i];
             }
 
-            const optativasValidas = ['OPT_BCET_1', 'OPT_BCET_2', 'OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
-            if (optativasValidas.includes(codigo)) {
-                abrirModalOptativa(alunoId, codigo);
-                return;
-            }
+            return resultado;
+        }
 
-            let isOptativaSelecionada = false;
-            for (const slot of optativasValidas) {
-                if (aluno.optativas[slot] === codigo) {
-                    isOptativaSelecionada = true;
-                    break;
+        // 2.9 Calcula progresso
+        function calcularProgresso(curriculo, disciplinas, optativas) {
+            let total = 0,
+                done = 0,
+                pending = 0;
+
+            for (const semestre of curriculo) {
+                for (const disc of semestre.disciplinas) {
+                    if (disc.isOptativa) {
+                        total++;
+                        const codigo = optativas[disc.codigo];
+                        if (codigo && disciplinas[codigo]?.status === 'done') done++;
+                        else if (codigo && disciplinas[codigo]?.status === 'pending') pending++;
+                    } else {
+                        total++;
+                        const status = disciplinas[disc.codigo]?.status || 'not-started';
+                        if (status === 'done') done++;
+                        else if (status === 'pending') pending++;
+                    }
                 }
             }
 
-            if (isOptativaSelecionada) {
-                const current = aluno.progresso[codigo] || 'pending';
-                const next = current === 'pending' ? 'done' : 'pending';
-                aluno.progresso[codigo] = next;
-                aluno.historico_completo[codigo] = {
-                    status: next,
-                    origem: cursoAtivo,
-                    data: new Date().toISOString()
-                };
-                recalcularEquivalencias(alunoId);
-                renderFluxograma(alunoId);
-                renderAlunoList();
-                saveData();
-                showToast(`📌 ${codigo} ${next === 'done' ? '✅ cursada' : '🟡 cursando'}`, 'info');
-                return;
-            }
-
-            if (!isPrereqCursado(alunoId, codigo)) {
-                abrirModalQuebra(alunoId, codigo);
-                return;
-            }
-
-            const states = ['not-started', 'pending', 'done'];
-            const current = aluno.progresso[codigo] || 'not-started';
-            const nextIndex = (states.indexOf(current) + 1) % states.length;
-            aluno.progresso[codigo] = states[nextIndex];
-
-            aluno.historico_completo[codigo] = {
-                status: states[nextIndex],
-                origem: cursoAtivo,
-                data: new Date().toISOString()
-            };
-
-            recalcularEquivalencias(alunoId);
-            renderFluxograma(alunoId);
-            renderAlunoList();
-            saveData();
+            return { total, done, pending, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
         }
 
-        // ============================================================
-        // VERIFICAÇÃO DE PRÉ-REQUISITOS
-        // ============================================================
-        function verificarPreRequisitos(alunoId, codigo) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return { status: 'none', lista: [] };
-
-            const prereqs = getPreRequisitos(codigo);
+        // 2.10 Verifica se pré-requisitos estão cumpridos
+        function verificarPreRequisitos(codigo, curso, disciplinas, quebras) {
+            const prereqs = getPreRequisitos(codigo, curso);
             if (prereqs.length === 0) return { status: 'none', lista: [] };
-            if (aluno.quebras && aluno.quebras[codigo]) return { status: 'quebra', lista: prereqs, quebra: true };
+            if (quebras && quebras[codigo]) return { status: 'quebra', lista: prereqs, quebra: true };
 
             const resultados = [];
             let todosOk = true,
                 temPendente = false;
             for (const pre of prereqs) {
-                const status = aluno.progresso[pre] || 'not-started';
+                const status = disciplinas[pre]?.status || 'not-started';
                 resultados.push({ codigo: pre, status });
                 if (status === 'not-started') todosOk = false;
                 if (status === 'pending') temPendente = true;
@@ -2439,42 +1828,26 @@
             return { status: 'blocked', lista: resultados };
         }
 
-        function isPrereqCursado(alunoId, codigo) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return false;
-            const prereqs = getPreRequisitos(codigo);
-            if (prereqs.length === 0) return true;
-            if (aluno.quebras && aluno.quebras[codigo]) return true;
-            for (const pre of prereqs) {
-                if ((aluno.progresso[pre] || 'not-started') !== 'done') return false;
-            }
-            return true;
-        }
-
-        // ============================================================
-        // ===== BUG #12 CORRIGIDO: MODAL DE OPTATIVAS =====
-        // ============================================================
+        // 2.11 Obtém todas as optativas (BMAT + BCET)
         function getTodasOptativas() {
             const todas = [];
             const codigosVistos = new Set();
 
-            for (const opt of OPTATIVAS_BMAT_OPT1) {
+            for (const opt of CONFIG.optativasBMAT.opt1) {
                 if (!codigosVistos.has(opt.codigo)) {
-                    todas.push({ ...opt, origem: 'bmat', slot: 'OPT1' });
+                    todas.push({ ...opt, origem: 'bmat' });
                     codigosVistos.add(opt.codigo);
                 }
             }
-
-            for (const opt of OPTATIVAS_BMAT_OUTRAS) {
+            for (const opt of CONFIG.optativasBMAT.outras) {
                 if (!codigosVistos.has(opt.codigo)) {
-                    todas.push({ ...opt, origem: 'bmat', slot: 'OPT2-OPT5' });
+                    todas.push({ ...opt, origem: 'bmat' });
                     codigosVistos.add(opt.codigo);
                 }
             }
-
-            for (const opt of OPTATIVAS_BCET) {
+            for (const opt of CONFIG.optativasBCET) {
                 if (!codigosVistos.has(opt.codigo)) {
-                    todas.push({ ...opt, origem: 'bcet', slot: 'OPT_BCET' });
+                    todas.push({ ...opt, origem: 'bcet' });
                     codigosVistos.add(opt.codigo);
                 }
             }
@@ -2482,8 +1855,473 @@
             return todas;
         }
 
+        // 2.12 Obtém currículo do curso atual
+        function getCurriculo(curso) {
+            return curso === 'bmat' ? CONFIG.curriculoBMAT : CONFIG.curriculoBCET;
+        }
+
+        // 2.13 Obtém slots de optativa do curso atual
+        function getSlotsOptativa(curso) {
+            if (curso === 'bmat') return ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
+            return ['OPT_BCET_1', 'OPT_BCET_2'];
+        }
+
+        // ============================================================
+        // 3. GERENCIAMENTO DE ESTADO
+        // ============================================================
+
+        let state = {
+            alunos: {},
+            nextId: 1,
+            alunoAtivoId: null,
+            cursoAtivo: 'bmat'
+        };
+
+        // ============================================================
+        // 4. FUNÇÕES DE INTERFACE
+        // ============================================================
+
+        // 4.1 Renderizar lista de alunos
+        function renderAlunoList() {
+            const container = document.getElementById('alunoList');
+            const keys = Object.keys(state.alunos);
+            if (keys.length === 0) {
+                container.innerHTML = '<div style="padding:16px;text-align:center;color:#999;">Nenhum aluno cadastrado</div>';
+                return;
+            }
+            container.innerHTML = '';
+            for (const id of keys) {
+                const aluno = state.alunos[id];
+                const curriculo = getCurriculo(aluno.curso || 'bmat');
+                const progresso = calcularProgresso(curriculo, aluno.progresso || {}, aluno.optativas || {});
+                const pct = progresso.pct || 0;
+
+                const div = document.createElement('div');
+                div.className = `aluno-item ${id === state.alunoAtivoId ? 'active' : ''}`;
+                const matriculaStr = aluno.matricula ? ` (${aluno.matricula})` : '';
+                const cursoStr = aluno.curso === 'bcet' ? ' 📘' : ' 📐';
+                div.innerHTML = `
+                        <span class="aluno-name">${aluno.nome}${matriculaStr}${cursoStr}</span>
+                        <span class="aluno-progress">${progresso.done}/${progresso.total} (${pct}%)</span>
+                        <div class="aluno-actions">
+                            <button onclick="event.stopPropagation();deleteAluno('${id}')" class="btn-del" title="Remover" aria-label="Remover aluno">✕</button>
+                        </div>
+                    `;
+                div.onclick = () => selectAluno(id);
+                container.appendChild(div);
+            }
+        }
+
+        // 4.2 Selecionar aluno
+        function selectAluno(id) {
+            state.alunoAtivoId = id;
+            renderAlunoList();
+            renderFluxograma(id);
+        }
+
+        // 4.3 Adicionar aluno
+        function addAlunoCompleto() {
+            const nomeInput = document.getElementById('newAlunoNome');
+            const matriculaInput = document.getElementById('newAlunoMatricula');
+            const nome = nomeInput.value.trim();
+            const matricula = matriculaInput.value.trim();
+
+            if (!nome) {
+                showToast('Digite o nome do aluno!', 'error');
+                return;
+            }
+
+            const id = String(state.nextId++);
+            state.alunos[id] = {
+                nome: nome,
+                matricula: matricula || '',
+                progresso: {},
+                optativas: {},
+                quebras: {},
+                equiv: {},
+                historico_completo: {},
+                historico_optativas: {},
+                curso: state.cursoAtivo,
+                dadosPessoais: {}
+            };
+
+            nomeInput.value = '';
+            matriculaInput.value = '';
+
+            renderAlunoList();
+            state.alunoAtivoId = id;
+            renderFluxograma(id);
+            updateAlunoCount();
+            saveData();
+            showToast(`✅ Aluno "${nome}" adicionado!`, 'success');
+        }
+
+        // 4.4 Adicionar múltiplos alunos
+        function addMultipleAlunos() {
+            const texto = prompt('Digite os nomes dos alunos, um por linha. Para matrícula, use: Nome | Matrícula');
+            if (!texto) return;
+            const linhas = texto.split('\n').map(s => s.trim()).filter(s => s);
+            if (linhas.length === 0) {
+                showToast('Nenhum nome válido.', 'error');
+                return;
+            }
+
+            const nomesExistentes = new Set();
+            const matriculasExistentes = new Set();
+            for (const id in state.alunos) {
+                nomesExistentes.add(state.alunos[id].nome.toLowerCase().trim());
+                if (state.alunos[id].matricula) matriculasExistentes.add(state.alunos[id].matricula);
+            }
+
+            let count = 0,
+                ignorados = 0;
+            for (const linha of linhas) {
+                const partes = linha.split('|').map(s => s.trim());
+                const nome = partes[0];
+                const matricula = partes[1] || '';
+                if (!nome) continue;
+
+                const nomeLower = nome.toLowerCase().trim();
+                if (nomesExistentes.has(nomeLower)) { ignorados++; continue; }
+                if (matricula && matriculasExistentes.has(matricula)) { ignorados++; continue; }
+
+                const id = String(state.nextId++);
+                state.alunos[id] = {
+                    nome: nome,
+                    matricula: matricula,
+                    progresso: {},
+                    optativas: {},
+                    quebras: {},
+                    equiv: {},
+                    historico_completo: {},
+                    historico_optativas: {},
+                    curso: state.cursoAtivo,
+                    dadosPessoais: {}
+                };
+                nomesExistentes.add(nomeLower);
+                if (matricula) matriculasExistentes.add(matricula);
+                count++;
+            }
+
+            renderAlunoList();
+            updateAlunoCount();
+            saveData();
+            let msg = `✅ ${count} alunos adicionados!`;
+            if (ignorados > 0) msg += ` ⚠️ ${ignorados} duplicatas ignoradas.`;
+            showToast(msg, 'success');
+        }
+
+        // 4.5 Deletar aluno
+        function deleteAluno(id) {
+            if (!confirm(`Remover aluno "${state.alunos[id].nome}"?`)) return;
+            delete state.alunos[id];
+            if (state.alunoAtivoId === id) {
+                const keys = Object.keys(state.alunos);
+                state.alunoAtivoId = keys.length > 0 ? keys[0] : null;
+            }
+            renderAlunoList();
+            if (state.alunoAtivoId) {
+                renderFluxograma(state.alunoAtivoId);
+            } else {
+                document.getElementById('fluxogramaContent').innerHTML =
+                    `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
+            }
+            updateAlunoCount();
+            saveData();
+            showToast('🗑️ Aluno removido.', 'info');
+        }
+
+        // 4.6 Selecionar curso
+        function selecionarCurso(curso) {
+            state.cursoAtivo = curso;
+            document.getElementById('cursoBMAT').className = curso === 'bmat' ? 'active' : '';
+            document.getElementById('cursoBCET').className = curso === 'bcet' ? 'active' : '';
+
+            if (state.alunoAtivoId && state.alunos[state.alunoAtivoId]) {
+                const aluno = state.alunos[state.alunoAtivoId];
+                aluno.curso = curso;
+                renderFluxograma(state.alunoAtivoId);
+            }
+            saveData();
+            showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`, 'info');
+        }
+
+        // 4.7 Renderizar fluxograma
+        function renderFluxograma(alunoId) {
+            const aluno = state.alunos[alunoId];
+            if (!aluno) {
+                document.getElementById('fluxogramaContent').innerHTML =
+                    `<div class="no-aluno"><h3>👈 Aluno não encontrado</h3></div>`;
+                return;
+            }
+
+            if (!aluno.progresso) aluno.progresso = {};
+            if (!aluno.optativas) aluno.optativas = {};
+            if (!aluno.quebras) aluno.quebras = {};
+            if (!aluno.equiv) aluno.equiv = {};
+
+            const curso = aluno.curso || 'bmat';
+            const curriculo = getCurriculo(curso);
+            const progresso = calcularProgresso(curriculo, aluno.progresso, aluno.optativas);
+            const cursoLabel = curso === 'bcet' ? '📘 BCET - Matemática' : '📐 BMAT';
+
+            let html = `
+                    <div class="aluno-header">
+                        <h2>📘 ${aluno.nome} ${aluno.matricula ? `(${aluno.matricula})` : ''} - ${cursoLabel}</h2>
+                        <div class="stats-badge">
+                            <span class="done-count">✅ ${progresso.done}</span>
+                            <span class="pending-count">🟡 ${progresso.pending}</span>
+                            <span class="total-count">📚 ${progresso.total}</span>
+                            <span style="background:#1a237e;color:white;padding:2px 10px;border-radius:12px;font-size:12px;">${progresso.pct}%</span>
+                        </div>
+                    </div>
+                    <div class="legend">
+                        <div class="legend-item"><span class="legend-color done"></span> Cursada</div>
+                        <div class="legend-item"><span class="legend-color pending"></span> Cursando</div>
+                        <div class="legend-item"><span class="legend-color not-started"></span> Não cursada</div>
+                        <div class="legend-item"><span class="legend-color equiv"></span> Equivalência</div>
+                        <div class="legend-item"><span class="legend-color opt-selected"></span> Optativa</div>
+                        <div class="legend-item"><span class="legend-color quebra"></span> Quebra</div>
+                    </div>
+                    <div class="semester-grid">
+                `;
+
+            for (const semestre of curriculo) {
+                html += `<div class="semester-card"><div class="semester-title ${semestre.cls}">${semestre.nome}</div>`;
+                for (const disc of semestre.disciplinas) {
+                    if (disc.isOptativa) {
+                        html += renderOptativa(alunoId, disc);
+                    } else {
+                        html += renderDisciplina(alunoId, disc);
+                    }
+                }
+                html += `</div>`;
+            }
+
+            // Disciplinas extras
+            const extras = getDisciplinasExtras(alunoId);
+            if (extras.length > 0) {
+                html += `
+                        <div class="semester-card" style="grid-column:1/-1;border-color:#ff6f00;">
+                            <div class="semester-title" style="background:#ff6f00;">📋 Disciplinas Extras</div>
+                            ${extras.map(d => {
+                                const status = aluno.progresso[d.codigo]?.status || 'not-started';
+                                const isEquiv = aluno.equiv && aluno.equiv[d.codigo];
+                                const isQuebra = aluno.quebras && aluno.quebras[d.codigo];
+                                let finalClass = status === 'done' ? 'done' : 'not-started';
+                                if (isEquiv && status === 'done') finalClass = 'equiv-done';
+                                if (isQuebra) finalClass = 'quebra';
+                                const prereqCheck = verificarPreRequisitos(d.codigo, curso, aluno.progresso, aluno.quebras);
+                                const isBlocked = prereqCheck.status === 'blocked';
+                                const onClick = isBlocked ? `onclick="abrirModalQuebra('${alunoId}','${d.codigo}')"` :
+                                    `onclick="toggleDiscipline('${alunoId}','${d.codigo}')"`;
+                                return `
+                                        <div class="discipline ${finalClass}" ${onClick} style="border-color:#ff6f00;">
+                                            <span class="code">${d.codigo}</span> ${getNomeDisciplina(d.codigo) || d.codigo}
+                                            <span class="hours">${d.ch || '68h'}</span>
+                                            ${isEquiv ? '<span class="equiv-badge">🔗 Equiv.</span>' : ''}
+                                            ${isQuebra ? '<span class="quebra-badge">🔓 QUEBRA</span>' : ''}
+                                            <span class="quebra-badge">📄 Histórico</span>
+                                        </div>
+                                    `;
+                            }).join('')}
+                        </div>
+                    `;
+            }
+
+            html += `</div>`;
+            document.getElementById('fluxogramaContent').innerHTML = html;
+        }
+
+        // 4.8 Renderizar disciplina
+        function renderDisciplina(alunoId, disc) {
+            const aluno = state.alunos[alunoId];
+            const curso = aluno.curso || 'bmat';
+            const codigo = disc.codigo;
+
+            const status = aluno.progresso[codigo]?.status || 'not-started';
+            const isEquiv = aluno.equiv && aluno.equiv[codigo];
+            const isQuebra = aluno.quebras && aluno.quebras[codigo];
+            const isOpt = isOptativa(codigo, curso);
+
+            let classe = 'discipline';
+            if (isEquiv && status === 'done') classe += ' equiv-done';
+            else if (isOpt && status === 'done') classe += ' opt-selected';
+            else if (isOpt && status === 'pending') classe += ' opt-pending';
+            else if (isQuebra) classe += ' quebra';
+            else if (status === 'done') classe += ' done';
+            else if (status === 'pending') classe += ' pending';
+            else classe += ' not-started';
+
+            const prereqCheck = verificarPreRequisitos(codigo, curso, aluno.progresso, aluno.quebras);
+            if (prereqCheck.status === 'none') classe += ' prereq-none';
+            else if (prereqCheck.status === 'ok') classe += ' prereq-ok';
+            else if (prereqCheck.status === 'pending') classe += ' prereq-pending';
+            else if (prereqCheck.status === 'blocked') classe += ' prereq-blocked blocked';
+            else if (prereqCheck.status === 'quebra') classe += ' prereq-quebra';
+
+            let badge = '';
+            if (isEquiv) {
+                const equivInfo = aluno.equiv[codigo];
+                badge += `<span class="equiv-badge">🔗 Equiv.</span>`;
+                if (equivInfo) badge += ` <span class="prereq-badge">via ${equivInfo.via}</span>`;
+            }
+            if (isQuebra) badge += ` <span class="quebra-badge">🔓 QUEBRA</span>`;
+            if (isOpt && !isEquiv) badge += ` <span class="opt-badge">📌 Opt.</span>`;
+
+            const prereqs = getPreRequisitos(codigo, curso);
+            if (prereqs.length > 0 && !isEquiv && prereqCheck.status !== 'quebra') {
+                const feitos = prereqs.filter(p => aluno.progresso[p]?.status === 'done').length;
+                badge += `<span class="prereq-badge">${feitos}/${prereqs.length} pré-req</span>`;
+            }
+
+            const isBlocked = prereqCheck.status === 'blocked';
+            const onClick = isBlocked ? `onclick="abrirModalQuebra('${alunoId}','${codigo}')"` :
+                `onclick="toggleDiscipline('${alunoId}','${codigo}')"`;
+            const finalOnClick = isEquiv ?
+                `style="cursor:default;" onclick="showToast('⚠️ Disciplina cursada por equivalência', 'info')"` :
+                onClick;
+
+            return `
+                    <button class="${classe}" ${finalOnClick}>
+                        <span class="code">${codigo}</span> ${getNomeDisciplina(codigo)}
+                        <span class="hours">${disc.horas || '68h'}</span>
+                        ${badge}
+                    </button>
+                `;
+        }
+
+        // 4.9 Renderizar optativa
+        function renderOptativa(alunoId, disc) {
+            const aluno = state.alunos[alunoId];
+            const curso = aluno.curso || 'bmat';
+            const optCodigo = disc.codigo;
+            const optSelecionada = aluno.optativas[optCodigo] || null;
+            let status = 'not-started';
+            let displayName = optCodigo;
+            let badge = '';
+            let classe = 'discipline';
+
+            if (optSelecionada) {
+                const optStatus = aluno.progresso[optSelecionada]?.status || 'not-started';
+                const isEquiv = aluno.equiv && aluno.equiv[optSelecionada];
+                const isQuebra = aluno.quebras && aluno.quebras[optSelecionada];
+
+                if (isEquiv && optStatus === 'done') {
+                    status = 'equiv-done';
+                    badge = `<span class="equiv-badge">🔗 Equiv.</span>`;
+                    const equivInfo = aluno.equiv[optSelecionada];
+                    if (equivInfo) badge += ` <span class="prereq-badge">via ${equivInfo.via}</span>`;
+                } else if (isQuebra) {
+                    status = 'quebra';
+                    badge = `<span class="quebra-badge">🔓 QUEBRA</span>`;
+                } else if (optStatus === 'done') {
+                    status = 'opt-selected';
+                    badge = `<span class="opt-badge">📌 Opt.</span>`;
+                } else if (optStatus === 'pending') {
+                    status = 'opt-pending';
+                    badge = `<span class="opt-badge">📌 Opt.</span>`;
+                } else {
+                    status = 'opt-selected';
+                    badge = `<span class="opt-badge">📌 Opt.</span>`;
+                }
+
+                const todasOptativas = getTodasOptativas();
+                const optInfo = todasOptativas.find(o => o.codigo === optSelecionada);
+                displayName = `${optSelecionada} - ${optInfo ? optInfo.nome : 'Optativa'}`;
+            } else {
+                displayName = 'Optativa (selecionar)';
+                status = 'not-started';
+            }
+
+            if (status === 'equiv-done') classe += ' equiv-done';
+            else if (status === 'opt-selected') classe += ' opt-selected';
+            else if (status === 'opt-pending') classe += ' opt-pending';
+            else if (status === 'quebra') classe += ' quebra';
+            else if (status === 'done') classe += ' done';
+            else if (status === 'pending') classe += ' pending';
+            else classe += ' not-started';
+
+            return `
+                    <button class="${classe}" onclick="toggleDiscipline('${alunoId}','${optCodigo}')">
+                        <span class="code">${optCodigo}</span> ${displayName}
+                        <span class="hours">${disc.horas}</span>
+                        ${badge}
+                    </button>
+                `;
+        }
+
+        // 4.10 Toggle discipline
+        function toggleDiscipline(alunoId, codigo) {
+            const aluno = state.alunos[alunoId];
+            if (!aluno) return;
+            if (!aluno.progresso) aluno.progresso = {};
+            if (!aluno.historico_completo) aluno.historico_completo = {};
+
+            const curso = aluno.curso || 'bmat';
+            const slots = getSlotsOptativa(curso);
+
+            if (aluno.equiv && aluno.equiv[codigo]) {
+                showToast('⚠️ Disciplina cursada por equivalência', 'info');
+                return;
+            }
+
+            // Se for slot de optativa
+            if (slots.includes(codigo)) {
+                abrirModalOptativa(alunoId, codigo);
+                return;
+            }
+
+            // Verifica se é optativa selecionada
+            let isOptativaSelecionada = false;
+            for (const slot of slots) {
+                if (aluno.optativas[slot] === codigo) {
+                    isOptativaSelecionada = true;
+                    break;
+                }
+            }
+
+            if (isOptativaSelecionada) {
+                const current = aluno.progresso[codigo]?.status || 'pending';
+                const next = current === 'pending' ? 'done' : 'pending';
+                aluno.progresso[codigo] = { status: next, origem: 'manual' };
+                aluno.historico_completo[codigo] = {
+                    status: next,
+                    origem: curso,
+                    data: new Date().toISOString()
+                };
+                renderFluxograma(alunoId);
+                renderAlunoList();
+                saveData();
+                showToast(`📌 ${codigo} ${next === 'done' ? '✅ cursada' : '🟡 cursando'}`, 'info');
+                return;
+            }
+
+            // Disciplina normal
+            const prereqCheck = verificarPreRequisitos(codigo, curso, aluno.progresso, aluno.quebras);
+            if (prereqCheck.status === 'blocked') {
+                abrirModalQuebra(alunoId, codigo);
+                return;
+            }
+
+            const states = ['not-started', 'pending', 'done'];
+            const current = aluno.progresso[codigo]?.status || 'not-started';
+            const nextIndex = (states.indexOf(current) + 1) % states.length;
+            aluno.progresso[codigo] = { status: states[nextIndex], origem: 'manual' };
+            aluno.historico_completo[codigo] = {
+                status: states[nextIndex],
+                origem: curso,
+                data: new Date().toISOString()
+            };
+
+            renderFluxograma(alunoId);
+            renderAlunoList();
+            saveData();
+        }
+
+        // 4.11 Abrir modal optativa
         function abrirModalOptativa(alunoId, optCodigo) {
-            const aluno = alunos[alunoId];
+            const aluno = state.alunos[alunoId];
             if (!aluno) return;
 
             modalContexto = { alunoId, optCodigo };
@@ -2499,68 +2337,65 @@
             };
             const optLabel = labels[optCodigo] || 'Optativa';
 
-            const optativasDisponiveis = getTodasOptativas();
+            const todasOptativas = getTodasOptativas();
 
-            // Optativas válidas no curso atual
-            const optativasValidas = new Set();
-            if (cursoAtivo === 'bmat') {
-                for (const opt of OPTATIVAS_BMAT_OPT1) optativasValidas.add(opt.codigo);
-                for (const opt of OPTATIVAS_BMAT_OUTRAS) optativasValidas.add(opt.codigo);
-            } else {
-                for (const opt of OPTATIVAS_BCET) optativasValidas.add(opt.codigo);
-            }
-
-            // Optativas já alocadas em outros slots
+            // Verifica optativas já alocadas
             const slotsOcupados = new Set();
-            for (const slot in aluno.optativas) {
+            const slots = getSlotsOptativa(aluno.curso || 'bmat');
+            for (const slot of slots) {
                 if (slot !== optCodigo && aluno.optativas[slot]) {
                     slotsOcupados.add(aluno.optativas[slot]);
                 }
             }
 
             document.getElementById('optModalTitle').textContent = `Selecionar ${optLabel}`;
-            document.getElementById('optModalSub').textContent = `Escolha a disciplina optativa para ${aluno.nome}`;
+            document.getElementById('optModalSub').textContent =
+                `Escolha a disciplina optativa para ${aluno.nome} (${todasOptativas.length} disponíveis)`;
 
             const list = document.getElementById('optList');
             list.innerHTML = '';
 
-            for (const opt of optativasDisponiveis) {
+            // Filtra optativas já alocadas em outros slots
+            const optativasFiltradas = todasOptativas.filter(opt => {
+                if (slotsOcupados.has(opt.codigo) && aluno.optativas[optCodigo] !== opt.codigo) {
+                    return false;
+                }
+                return true;
+            });
+
+            for (const opt of optativasFiltradas) {
                 const div = document.createElement('div');
                 const isSelected = aluno.optativas[optCodigo] === opt.codigo;
                 const isOcupado = slotsOcupados.has(opt.codigo);
-                const isValida = optativasValidas.has(opt.codigo);
-                const isEquiv = aluno.equiv && aluno.equiv[opt.codigo];
+                const isValida = isOptativa(opt.codigo, aluno.curso || 'bmat');
 
                 div.className = `opt-item ${isSelected ? 'selected' : ''}`;
 
                 if (isOcupado && !isSelected) {
-                    div.style.opacity = '0.5';
+                    div.style.opacity = '0.4';
                     div.style.cursor = 'not-allowed';
+                    div.style.pointerEvents = 'none';
                     div.title = 'Já selecionada em outro semestre';
                 }
 
-                if (!isValida && !isSelected) {
+                if (!isValida && !isSelected && !isOcupado) {
                     div.style.borderColor = '#ff6f00';
                     div.style.background = '#fff3e0';
-                }
-
-                if (isEquiv && isSelected) {
-                    div.style.borderColor = '#7c4dff';
-                    div.style.background = '#ede7f6';
+                    div.title = '⚠️ Optativa válida apenas no outro curso';
                 }
 
                 const preDisplay = opt.pre === 'Nenhum' ? 'Sem pré-requisito' : `Pré: ${opt.pre}`;
                 const origemLabel = opt.origem === 'bmat' ? '📐' : '📘';
-                const statusLabel = isEquiv ? ' 🔗 Equiv.' : '';
-                const invalidaLabel = !isValida && !isSelected ? ' ⚠️' : '';
+                const invalidaLabel = !isValida && !isSelected && !isOcupado ? ' ⚠️' : '';
+                const ocupadoLabel = isOcupado && !isSelected ? ' 🔒' : '';
 
                 div.innerHTML = `
                         <span class="opt-code">${opt.codigo}</span>
                         ${opt.nome} ${origemLabel}
                         <span class="opt-pre">${preDisplay}</span>
                         ${isSelected ? ' ✅ Selecionada' : ''}
-                        ${statusLabel}
                         ${invalidaLabel}
+                        ${ocupadoLabel}
                     `;
 
                 if (isOcupado && !isSelected) {
@@ -2572,19 +2407,31 @@
                 list.appendChild(div);
             }
 
+            if (optativasFiltradas.length === 0) {
+                list.innerHTML = `
+                        <div style="grid-column:1/-1;text-align:center;padding:20px;color:#999;">
+                            <p>⚠️ Nenhuma optativa disponível para seleção.</p>
+                            <p style="font-size:12px;">Todas as optativas já estão alocadas em outros semestres.</p>
+                        </div>
+                    `;
+            }
+
             document.getElementById('optModal').classList.add('show');
         }
 
+        // 4.12 Selecionar optativa
         function selecionarOptativa(codigo) {
             if (!modalContexto) return;
             const { alunoId, optCodigo } = modalContexto;
-            const aluno = alunos[alunoId];
+            const aluno = state.alunos[alunoId];
             if (!aluno) return;
 
             if (!aluno.historico_optativas) aluno.historico_optativas = {};
             if (!aluno.historico_completo) aluno.historico_completo = {};
 
-            const slots = ['OPT_BCET_1', 'OPT_BCET_2', 'OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
+            const slots = getSlotsOptativa(aluno.curso || 'bmat');
+
+            // Verifica duplicidade
             for (const slot of slots) {
                 if (slot === optCodigo) continue;
                 if (aluno.optativas[slot] === codigo) {
@@ -2593,32 +2440,35 @@
                 }
             }
 
+            // Verifica se é optativa global
             if (!isOptativaGlobal(codigo)) {
-                showToast(`⚠️ ${codigo} não é uma optativa válida em nenhum currículo!`, 'error');
+                showToast(`⚠️ ${codigo} não é uma optativa válida!`, 'error');
                 return;
             }
 
-            if (!isOptativa(codigo)) {
-                if (!confirm(`⚠️ ${codigo} não é uma optativa válida no curso atual (${cursoAtivo}).\n\nDeseja mesmo assim selecioná-la?`)) {
+            // Aviso se não é válida no curso atual
+            if (!isOptativa(codigo, aluno.curso || 'bmat')) {
+                if (!confirm(`⚠️ ${codigo} não é uma optativa válida no curso atual.\n\nDeseja mesmo assim selecioná-la?`)) {
                     return;
                 }
             }
 
-            const prereqs = getPreRequisitos(codigo);
+            // Verifica pré-requisitos
+            const prereqs = getPreRequisitos(codigo, aluno.curso || 'bmat');
             if (prereqs.length > 0) {
-                const temTodos = prereqs.every(pre => (aluno.progresso[pre] || 'not-started') === 'done');
+                const temTodos = prereqs.every(pre => aluno.progresso[pre]?.status === 'done');
                 if (!temTodos) {
                     const preNomes = prereqs.map(c => `${c} - ${getNomeDisciplina(c)}`).join(', ');
                     if (!confirm(
-                            `⚠️ O aluno não possui todos os pré-requisitos para esta optativa.\n\nPré-requisitos necessários:\n${preNomes}\n\nDeseja mesmo assim selecionar esta optativa?`
+                            `⚠️ O aluno não possui todos os pré-requisitos.\n\nPré-requisitos necessários:\n${preNomes}\n\nDeseja continuar?`
                         )) {
                         return;
                     }
                 }
             }
 
+            // Adiciona ou remove
             if (aluno.optativas[optCodigo] === codigo) {
-                const antiga = aluno.optativas[optCodigo];
                 delete aluno.optativas[optCodigo];
                 delete aluno.progresso[codigo];
                 delete aluno.historico_optativas[optCodigo];
@@ -2629,36 +2479,37 @@
                     delete aluno.progresso[antiga];
                 }
                 aluno.optativas[optCodigo] = codigo;
-                aluno.progresso[codigo] = 'pending';
+                aluno.progresso[codigo] = { status: 'pending', origem: 'manual' };
                 aluno.historico_optativas[optCodigo] = {
                     codigo: codigo,
-                    origem: cursoAtivo,
+                    origem: aluno.curso || 'bmat',
                     data: new Date().toISOString()
                 };
                 aluno.historico_completo[codigo] = {
                     status: 'pending',
-                    origem: cursoAtivo,
+                    origem: aluno.curso || 'bmat',
                     data: new Date().toISOString()
                 };
                 showToast(`✅ Optativa ${codigo} selecionada!`, 'success');
             }
 
             closeOptModal();
-            recalcularEquivalencias(alunoId);
             renderFluxograma(alunoId);
             renderAlunoList();
             saveData();
         }
 
+        // 4.13 Fechar modal optativa
         function closeOptModal() {
             document.getElementById('optModal').classList.remove('show');
             modalContexto = null;
         }
 
+        // 4.14 Limpar optativa
         function clearOptativa() {
             if (!modalContexto) return;
             const { alunoId, optCodigo } = modalContexto;
-            const aluno = alunos[alunoId];
+            const aluno = state.alunos[alunoId];
             if (!aluno) return;
 
             if (aluno.optativas[optCodigo]) {
@@ -2669,7 +2520,6 @@
             }
 
             closeOptModal();
-            recalcularEquivalencias(alunoId);
             renderFluxograma(alunoId);
             renderAlunoList();
             saveData();
@@ -2680,15 +2530,14 @@
             if (e.target === this) closeOptModal();
         });
 
-        // ============================================================
-        // MODAL DE QUEBRA
-        // ============================================================
+        // 4.15 Modal quebra
         function abrirModalQuebra(alunoId, codigo) {
-            const aluno = alunos[alunoId];
+            const aluno = state.alunos[alunoId];
             if (!aluno) return;
 
             quebraContexto = { alunoId, codigo };
-            const prereqs = getPreRequisitos(codigo);
+            const curso = aluno.curso || 'bmat';
+            const prereqs = getPreRequisitos(codigo, curso);
             const preNomes = prereqs.map(c => `${c} - ${getNomeDisciplina(c)}`).join(', ');
 
             document.getElementById('quebraSubtitle').textContent = `Aluno: ${aluno.nome}`;
@@ -2704,14 +2553,14 @@
         function confirmarQuebra() {
             if (!quebraContexto) return;
             const { alunoId, codigo } = quebraContexto;
-            const aluno = alunos[alunoId];
+            const aluno = state.alunos[alunoId];
             if (!aluno) return;
 
             if (!aluno.quebras) aluno.quebras = {};
             aluno.quebras[codigo] = true;
 
-            if (!aluno.progresso[codigo] || aluno.progresso[codigo] === 'not-started') {
-                aluno.progresso[codigo] = 'pending';
+            if (!aluno.progresso[codigo] || aluno.progresso[codigo]?.status === 'not-started') {
+                aluno.progresso[codigo] = { status: 'pending', origem: 'quebra' };
             }
 
             fecharModalQuebra();
@@ -2724,7 +2573,7 @@
         function removerQuebra() {
             if (!quebraContexto) return;
             const { alunoId, codigo } = quebraContexto;
-            const aluno = alunos[alunoId];
+            const aluno = state.alunos[alunoId];
             if (!aluno) return;
 
             if (aluno.quebras && aluno.quebras[codigo]) {
@@ -2748,14 +2597,41 @@
             if (e.target === this) fecharModalQuebra();
         });
 
-        // ============================================================
-        // ===== BUG #2, #3, #5 CORRIGIDOS: IMPORTAÇÃO =====
-        // ============================================================
+        // 4.16 Disciplinas extras
+        function getDisciplinasExtras(alunoId) {
+            const aluno = state.alunos[alunoId];
+            if (!aluno) return [];
+
+            const curso = aluno.curso || 'bmat';
+            const curriculo = getCurriculo(curso);
+            const codigosDoCurso = new Set();
+            for (const sem of curriculo) {
+                for (const disc of sem.disciplinas) {
+                    if (!disc.isOptativa) codigosDoCurso.add(disc.codigo);
+                }
+            }
+
+            const extras = [];
+            for (const codigo in aluno.progresso) {
+                if (codigo.startsWith('OPT')) continue;
+                if (codigo.startsWith('OPT_BCET')) continue;
+                if (codigosDoCurso.has(codigo)) continue;
+                if (isOptativa(codigo, curso)) continue;
+                if (aluno.equiv && aluno.equiv[codigo]) continue;
+                if (aluno.progresso[codigo]?.status === 'not-started') continue;
+
+                extras.push({ codigo, ch: '68h' });
+            }
+
+            return extras;
+        }
+
+        // 4.17 Importar histórico
         async function importarHistorico(event) {
             const file = event.target.files[0];
             if (!file) return;
 
-            if (!alunoAtivoId || !alunos[alunoAtivoId]) {
+            if (!state.alunoAtivoId || !state.alunos[state.alunoAtivoId]) {
                 showToast('❌ Selecione ou crie um aluno primeiro!', 'error');
                 event.target.value = '';
                 return;
@@ -2806,137 +2682,53 @@
                     return;
                 }
 
-                const aluno = alunos[alunoAtivoId];
+                const aluno = state.alunos[state.alunoAtivoId];
+                const curso = aluno.curso || 'bmat';
 
-                if (!aluno.historico_completo) aluno.historico_completo = {};
-                if (!aluno.historico_optativas) aluno.historico_optativas = {};
+                // Processa o histórico
+                const resultado = processarHistorico(todasOcorrencias, curso);
 
-                const semestresOrdenados = ['2021.1', '2021.2', '2022.1', '2022.2', '2023.1', '2023.2', '2024.1', '2024.2', '2025.1', '2025.2', '2026.1'];
-                const optativasCursadas = [];
-                let countAPR = 0,
-                    countMATR = 0,
-                    countREP = 0;
-
-                const porSemestre = {};
-                for (const occ of todasOcorrencias) {
-                    if (!porSemestre[occ.periodo]) porSemestre[occ.periodo] = [];
-                    porSemestre[occ.periodo].push(occ);
-                }
-
-                const disciplinasProcessadas = new Set();
-
-                for (const semestre of semestresOrdenados) {
-                    if (!porSemestre[semestre]) continue;
-
-                    for (const occ of porSemestre[semestre]) {
-                        const codigoBase = normalizarCodigo(occ.codigo);
-
-                        const chaveUnica = `${semestre}_${codigoBase}`;
-                        if (disciplinasProcessadas.has(chaveUnica)) continue;
-                        disciplinasProcessadas.add(chaveUnica);
-
-                        if (!disciplinaExisteNoCurriculo(codigoBase) && !isOptativaGlobal(codigoBase)) {
-                            continue;
-                        }
-
-                        const temAPR = occ.situacao === 'APR' || occ.situacao === 'DISP' || occ.situacao === 'DISPCN';
-                        const temMATR = occ.situacao === 'MATR';
-                        const temREP = occ.situacao === 'REP' || occ.situacao === 'REPF' || occ.situacao === 'REPMF';
-
-                        let statusFinal = 'not-started';
-                        if (temAPR) { statusFinal = 'done';
-                            countAPR++; } else if (temMATR) { statusFinal = 'pending';
-                            countMATR++; } else if (temREP) { statusFinal = 'not-started';
-                            countREP++; }
-
-                        if (!aluno.progresso[codigoBase] || aluno.progresso[codigoBase] === 'not-started' || statusFinal === 'done') {
-                            aluno.progresso[codigoBase] = statusFinal;
-                            aluno.historico_completo[codigoBase] = {
-                                status: statusFinal,
-                                origem: cursoAtivo,
-                                data: new Date().toISOString()
-                            };
-                        }
-
-                        if (isOptativaGlobal(codigoBase) && statusFinal === 'done') {
-                            if (!optativasCursadas.includes(codigoBase)) {
-                                optativasCursadas.push(codigoBase);
-                            }
-                        }
-
-                        // ===== BUG #11 CORRIGIDO: Verifica equivalência para optativa =====
-                        const equiv = getEquivalenciaOptativa(codigoBase);
-                        if (equiv && statusFinal === 'done') {
-                            const equivCod = equiv.equivalente;
-                            if (equiv.tipo === 'optativa_para_optativa' && isOptativa(equivCod)) {
-                                if (!optativasCursadas.includes(equivCod)) {
-                                    optativasCursadas.push(equivCod);
-                                    aluno.progresso[equivCod] = 'done';
-                                    aluno.equiv[equivCod] = { via: codigoBase };
-                                }
-                            }
-                        }
+                // Aplica ao aluno
+                for (const [codigo, info] of Object.entries(resultado.disciplinas)) {
+                    aluno.progresso[codigo] = { status: info.status, origem: info.origem };
+                    if (info.origem === 'equivalencia' && resultado.equivalencias[codigo]) {
+                        aluno.equiv[codigo] = resultado.equivalencias[codigo];
                     }
-                }
-
-                // ===== BUG #11 CORRIGIDO: Força reconhecimento de optativas específicas =====
-                const optativasForcadas = ['GCET200', 'GCET218', 'GCET673', 'GCET675'];
-                for (const codigo of optativasForcadas) {
-                    if (aluno.progresso[codigo] === 'done' || aluno.progresso[codigo] === 'pending') {
-                        if (!optativasCursadas.includes(codigo)) {
-                            optativasCursadas.push(codigo);
-                        }
-                    }
-                    // Verifica equivalência
-                    const equiv = getEquivalenciaOptativa(codigo);
-                    if (equiv && aluno.progresso[equiv.equivalente] === 'done') {
-                        if (!optativasCursadas.includes(equiv.equivalente)) {
-                            optativasCursadas.push(equiv.equivalente);
-                        }
-                    }
-                }
-
-                // Preenche slots de optativas
-                const slots = ['OPT_BCET_1', 'OPT_BCET_2', 'OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
-                const slotsDisponiveis = slots.filter(slot => !aluno.optativas[slot]);
-
-                // Ordena por prioridade: done > pending
-                const optativasPriorizadas = optativasCursadas.sort((a, b) => {
-                    const statusA = aluno.progresso[a] || 'not-started';
-                    const statusB = aluno.progresso[b] || 'not-started';
-                    if (statusA === 'done' && statusB !== 'done') return -1;
-                    if (statusB === 'done' && statusA !== 'done') return 1;
-                    return 0;
-                });
-
-                for (let i = 0; i < Math.min(optativasPriorizadas.length, slotsDisponiveis.length); i++) {
-                    const slot = slotsDisponiveis[i];
-                    const codigo = optativasPriorizadas[i];
-                    aluno.optativas[slot] = codigo;
-                    aluno.historico_optativas[slot] = {
-                        codigo: codigo,
-                        origem: 'importado',
+                    aluno.historico_completo[codigo] = {
+                        status: info.status,
+                        origem: curso,
                         data: new Date().toISOString()
                     };
-                    if (aluno.progresso[codigo] !== 'done') {
-                        aluno.progresso[codigo] = 'done';
+                }
+
+                // Aloca optativas
+                const slots = getSlotsOptativa(curso);
+                const slotsDisponiveis = slots.filter(s => !aluno.optativas[s]);
+                aluno.optativas = alocarOptativas(resultado.optativas, aluno.optativas, slotsDisponiveis);
+
+                // Salva histórico das optativas
+                for (const slot in aluno.optativas) {
+                    if (!aluno.historico_optativas[slot]) {
+                        aluno.historico_optativas[slot] = {
+                            codigo: aluno.optativas[slot],
+                            origem: 'importado',
+                            data: new Date().toISOString()
+                        };
                     }
                 }
 
-                aluno.curso = cursoAtivo;
+                aluno.curso = curso;
 
-                recalcularEquivalencias(alunoAtivoId);
-
-                renderFluxograma(alunoAtivoId);
+                renderFluxograma(state.alunoAtivoId);
                 renderAlunoList();
                 saveData();
 
+                const countAPR = Object.values(resultado.disciplinas).filter(d => d.status === 'done').length;
                 preview.innerHTML = `
                         <div class="success">✅ Disciplinas processadas para <strong>${aluno.nome}</strong>!</div>
                         <div class="info">📚 ${countAPR} disciplinas CURSADAS</div>
-                        <div class="info">🟡 ${countMATR} disciplinas em ANDAMENTO</div>
-                        <div class="info">⏭️ ${countREP} reprovações IGNORADAS</div>
-                        <div class="info">📌 ${optativasCursadas.length} optativa(s) identificada(s): ${optativasCursadas.join(', ')}</div>
+                        <div class="info">📌 ${resultado.optativas.length} optativa(s) identificada(s)</div>
+                        ${Object.keys(resultado.equivalencias).length > 0 ? `<div class="info">🔗 ${Object.keys(resultado.equivalencias).length} equivalência(s) aplicada(s)</div>` : ''}
                     `;
 
                 showToast(`✅ ${countAPR} disciplinas processadas!`, 'success');
@@ -2950,378 +2742,145 @@
             event.target.value = '';
         }
 
-        // ============================================================
-        // RENDER FLUXOGRAMA
-        // ============================================================
-        function renderFluxograma(alunoId) {
-            const aluno = alunos[alunoId];
-            if (!aluno) {
-                document.getElementById('fluxogramaContent').innerHTML =
-                    `<div class="no-aluno"><h3>👈 Aluno não encontrado</h3></div>`;
-                return;
-            }
-
-            if (!aluno.progresso) aluno.progresso = {};
-            if (!aluno.optativas) aluno.optativas = {};
-            if (!aluno.quebras) aluno.quebras = {};
-            if (!aluno.equiv) aluno.equiv = {};
-
-            const total = getTotalDisciplinas(alunoId);
-            const done = countStatus(alunoId, 'done');
-            const pending = countStatus(alunoId, 'pending');
-            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-            const cursoLabel = aluno.curso === 'bcet' ? '📘 BCET - Matemática' : '📐 BMAT';
-
-            let html = `
-                    <div class="aluno-header">
-                        <h2>📘 ${aluno.nome} ${aluno.matricula ? `(${aluno.matricula})` : ''} - ${cursoLabel}</h2>
-                        <div class="stats-badge">
-                            <span class="done-count">✅ ${done}</span>
-                            <span class="pending-count">🟡 ${pending}</span>
-                            <span class="total-count">📚 ${total}</span>
-                            <span style="background:#1a237e;color:white;padding:2px 10px;border-radius:12px;font-size:12px;">${pct}%</span>
-                        </div>
-                    </div>
-                    <div class="legend">
-                        <div class="legend-item"><span class="legend-color done"></span> Cursada</div>
-                        <div class="legend-item"><span class="legend-color pending"></span> Cursando</div>
-                        <div class="legend-item"><span class="legend-color not-started"></span> Não cursada</div>
-                        <div class="legend-item"><span class="legend-color equiv"></span> Equivalência</div>
-                        <div class="legend-item"><span class="legend-color opt-selected"></span> Optativa</div>
-                        <div class="legend-item"><span class="legend-color quebra"></span> Quebra</div>
-                    </div>
-                    <div class="semester-grid">
-                `;
-
-            const curriculo = getCurriculo();
-            for (const semestre of curriculo) {
-                html += `<div class="semester-card"><div class="semester-title ${semestre.cls}">${semestre.nome}</div>`;
-                for (const disc of semestre.disciplinas) {
-                    if (disc.isOptativa) {
-                        html += renderOptativa(alunoId, disc);
-                    } else {
-                        html += renderDisciplina(alunoId, disc);
-                    }
-                }
-                html += `</div>`;
-            }
-
-            const extras = getDisciplinasExtras(alunoId);
-            if (extras.length > 0) {
-                html += `
-                        <div class="semester-card" style="grid-column:1/-1;border-color:#ff6f00;">
-                            <div class="semester-title" style="background:#ff6f00;">📋 Disciplinas Extras</div>
-                            ${extras.map(d => {
-                                const status = getStatusDisplay(d.codigo, aluno);
-                                const statusClass = status === 'done' ? 'done' : 'not-started';
-                                const isEquiv = aluno.equiv && aluno.equiv[d.codigo];
-                                const isQuebra = aluno.quebras && aluno.quebras[d.codigo];
-                                let finalClass = statusClass;
-                                if (isEquiv && status === 'done') finalClass = 'equiv-done';
-                                if (isQuebra) finalClass = 'quebra';
-                                const prereqCheck = verificarPreRequisitos(alunoId, d.codigo);
-                                const isBlocked = prereqCheck.status === 'blocked';
-                                const onClick = isBlocked ? `onclick="abrirModalQuebra('${alunoId}','${d.codigo}')"` :
-                                    `onclick="toggleDiscipline('${alunoId}','${d.codigo}')"`;
-                                return `
-                                        <div class="discipline ${finalClass}" ${onClick} style="border-color:#ff6f00;">
-                                            <span class="code">${d.codigo}</span> ${getNomeDisciplina(d.codigo) || d.codigo}
-                                            <span class="hours">${d.ch || '68h'}</span>
-                                            ${isEquiv ? '<span class="equiv-badge">🔗 Equiv.</span>' : ''}
-                                            ${isQuebra ? '<span class="quebra-badge">🔓 QUEBRA</span>' : ''}
-                                            <span class="quebra-badge">📄 Histórico</span>
-                                        </div>
-                                    `;
-                            }).join('')}
-                        </div>
-                    `;
-            }
-
-            html += `</div>`;
-            document.getElementById('fluxogramaContent').innerHTML = html;
+        // 4.18 Atualizar contagem de alunos
+        function updateAlunoCount() {
+            document.getElementById('alunoCount').textContent = Object.keys(state.alunos).length;
         }
 
-        function getStatusDisplay(codigo, aluno) {
-            const status = aluno.progresso[codigo] || 'not-started';
-            const isEquiv = aluno.equiv && aluno.equiv[codigo];
-            const isOpt = isOptativa(codigo);
-            const isQuebra = aluno.quebras && aluno.quebras[codigo];
-
-            if (isQuebra) return 'quebra';
-            if (isEquiv && status === 'done') return 'equiv-done';
-            if (isOpt && status === 'done') return 'opt-selected';
-            if (isOpt && status === 'pending') return 'opt-pending';
-            return status;
-        }
-
-        function renderDisciplina(alunoId, disc) {
-            const aluno = alunos[alunoId];
-            const codigo = disc.codigo;
-
-            const displayStatus = getStatusDisplay(codigo, aluno);
-            const isEquiv = aluno.equiv && aluno.equiv[codigo];
-            const isQuebra = aluno.quebras && aluno.quebras[codigo];
-            const isOpt = isOptativa(codigo);
-
-            let classe = 'discipline';
-
-            if (displayStatus === 'equiv-done') {
-                classe += ' equiv-done';
-            } else if (displayStatus === 'opt-selected') {
-                classe += ' opt-selected';
-            } else if (displayStatus === 'opt-pending') {
-                classe += ' opt-pending';
-            } else if (displayStatus === 'quebra') {
-                classe += ' quebra';
-            } else if (displayStatus === 'done') {
-                classe += ' done';
-            } else if (displayStatus === 'pending') {
-                classe += ' pending';
+        // 4.19 Alternar versão
+        function alternarVersao() {
+            const grid = document.getElementById('mainGrid');
+            const btn = document.getElementById('btnToggleVersion');
+            if (grid.classList.contains('modo-mobile')) {
+                grid.classList.remove('modo-mobile');
+                grid.classList.add('clasica', 'modo-clasica');
+                document.body.classList.remove('modo-mobile');
+                document.body.classList.add('modo-clasica');
+                btn.textContent = '📱 Mobile';
+                btn.className = 'btn-toggle-version';
             } else {
-                classe += ' not-started';
+                grid.classList.remove('clasica', 'modo-clasica');
+                grid.classList.add('modo-mobile');
+                document.body.classList.remove('modo-clasica');
+                document.body.classList.add('modo-mobile');
+                btn.textContent = '💻 Clássica';
+                btn.className = 'btn-toggle-version mobile';
             }
-
-            const prereqCheck = verificarPreRequisitos(alunoId, codigo);
-            if (prereqCheck.status === 'none') {
-                classe += ' prereq-none';
-            } else if (prereqCheck.status === 'ok') {
-                classe += ' prereq-ok';
-            } else if (prereqCheck.status === 'pending') {
-                classe += ' prereq-pending';
-            } else if (prereqCheck.status === 'blocked') {
-                classe += ' prereq-blocked blocked';
-            } else if (prereqCheck.status === 'quebra') {
-                classe += ' prereq-quebra';
+            if (state.alunoAtivoId && state.alunos[state.alunoAtivoId]) {
+                renderFluxograma(state.alunoAtivoId);
             }
-
-            let badge = '';
-            if (isEquiv) {
-                const equivInfo = aluno.equiv[codigo];
-                badge += `<span class="equiv-badge">🔗 Equiv.</span>`;
-                if (equivInfo) {
-                    badge += ` <span class="prereq-badge" title="Cursado via: ${equivInfo.via}">via ${equivInfo.via}</span>`;
-                }
-            }
-            if (isQuebra) {
-                badge += ` <span class="quebra-badge">🔓 QUEBRA</span>`;
-            }
-            if (isOpt && !isEquiv) {
-                badge += ` <span class="opt-badge">📌 Opt.</span>`;
-            }
-
-            const prereqs = getPreRequisitos(codigo);
-            if (prereqs.length > 0 && !isEquiv && prereqCheck.status !== 'quebra') {
-                const totalPre = prereqs.length;
-                const feitos = prereqs.filter(p => (aluno.progresso[p] || 'not-started') === 'done').length;
-                badge += `<span class="prereq-badge">${feitos}/${totalPre} pré-req</span>`;
-            }
-
-            let tooltip = '';
-            if (prereqs.length > 0 && !isEquiv) {
-                const lista = prereqs.map(c => {
-                    const s = aluno.progresso[c] || 'not-started';
-                    const emoji = s === 'done' ? '✅' : s === 'pending' ? '🟡' : '❌';
-                    return `${c} ${emoji}`;
-                }).join(', ');
-                tooltip = `title="Pré-requisitos: ${lista}"`;
-            }
-            if (isEquiv) {
-                const equivInfo = aluno.equiv[codigo];
-                if (equivInfo) {
-                    tooltip = `title="🔗 Equivalência: cursou através de ${equivInfo.via}"`;
-                }
-            }
-
-            const isBlocked = prereqCheck.status === 'blocked';
-            const onClick = isBlocked ? `onclick="abrirModalQuebra('${alunoId}','${codigo}')"` :
-                `onclick="toggleDiscipline('${alunoId}','${codigo}')"`;
-            const finalOnClick = isEquiv ?
-                `style="cursor:default;" onclick="showToast('⚠️ Disciplina cursada por equivalência', 'info')"` :
-                onClick;
-
-            const nomeDisplay = getNomeDisciplina(codigo) || codigo;
-
-            return `
-                    <button class="${classe}" ${tooltip} ${finalOnClick}>
-                        <span class="code">${codigo}</span> ${nomeDisplay}
-                        <span class="hours">${disc.horas || '68h'}</span>
-                        ${badge}
-                    </button>
-                `;
+            showToast(`📱 Versão ${grid.classList.contains('modo-mobile') ? 'Mobile' : 'Clássica'} ativada!`, 'info');
         }
 
-        function renderOptativa(alunoId, disc) {
-            const aluno = alunos[alunoId];
-            const optCodigo = disc.codigo;
-            const optSelecionada = aluno.optativas[optCodigo] || null;
-            let status = 'not-started';
-            let displayName = disc.codigo;
-            let badge = '';
-            let classe = 'discipline';
-
-            if (optSelecionada) {
-                const optativas = getOptativasDisponiveis();
-                const optInfo = optativas.find(o => o.codigo === optSelecionada);
-                const optStatus = aluno.progresso[optSelecionada] || 'not-started';
-                const isEquiv = aluno.equiv && aluno.equiv[optSelecionada];
-                const isQuebra = aluno.quebras && aluno.quebras[optSelecionada];
-
-                if (isEquiv && optStatus === 'done') {
-                    status = 'equiv-done';
-                    badge = `<span class="equiv-badge">🔗 Equiv.</span>`;
-                } else if (isQuebra) {
-                    status = 'quebra';
-                    badge = `<span class="quebra-badge">🔓 QUEBRA</span>`;
-                } else if (optStatus === 'done') {
-                    status = 'opt-selected';
-                    badge = `<span class="opt-badge">📌 Opt.</span>`;
-                } else if (optStatus === 'pending') {
-                    status = 'opt-pending';
-                    badge = `<span class="opt-badge">📌 Opt.</span>`;
-                } else {
-                    status = 'opt-selected';
-                    badge = `<span class="opt-badge">📌 Opt.</span>`;
-                }
-
-                if (status === 'equiv-done') {
-                    badge = `<span class="equiv-badge">🔗 Equiv.</span>`;
-                    const equivInfo = aluno.equiv[optSelecionada];
-                    if (equivInfo) {
-                        badge += ` <span class="prereq-badge">via ${equivInfo.via}</span>`;
-                    }
-                }
-
-                displayName = `${optSelecionada} - ${optInfo ? optInfo.nome : 'Optativa'}`;
-            } else {
-                displayName = 'Optativa (selecionar)';
-                status = 'not-started';
-            }
-
-            if (status === 'equiv-done') {
-                classe += ' equiv-done';
-            } else if (status === 'opt-selected') {
-                classe += ' opt-selected';
-            } else if (status === 'opt-pending') {
-                classe += ' opt-pending';
-            } else if (status === 'quebra') {
-                classe += ' quebra';
-            } else if (status === 'done') {
-                classe += ' done';
-            } else if (status === 'pending') {
-                classe += ' pending';
-            } else {
-                classe += ' not-started';
-            }
-
-            return `
-                    <button class="${classe}" onclick="toggleDiscipline('${alunoId}','${optCodigo}')">
-                        <span class="code">${optCodigo}</span> ${displayName}
-                        <span class="hours">${disc.horas}</span>
-                        ${badge}
-                    </button>
-                `;
+        // 4.20 Toast
+        function showToast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = `toast ${type} show`;
+            clearTimeout(toastTimeout);
+            el.onclick = function() { el.classList.remove('show');
+                clearTimeout(toastTimeout); };
+            toastTimeout = setTimeout(() => el.classList.remove('show'), 4000);
         }
 
-        // ============================================================
-        // ===== BUG #10 CORRIGIDO: Contagem de disciplinas =====
-        // ============================================================
-        function getTotalDisciplinas(alunoId) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return 0;
-            let count = 0;
-            const curriculo = getCurriculo();
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (disc.isOptativa) {
-                        count++;
-                    } else {
-                        count++;
-                    }
-                }
-            }
-            const extras = getDisciplinasExtras(alunoId);
-            count += extras.length;
-            return count;
+        let toastTimeout;
+
+        // 4.21 Salvar dados
+        function saveData() {
+            localStorage.setItem('gerenciador_bmat_bcet_status', JSON.stringify({
+                alunos: state.alunos,
+                nextId: state.nextId,
+                cursoAtivo: state.cursoAtivo
+            }));
         }
 
-        function countStatus(alunoId, status) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return 0;
-            let count = 0;
-            const curriculo = getCurriculo();
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (disc.isOptativa) {
-                        const optCod = aluno.optativas[disc.codigo];
-                        if (optCod && (aluno.progresso[optCod] || 'not-started') === status) count++;
-                        else if (!optCod && status === 'not-started') count++;
-                    } else {
-                        const isEquiv = aluno.equiv && aluno.equiv[disc.codigo];
-                        if (isEquiv && status === 'done') {
-                            count++;
-                        } else if ((aluno.progresso[disc.codigo] || 'not-started') === status) {
-                            count++;
+        // 4.22 Exportar dados
+        function exportAllData() {
+            const data = {
+                alunos: state.alunos,
+                nextId: state.nextId,
+                cursoAtivo: state.cursoAtivo,
+                exportado: new Date().toISOString()
+            };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alunos_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('📤 Dados exportados!', 'success');
+        }
+
+        // 4.23 Importar dados
+        function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.alunos && typeof data.alunos === 'object') {
+                        state.alunos = data.alunos;
+                        state.nextId = data.nextId || 1;
+                        if (data.cursoAtivo) state.cursoAtivo = data.cursoAtivo;
+                        for (const id in state.alunos) {
+                            if (!state.alunos[id].progresso) state.alunos[id].progresso = {};
+                            if (!state.alunos[id].optativas) state.alunos[id].optativas = {};
+                            if (!state.alunos[id].quebras) state.alunos[id].quebras = {};
+                            if (!state.alunos[id].equiv) state.alunos[id].equiv = {};
+                            if (!state.alunos[id].historico_completo) state.alunos[id].historico_completo = {};
+                            if (!state.alunos[id].historico_optativas) state.alunos[id].historico_optativas = {};
+                            if (!state.alunos[id].curso) state.alunos[id].curso = 'bmat';
                         }
+                        document.getElementById('cursoBMAT').className = state.cursoAtivo === 'bmat' ? 'active' : '';
+                        document.getElementById('cursoBCET').className = state.cursoAtivo === 'bcet' ? 'active' : '';
+                        const keys = Object.keys(state.alunos);
+                        state.alunoAtivoId = keys.length > 0 ? keys[0] : null;
+                        renderAlunoList();
+                        if (state.alunoAtivoId) renderFluxograma(state.alunoAtivoId);
+                        updateAlunoCount();
+                        saveData();
+                        showToast(`📥 Importados ${keys.length} alunos!`, 'success');
+                    } else {
+                        showToast('❌ Formato inválido.', 'error');
                     }
+                } catch (err) {
+                    showToast('❌ Erro ao importar: ' + err.message, 'error');
                 }
-            }
-            const extras = getDisciplinasExtras(alunoId);
-            for (const extra of extras) {
-                if ((aluno.progresso[extra.codigo] || 'not-started') === status) count++;
-            }
-            return count;
+            };
+            reader.readAsText(file);
+            event.target.value = '';
         }
 
-        function getDisciplinasExtras(alunoId) {
-            const aluno = alunos[alunoId];
-            if (!aluno) return [];
-
-            const codigosDoCurso = new Set();
-            const curriculo = getCurriculo();
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (!disc.isOptativa) {
-                        codigosDoCurso.add(disc.codigo);
-                    }
-                }
-            }
-
-            const extras = [];
-            for (const codigo in aluno.progresso) {
-                if (codigo.startsWith('OPT')) continue;
-                if (codigo.startsWith('OPT_BCET')) continue;
-                if (codigosDoCurso.has(codigo)) continue;
-                if (isOptativa(codigo)) continue;
-                if (aluno.equiv && aluno.equiv[codigo]) continue;
-                if (!aluno.progresso[codigo] || aluno.progresso[codigo] === 'not-started') continue;
-
-                extras.push({
-                    codigo: codigo,
-                    ch: '68h'
-                });
-            }
-
-            return extras;
+        // 4.24 Limpar todos os dados
+        function clearAllData() {
+            if (!confirm('⚠️ Tem certeza que deseja apagar TODOS os dados?')) return;
+            state.alunos = {};
+            state.nextId = 1;
+            state.alunoAtivoId = null;
+            renderAlunoList();
+            document.getElementById('fluxogramaContent').innerHTML =
+                `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
+            updateAlunoCount();
+            saveData();
+            showToast('🗑️ Todos os dados foram removidos.', 'info');
         }
 
-        // ============================================================
-        // GERAR PDF
-        // ============================================================
+        // 4.25 Gerar PDF
         function gerarPDFVisual() {
-            if (!alunoAtivoId || !alunos[alunoAtivoId]) {
+            if (!state.alunoAtivoId || !state.alunos[state.alunoAtivoId]) {
                 showToast('❌ Selecione um aluno primeiro!', 'error');
                 return;
             }
 
-            const aluno = alunos[alunoAtivoId];
-            const total = getTotalDisciplinas(alunoAtivoId);
-            const done = countStatus(alunoAtivoId, 'done');
-            const pending = countStatus(alunoAtivoId, 'pending');
-            const pct = total > 0 ? Math.round((done / total) * 100) : 0;
+            const aluno = state.alunos[state.alunoAtivoId];
+            const curso = aluno.curso || 'bmat';
+            const curriculo = getCurriculo(curso);
+            const progresso = calcularProgresso(curriculo, aluno.progresso, aluno.optativas);
+            const cursoLabel = curso === 'bcet' ? 'BCET - Itinerário Matemática (PPC 2025)' : 'BMAT (PPC 2013)';
 
             let semestresHtml = '';
-            const curriculo = getCurriculo();
             for (const semestre of curriculo) {
                 let discHtml = '';
                 for (const disc of semestre.disciplinas) {
@@ -3334,11 +2893,11 @@
                     if (disc.isOptativa) {
                         const optCod = aluno.optativas[codigo];
                         if (optCod) {
-                            const optativas = getOptativasDisponiveis();
-                            const optInfo = optativas.find(o => o.codigo === optCod);
+                            const todasOptativas = getTodasOptativas();
+                            const optInfo = todasOptativas.find(o => o.codigo === optCod);
                             codigo = optCod;
                             nome = optInfo ? optInfo.nome : 'Optativa';
-                            const optStatus = aluno.progresso[optCod] || 'not-started';
+                            const optStatus = aluno.progresso[optCod]?.status || 'not-started';
                             if (aluno.equiv && aluno.equiv[optCod]) {
                                 statusClass = 'equiv-done';
                                 badgeHtml = `<span class="badge equiv">🔗 Equiv.</span>`;
@@ -3353,19 +2912,18 @@
                             statusClass = 'not-started';
                         }
                     } else {
-                        const displayStatus = getStatusDisplay(codigo, aluno);
-                        if (displayStatus === 'equiv-done') {
+                        const status = aluno.progresso[codigo]?.status || 'not-started';
+                        const isEquiv = aluno.equiv && aluno.equiv[codigo];
+                        const isQuebra = aluno.quebras && aluno.quebras[codigo];
+                        if (isEquiv && status === 'done') {
                             statusClass = 'equiv-done';
                             badgeHtml = `<span class="badge equiv">🔗 Equiv.</span>`;
-                        } else if (displayStatus === 'opt-selected') {
-                            statusClass = 'opt-selected';
-                            badgeHtml = `<span class="badge opt">📌 Opt.</span>`;
-                        } else if (displayStatus === 'quebra') {
+                        } else if (isQuebra) {
                             statusClass = 'quebra';
                             badgeHtml = `<span class="badge quebra">🔓 Quebra</span>`;
-                        } else if (displayStatus === 'done') {
+                        } else if (status === 'done') {
                             statusClass = 'done';
-                        } else if (displayStatus === 'pending') {
+                        } else if (status === 'pending') {
                             statusClass = 'pending';
                         } else {
                             statusClass = 'not-started';
@@ -3390,7 +2948,8 @@
                     `;
             }
 
-            const extras = getDisciplinasExtras(alunoAtivoId);
+            // Disciplinas extras no PDF
+            const extras = getDisciplinasExtras(state.alunoAtivoId);
             let extrasHtml = '';
             if (extras.length > 0) {
                 extrasHtml = `
@@ -3398,7 +2957,7 @@
                             <div class="title">📋 Disciplinas Extras</div>
                             <div class="list">
                                 ${extras.map(d => {
-                                    const status = getStatusDisplay(d.codigo, aluno);
+                                    const status = aluno.progresso[d.codigo]?.status || 'not-started';
                                     let statusClass = status === 'done' ? 'done' : 'not-started';
                                     if (aluno.equiv && aluno.equiv[d.codigo]) statusClass = 'equiv-done';
                                     if (aluno.quebras && aluno.quebras[d.codigo]) statusClass = 'quebra';
@@ -3415,8 +2974,6 @@
                     `;
             }
 
-            const cursoLabel = aluno.curso === 'bcet' ? 'BCET - Itinerário Matemática (PPC 2025)' : 'BMAT (PPC 2013)';
-
             const pdfHtml = `
                     <div style="padding:15px;background:white;font-family:'Segoe UI',Arial,sans-serif;max-width:1100px;margin:0 auto;font-size:11px;">
                         <div style="text-align:center;border-bottom:2px solid #1a237e;padding-bottom:8px;margin-bottom:8px;">
@@ -3432,10 +2989,10 @@
                         </div>
 
                         <div style="display:flex;justify-content:center;gap:20px;margin:6px 0 8px 0;flex-wrap:wrap;font-size:11px;">
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${done}</span><br><span style="color:#666;">✅ Cursadas</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${pending}</span><br><span style="color:#666;">🟡 Cursando</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${total}</span><br><span style="color:#666;">📚 Total</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${pct}%</span><br><span style="color:#666;">📊 Progresso</span></div>
+                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.done}</span><br><span style="color:#666;">✅ Cursadas</span></div>
+                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.pending}</span><br><span style="color:#666;">🟡 Cursando</span></div>
+                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.total}</span><br><span style="color:#666;">📚 Total</span></div>
+                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.pct}%</span><br><span style="color:#666;">📊 Progresso</span></div>
                         </div>
 
                         <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;padding:4px 8px;background:#f8f9fa;border-radius:6px;font-size:10px;">
@@ -3473,7 +3030,6 @@
                     allowTaint: false
                 }).then(canvas => {
                     const imgData = canvas.toDataURL('image/jpeg', 0.7);
-
                     const { jsPDF } = window.jspdf;
                     const pdf = new jsPDF({
                         orientation: 'landscape',
@@ -3485,22 +3041,16 @@
 
                     const pdfWidth = pdf.internal.pageSize.getWidth();
                     const pdfHeight = pdf.internal.pageSize.getHeight();
-
                     const imgWidth = canvas.width;
                     const imgHeight = canvas.height;
                     const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-
                     const finalWidth = imgWidth * ratio;
                     const finalHeight = imgHeight * ratio;
-
                     const x = (pdfWidth - finalWidth) / 2;
                     const y = (pdfHeight - finalHeight) / 2;
 
                     pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-                    pdf.save(
-                        `relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`
-                    );
-
+                    pdf.save(`relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
                     showToast('📄 PDF gerado com sucesso!', 'success');
                 }).catch(err => {
                     console.error('Erro ao capturar:', err);
@@ -3510,341 +3060,60 @@
         }
 
         // ============================================================
-        // ALUNOS - CRUD
+        // 5. INICIALIZAÇÃO
         // ============================================================
-        function addAlunoCompleto() {
-            const nomeInput = document.getElementById('newAlunoNome');
-            const matriculaInput = document.getElementById('newAlunoMatricula');
-            const nome = nomeInput.value.trim();
-            const matricula = matriculaInput.value.trim();
 
-            if (!nome) {
-                showToast('Digite o nome do aluno!', 'error');
-                return;
-            }
-
-            const id = String(nextId++);
-            alunos[id] = {
-                nome: nome,
-                matricula: matricula || '',
-                progresso: {},
-                optativas: {},
-                quebras: {},
-                equiv: {},
-                historico_completo: {},
-                historico_optativas: {},
-                curso: cursoAtivo,
-                dadosPessoais: {}
-            };
-
-            nomeInput.value = '';
-            matriculaInput.value = '';
-
-            renderAlunoList();
-            alunoAtivoId = id;
-            renderFluxograma(id);
-            updateAlunoCount();
-            saveData();
-            showToast(`✅ Aluno "${nome}" adicionado!`, 'success');
-        }
-
-        // ===== BUG #7 CORRIGIDO: Validação de duplicatas =====
-        function addMultipleAlunos() {
-            const texto = prompt('Digite os nomes dos alunos, um por linha. Para matrícula, use: Nome | Matrícula');
-            if (!texto) return;
-            const linhas = texto.split('\n').map(s => s.trim()).filter(s => s);
-            if (linhas.length === 0) {
-                showToast('Nenhum nome válido.', 'error');
-                return;
-            }
-
-            const nomesExistentes = new Set();
-            const matriculasExistentes = new Set();
-            for (const id in alunos) {
-                nomesExistentes.add(alunos[id].nome.toLowerCase().trim());
-                if (alunos[id].matricula) {
-                    matriculasExistentes.add(alunos[id].matricula);
-                }
-            }
-
-            let count = 0;
-            let ignorados = 0;
-            for (const linha of linhas) {
-                const partes = linha.split('|').map(s => s.trim());
-                const nome = partes[0];
-                const matricula = partes[1] || '';
-                if (!nome) continue;
-
-                const nomeLower = nome.toLowerCase().trim();
-                if (nomesExistentes.has(nomeLower)) {
-                    ignorados++;
-                    continue;
-                }
-                if (matricula && matriculasExistentes.has(matricula)) {
-                    ignorados++;
-                    continue;
-                }
-
-                const id = String(nextId++);
-                alunos[id] = {
-                    nome: nome,
-                    matricula: matricula,
-                    progresso: {},
-                    optativas: {},
-                    quebras: {},
-                    equiv: {},
-                    historico_completo: {},
-                    historico_optativas: {},
-                    curso: cursoAtivo,
-                    dadosPessoais: {}
-                };
-                nomesExistentes.add(nomeLower);
-                if (matricula) matriculasExistentes.add(matricula);
-                count++;
-            }
-
-            renderAlunoList();
-            updateAlunoCount();
-            saveData();
-            let msg = `✅ ${count} alunos adicionados!`;
-            if (ignorados > 0) msg += ` ⚠️ ${ignorados} duplicatas ignoradas.`;
-            showToast(msg, 'success');
-        }
-
-        function selectAluno(id) {
-            alunoAtivoId = id;
-            renderAlunoList();
-            renderFluxograma(id);
-        }
-
-        function deleteAluno(id) {
-            if (!confirm(`Remover aluno "${alunos[id].nome}"?`)) return;
-            delete alunos[id];
-            if (alunoAtivoId === id) {
-                const keys = Object.keys(alunos);
-                alunoAtivoId = keys.length > 0 ? keys[0] : null;
-            }
-            renderAlunoList();
-            if (alunoAtivoId) {
-                renderFluxograma(alunoAtivoId);
-            } else {
-                document.getElementById('fluxogramaContent').innerHTML =
-                    `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
-            }
-            updateAlunoCount();
-            saveData();
-            showToast('🗑️ Aluno removido.', 'info');
-        }
-
-        function renderAlunoList() {
-            const container = document.getElementById('alunoList');
-            const keys = Object.keys(alunos);
-            if (keys.length === 0) {
-                container.innerHTML = '<div style="padding:16px;text-align:center;color:#999;">Nenhum aluno cadastrado</div>';
-                return;
-            }
-            container.innerHTML = '';
-            for (const id of keys) {
-                const aluno = alunos[id];
-                const total = getTotalDisciplinas(id);
-                const done = countStatus(id, 'done');
-                const pct = total > 0 ? Math.round((done / total) * 100) : 0;
-
-                const div = document.createElement('div');
-                div.className = `aluno-item ${id === alunoAtivoId ? 'active' : ''}`;
-                const matriculaStr = aluno.matricula ? ` (${aluno.matricula})` : '';
-                const cursoStr = aluno.curso === 'bcet' ? ' 📘' : ' 📐';
-                div.innerHTML = `
-                        <span class="aluno-name">${aluno.nome}${matriculaStr}${cursoStr}</span>
-                        <span class="aluno-progress">${done}/${total} (${pct}%)</span>
-                        <div class="aluno-actions">
-                            <button onclick="event.stopPropagation();deleteAluno('${id}')" class="btn-del" title="Remover" aria-label="Remover aluno">✕</button>
-                        </div>
-                    `;
-                div.onclick = () => selectAluno(id);
-                container.appendChild(div);
-            }
-        }
-
-        function updateAlunoCount() {
-            document.getElementById('alunoCount').textContent = Object.keys(alunos).length;
-        }
-
-        // ============================================================
-        // EXPORT / IMPORT
-        // ============================================================
-        function exportAllData() {
-            const data = { alunos, nextId, cursoAtivo, exportado: new Date().toISOString() };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `alunos_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('📤 Dados exportados!', 'success');
-        }
-
-        function importAllData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.alunos && typeof data.alunos === 'object') {
-                        alunos = data.alunos;
-                        nextId = data.nextId || 1;
-                        if (data.cursoAtivo) cursoAtivo = data.cursoAtivo;
-                        for (const id in alunos) {
-                            if (!alunos[id].progresso) alunos[id].progresso = {};
-                            if (!alunos[id].optativas) alunos[id].optativas = {};
-                            if (!alunos[id].quebras) alunos[id].quebras = {};
-                            if (!alunos[id].equiv) alunos[id].equiv = {};
-                            if (!alunos[id].historico_completo) alunos[id].historico_completo = {};
-                            if (!alunos[id].historico_optativas) alunos[id].historico_optativas = {};
-                            if (!alunos[id].curso) alunos[id].curso = 'bmat';
-                        }
-                        document.getElementById('cursoBMAT').className = cursoAtivo === 'bmat' ? 'active' : '';
-                        document.getElementById('cursoBCET').className = cursoAtivo === 'bcet' ? 'active' : '';
-                        const keys = Object.keys(alunos);
-                        alunoAtivoId = keys.length > 0 ? keys[0] : null;
-                        renderAlunoList();
-                        if (alunoAtivoId) renderFluxograma(alunoAtivoId);
-                        updateAlunoCount();
-                        saveData();
-                        showToast(`📥 Importados ${keys.length} alunos!`, 'success');
-                    } else {
-                        showToast('❌ Formato inválido.', 'error');
-                    }
-                } catch (err) {
-                    showToast('❌ Erro ao importar: ' + err.message, 'error');
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        function clearAllData() {
-            if (!confirm('⚠️ Tem certeza que deseja apagar TODOS os dados?')) return;
-            alunos = {};
-            nextId = 1;
-            alunoAtivoId = null;
-            renderAlunoList();
-            document.getElementById('fluxogramaContent').innerHTML =
-                `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
-            updateAlunoCount();
-            saveData();
-            showToast('🗑️ Todos os dados foram removidos.', 'info');
-        }
-
-        // ============================================================
-        // VERSÃO
-        // ============================================================
-        function alternarVersao() {
-            versaoAtual = versaoAtual === 'mobile' ? 'clasica' : 'mobile';
-            const grid = document.getElementById('mainGrid');
-            const btn = document.getElementById('btnToggleVersion');
-            if (versaoAtual === 'mobile') {
-                grid.classList.remove('clasica');
-                grid.classList.add('modo-mobile');
-                document.body.classList.add('modo-mobile');
-                document.body.classList.remove('modo-clasica');
-                btn.textContent = '💻 Clássica';
-                btn.className = 'btn-toggle-version mobile';
-            } else {
-                grid.classList.add('clasica');
-                grid.classList.add('modo-clasica');
-                document.body.classList.add('modo-clasica');
-                document.body.classList.remove('modo-mobile');
-                btn.textContent = '📱 Mobile';
-                btn.className = 'btn-toggle-version';
-            }
-            if (alunoAtivoId && alunos[alunoAtivoId]) {
-                renderFluxograma(alunoAtivoId);
-            }
-            showToast(`📱 Versão ${versaoAtual === 'mobile' ? 'Mobile' : 'Clássica'} ativada!`, 'info');
-        }
-
-        // ============================================================
-        // SAVE / TOAST
-        // ===== BUG #6 CORRIGIDO: Toast fecha ao clicar =====
-        // ============================================================
-        function saveData() {
-            localStorage.setItem('gerenciador_bmat_bcet_status', JSON.stringify({ alunos, nextId, cursoAtivo }));
-        }
-
-        let toastTimeout;
-
-        function showToast(msg, type = 'info') {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.className = `toast ${type} show`;
-            clearTimeout(toastTimeout);
-
-            el.onclick = function() {
-                el.classList.remove('show');
-                clearTimeout(toastTimeout);
-            };
-
-            toastTimeout = setTimeout(() => el.classList.remove('show'), 4000);
-        }
-
-        // ============================================================
-        // INICIAR
-        // ============================================================
         document.addEventListener('DOMContentLoaded', function() {
             const saved = localStorage.getItem('gerenciador_bmat_bcet_status');
             if (saved) {
                 try {
                     const data = JSON.parse(saved);
-                    alunos = data.alunos || {};
-                    nextId = data.nextId || 1;
-                    cursoAtivo = data.cursoAtivo || 'bmat';
-                    for (const id in alunos) {
-                        if (!alunos[id].progresso) alunos[id].progresso = {};
-                        if (!alunos[id].optativas) alunos[id].optativas = {};
-                        if (!alunos[id].quebras) alunos[id].quebras = {};
-                        if (!alunos[id].equiv) alunos[id].equiv = {};
-                        if (!alunos[id].historico_completo) alunos[id].historico_completo = {};
-                        if (!alunos[id].historico_optativas) alunos[id].historico_optativas = {};
-                        if (!alunos[id].curso) alunos[id].curso = 'bmat';
+                    state.alunos = data.alunos || {};
+                    state.nextId = data.nextId || 1;
+                    state.cursoAtivo = data.cursoAtivo || 'bmat';
+                    for (const id in state.alunos) {
+                        if (!state.alunos[id].progresso) state.alunos[id].progresso = {};
+                        if (!state.alunos[id].optativas) state.alunos[id].optativas = {};
+                        if (!state.alunos[id].quebras) state.alunos[id].quebras = {};
+                        if (!state.alunos[id].equiv) state.alunos[id].equiv = {};
+                        if (!state.alunos[id].historico_completo) state.alunos[id].historico_completo = {};
+                        if (!state.alunos[id].historico_optativas) state.alunos[id].historico_optativas = {};
+                        if (!state.alunos[id].curso) state.alunos[id].curso = 'bmat';
                     }
                 } catch (e) {
                     console.error('Erro ao carregar dados:', e);
-                    alunos = {};
-                    nextId = 1;
+                    state.alunos = {};
+                    state.nextId = 1;
                 }
             }
 
-            document.getElementById('cursoBMAT').className = cursoAtivo === 'bmat' ? 'active' : '';
-            document.getElementById('cursoBCET').className = cursoAtivo === 'bcet' ? 'active' : '';
+            document.getElementById('cursoBMAT').className = state.cursoAtivo === 'bmat' ? 'active' : '';
+            document.getElementById('cursoBCET').className = state.cursoAtivo === 'bcet' ? 'active' : '';
 
             const isMobile = window.innerWidth < 768;
-            versaoAtual = isMobile ? 'mobile' : 'clasica';
             const grid = document.getElementById('mainGrid');
             const btn = document.getElementById('btnToggleVersion');
-            if (versaoAtual === 'mobile') {
-                grid.classList.remove('clasica');
+            if (isMobile) {
+                grid.classList.remove('clasica', 'modo-clasica');
                 grid.classList.add('modo-mobile');
                 document.body.classList.add('modo-mobile');
                 document.body.classList.remove('modo-clasica');
                 btn.textContent = '💻 Clássica';
                 btn.className = 'btn-toggle-version mobile';
             } else {
-                grid.classList.add('clasica');
-                grid.classList.add('modo-clasica');
-                document.body.classList.add('modo-clasica');
+                grid.classList.remove('modo-mobile');
+                grid.classList.add('clasica', 'modo-clasica');
                 document.body.classList.remove('modo-mobile');
+                document.body.classList.add('modo-clasica');
                 btn.textContent = '📱 Mobile';
                 btn.className = 'btn-toggle-version';
             }
 
             renderAlunoList();
-            const keys = Object.keys(alunos);
+            const keys = Object.keys(state.alunos);
             if (keys.length > 0) {
-                alunoAtivoId = keys[0];
-                renderFluxograma(alunoAtivoId);
+                state.alunoAtivoId = keys[0];
+                renderFluxograma(state.alunoAtivoId);
             } else {
                 document.getElementById('fluxogramaContent').innerHTML =
                     `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
@@ -3852,6 +3121,7 @@
             updateAlunoCount();
             saveData();
 
+            // Fechar modais com Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeOptModal();
@@ -3859,6 +3129,31 @@
                 }
             });
         });
+
+        // ============================================================
+        // 6. EXPOSIÇÃO GLOBAL (para chamadas inline no HTML)
+        // ============================================================
+
+        window.addAlunoCompleto = addAlunoCompleto;
+        window.addMultipleAlunos = addMultipleAlunos;
+        window.deleteAluno = deleteAluno;
+        window.selectAluno = selectAluno;
+        window.selecionarCurso = selecionarCurso;
+        window.toggleDiscipline = toggleDiscipline;
+        window.importarHistorico = importarHistorico;
+        window.alternarVersao = alternarVersao;
+        window.exportAllData = exportAllData;
+        window.importAllData = importAllData;
+        window.clearAllData = clearAllData;
+        window.gerarPDFVisual = gerarPDFVisual;
+        window.showToast = showToast;
+        window.abrirModalQuebra = abrirModalQuebra;
+        window.confirmarQuebra = confirmarQuebra;
+        window.removerQuebra = removerQuebra;
+        window.fecharModalQuebra = fecharModalQuebra;
+        window.clearOptativa = clearOptativa;
+        window.closeOptModal = closeOptModal;
+        window.selecionarOptativa = selecionarOptativa;
     </script>
 
 </body>
