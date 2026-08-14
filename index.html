@@ -1343,9 +1343,11 @@
         let quebraContexto = null;
 
         // ============================================================
-        // OPTATIVAS ESPECÍFICAS PARA OPT1 E OPT2 DO BMAT
+        // OPTATIVAS DO BMAT
         // ============================================================
-        const OPTATIVAS_BMAT_OPT1_OPT2 = [
+
+        // OPTATIVAS PARA OPT1 (6º Semestre) - 9 optativas específicas
+        const OPTATIVAS_BMAT_OPT1 = [
             { codigo: "GCET152", nome: "Cálculo Numérico II", pre: "GCET059" },
             { codigo: "GCET153", nome: "Equações Diferenciais", pre: "Nenhum" },
             { codigo: "GCET155", nome: "Álgebra III", pre: "GCET178" },
@@ -1355,6 +1357,31 @@
             { codigo: "GCET201", nome: "Tópicos Especiais em Matemática II", pre: "Nenhum" },
             { codigo: "GCET218", nome: "Desenho Técnico", pre: "Nenhum" },
             { codigo: "GCET508", nome: "Matemática Discreta", pre: "Nenhum" }
+        ];
+
+        // OPTATIVAS PARA OPT2, OPT3, OPT4, OPT5 (7º e 8º Semestres) - 21 optativas
+        const OPTATIVAS_BMAT_OUTRAS = [
+            { codigo: "GCET152", nome: "Cálculo Numérico II", pre: "GCET059" },
+            { codigo: "GCET155", nome: "Álgebra III", pre: "GCET178" },
+            { codigo: "GCET194", nome: "Funções Analíticas", pre: "GCET147" },
+            { codigo: "GCET200", nome: "Tópicos Especiais em Matemática I", pre: "Nenhum" },
+            { codigo: "GCET201", nome: "Tópicos Especiais em Matemática II", pre: "Nenhum" },
+            { codigo: "GCET218", nome: "Desenho Técnico I", pre: "Nenhum" },
+            { codigo: "GCET665", nome: "Análise Funcional", pre: "GCET175, GCET180" },
+            { codigo: "GCET666", nome: "Geometria Não Euclidiana", pre: "GCET176" },
+            { codigo: "GCET667", nome: "História da Matemática", pre: "GCET174" },
+            { codigo: "GCET668", nome: "Introdução às Curvas Algébricas", pre: "GCET178" },
+            { codigo: "GCET669", nome: "Introdução aos Sistemas Dinâmicos", pre: "GCET148, GCET179, GCET189" },
+            { codigo: "GCET670", nome: "Matemática Financeira", pre: "Nenhum" },
+            { codigo: "GCET671", nome: "Modelagem e Simulação Matemática", pre: "GCET152" },
+            { codigo: "GCET672", nome: "Otimização de Sistemas", pre: "GCET152" },
+            { codigo: "GCET673", nome: "Teoria dos Números", pre: "GCET178" },
+            { codigo: "GCET674", nome: "Tópicos de Álgebra", pre: "GCET178" },
+            { codigo: "GCET675", nome: "Tópicos de Análise", pre: "GCET173" },
+            { codigo: "GCET676", nome: "Tópicos de Geometria", pre: "GCET177" },
+            { codigo: "GCETIMC", nome: "Introdução à Matemática Computacional", pre: "GCET174" },
+            { codigo: "GCETMD", nome: "Matemática Discreta", pre: "GCET174" },
+            { codigo: "GCF247", nome: "Língua Brasileira de Sinais - LIBRAS", pre: "Nenhum" }
         ];
 
         // ============================================================
@@ -1828,20 +1855,23 @@
             "GCET200": true,
             "GCET201": true,
             "GCET218": true,
-            "GCET508": true
+            "GCET508": true,
+            "GCET665": true,
+            "GCET666": true,
+            "GCET667": true,
+            "GCET668": true,
+            "GCET669": true,
+            "GCET670": true,
+            "GCET671": true,
+            "GCET672": true,
+            "GCET673": true,
+            "GCET674": true,
+            "GCET675": true,
+            "GCET676": true,
+            "GCETIMC": true,
+            "GCETMD": true,
+            "GCF247": true
         };
-
-        const OPTATIVAS_DISPONIVEIS_BMAT = [
-            { codigo: "GCET152", nome: "Cálculo Numérico II", pre: "GCET059" },
-            { codigo: "GCET153", nome: "Equações Diferenciais", pre: "Nenhum" },
-            { codigo: "GCET155", nome: "Álgebra III", pre: "GCET178" },
-            { codigo: "GCET184", nome: "Métodos Matemáticos", pre: "Nenhum" },
-            { codigo: "GCET194", nome: "Funções Analíticas", pre: "GCET147" },
-            { codigo: "GCET200", nome: "Tópicos Especiais em Matemática I", pre: "Nenhum" },
-            { codigo: "GCET201", nome: "Tópicos Especiais em Matemática II", pre: "Nenhum" },
-            { codigo: "GCET218", nome: "Desenho Técnico", pre: "Nenhum" },
-            { codigo: "GCET508", nome: "Matemática Discreta", pre: "Nenhum" }
-        ];
 
         // ============================================================
         // CURRÍCULO BMAT
@@ -2132,7 +2162,7 @@
         }
 
         function getOptativasDisponiveis() {
-            return cursoAtivo === 'bmat' ? OPTATIVAS_DISPONIVEIS_BMAT : OPTATIVAS_BCET;
+            return cursoAtivo === 'bmat' ? OPTATIVAS_BMAT_OUTRAS : OPTATIVAS_BCET;
         }
 
         function getCurriculo() {
@@ -2838,7 +2868,7 @@
         }
 
         // ============================================================
-        // MODAL DE OPTATIVAS - CORRIGIDO (com lista específica para OPT1/OPT2)
+        // MODAL DE OPTATIVAS - CORRIGIDO (com listas específicas para OPT1/OPT2)
         // ============================================================
         function abrirModalOptativa(alunoId, optCodigo) {
             const aluno = alunos[alunoId];
@@ -2859,10 +2889,15 @@
 
             // 🔧 Define quais optativas mostrar baseado no slot
             let optativasDisponiveis;
-            if (cursoAtivo === 'bmat' && (optCodigo === 'OPT1' || optCodigo === 'OPT2')) {
-                // Apenas 9 optativas para OPT1 e OPT2 do BMAT
-                optativasDisponiveis = OPTATIVAS_BMAT_OPT1_OPT2;
+            if (cursoAtivo === 'bmat' && optCodigo === 'OPT1') {
+                // OPT1 (6º Semestre) - 9 optativas específicas
+                optativasDisponiveis = OPTATIVAS_BMAT_OPT1;
+            } else if (cursoAtivo === 'bmat' && (optCodigo === 'OPT2' || optCodigo === 'OPT3' || optCodigo === 'OPT4' ||
+                    optCodigo === 'OPT5')) {
+                // OPT2, OPT3, OPT4, OPT5 (7º e 8º Semestres) - 21 optativas
+                optativasDisponiveis = OPTATIVAS_BMAT_OUTRAS;
             } else {
+                // BCET ou outros casos
                 optativasDisponiveis = getOptativasDisponiveis();
             }
 
