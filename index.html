@@ -1,24 +1,3 @@
-Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigidos:
-
----
-
-📋 LISTA DE CORREÇÕES APLICADAS
-
-# Bug Correção
-1 isOptativa dependia de alunoAtivoId Verifica primeiro no mapa global, depois no aluno
-2 Disciplinas duplicadas na importação Adicionado Set para rastrear disciplinas processadas
-3 Parser não reconhecia caracteres especiais Regex aprimorada com \s\'\-
-4 Optativas perdidas ao alternar curso Verifica no historico_completo antes de isOptativa
-5 Múltiplas situações no mesmo semestre Agrupamento melhorado com verificação de status
-6 Toast não fechava ao clicar Adicionado onclick para fechar
-7 Duplicatas na adição múltipla Validação de nomes existentes
-8 Legenda do PDF incompleta Adicionados todos os status
-9 Extras sem verificação de pré-requisito Adicionada verificação com verificarPreRequisitos
-10 Contagem de optativas pendentes Slots de optativa sempre contados
-
----
-
-```html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -1384,6 +1363,50 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         ];
 
         // ============================================================
+        // OPTATIVAS DO BCET - PPC 2025
+        // ============================================================
+        const OPTATIVAS_BCET = [
+            { codigo: "GCET1055", nome: "Biomatemática", pre: "GCET993" },
+            { codigo: "GCET1056", nome: "Geometria Espacial", pre: "GCET1050" },
+            { codigo: "GCET1057", nome: "Geometria Não Euclidiana", pre: "GCET1050, GCET1044" },
+            { codigo: "GCET1058", nome: "História da Matemática", pre: "GCET987, GCET1050" },
+            { codigo: "GCET1059", nome: "Matemática Financeira", pre: "GCET987" },
+            { codigo: "GCET1060", nome: "Programação Linear", pre: "GCET991" },
+            { codigo: "GCET1061", nome: "Tópicos Especiais de Matemática I", pre: "Nenhum" },
+            { codigo: "GCET1062", nome: "Tópicos Especiais de Matemática II", pre: "Nenhum" },
+            { codigo: "GCET1063", nome: "Fundamentos de Lógica e Teoria dos Conjuntos", pre: "Nenhum" },
+            { codigo: "GCF247", nome: "Libras", pre: "Nenhum" }
+        ];
+
+        // ============================================================
+        // ===== BUG #13 CORRIGIDO: Tabela de equivalências baseada no PPC =====
+        // ============================================================
+        // Optativas BMAT → Optativas BCET (PPC p. 211-214)
+        const OPTATIVAS_BMAT_PARA_BCET = {
+            "GCET200": "GCET1061",  // Tópicos Especiais de Matemática I
+            "GCET201": "GCET1062",  // Tópicos Especiais de Matemática II
+            "GCET218": "GCET1064",  // Desenho Técnico e Expressão Gráfica I
+            "GCET673": "GCET1045",  // Teoria dos Números
+            "GCET666": "GCET1057",  // Geometria Não Euclidiana
+            "GCET667": "GCET1058",  // História da Matemática
+            "GCET670": "GCET1059",  // Matemática Financeira
+        };
+
+        // Optativas BMAT → Obrigatórias BCET (PPC p. 211-214)
+        const OPTATIVAS_BMAT_PARA_OBRIGATORIAS_BCET = {
+            "GCET152": "GCET994",   // Cálculo Numérico (obrigatória)
+            "GCET155": "GCET1044",  // Álgebra Linear II (obrigatória)
+            "GCET194": "GCET1054",  // Funções de Uma Variável Complexa I (obrigatória)
+        };
+
+        // Optativas BMAT sem equivalência no BCET
+        const OPTATIVAS_BMAT_SEM_EQUIVALENCIA = [
+            "GCET508", "GCET665", "GCET668", "GCET669",
+            "GCET671", "GCET672", "GCET674", "GCET675",
+            "GCET676", "GCETIMC", "GCETMD"
+        ];
+
+        // ============================================================
         // DADOS DO CURRÍCULO BMAT (PPC 2013)
         // ============================================================
 
@@ -1841,19 +1864,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             "GCF247": "Libras"
         };
 
-        const OPTATIVAS_BCET = [
-            { codigo: "GCET1055", nome: "Biomatemática", pre: "GCET993" },
-            { codigo: "GCET1056", nome: "Geometria Espacial", pre: "GCET1050" },
-            { codigo: "GCET1057", nome: "Geometria Não Euclidiana", pre: "GCET1050, GCET1044" },
-            { codigo: "GCET1058", nome: "História da Matemática", pre: "GCET987, GCET1050" },
-            { codigo: "GCET1059", nome: "Matemática Financeira", pre: "GCET987" },
-            { codigo: "GCET1060", nome: "Programação Linear", pre: "GCET991" },
-            { codigo: "GCET1061", nome: "Tópicos Especiais de Matemática I", pre: "Nenhum" },
-            { codigo: "GCET1062", nome: "Tópicos Especiais de Matemática II", pre: "Nenhum" },
-            { codigo: "GCET1063", nome: "Fundamentos de Lógica e Teoria dos Conjuntos", pre: "Nenhum" },
-            { codigo: "GCF247", nome: "Libras", pre: "Nenhum" }
-        ];
-
         const CURRICULO_BCET = [{
             nome: "1º Semestre",
             cls: "s1",
@@ -1966,33 +1976,20 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         }
 
         // ============================================================
-        // ===== BUG #1 CORRIGIDO: isOptativa não depende mais de alunoAtivoId =====
+        // ===== BUG #1 CORRIGIDO: isOptativa =====
         // ============================================================
         function isOptativa(codigoHistorico) {
             if (!codigoHistorico) return false;
 
-            let codigoBase = codigoHistorico.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
-
-            if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
-                codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
-            }
-
-            const mapeamento = getMapeamentoCodigos();
-            if (mapeamento[codigoBase]) {
-                codigoBase = mapeamento[codigoBase];
-            }
+            let codigoBase = normalizarCodigo(codigoHistorico);
 
             if (cursoAtivo === 'bmat') {
                 const optativas = getOptativasInternas();
-                // 1. VERIFICA NO MAPA GLOBAL
                 if (optativas[codigoBase]) return true;
-                // 2. VERIFICA NO ALUNO (se existir)
                 if (alunoAtivoId && alunos[alunoAtivoId]) {
                     const aluno = alunos[alunoAtivoId];
                     for (const slot in aluno.optativas) {
-                        if (aluno.optativas[slot] === codigoBase) {
-                            return true;
-                        }
+                        if (aluno.optativas[slot] === codigoBase) return true;
                     }
                 }
                 return false;
@@ -2010,16 +2007,84 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         }
 
         // ============================================================
+        // ===== BUG #11 CORRIGIDO: isOptativaGlobal =====
+        // ============================================================
+        function isOptativaGlobal(codigo) {
+            if (!codigo) return false;
+            const codigoBase = normalizarCodigo(codigo);
+
+            // 1. Verifica nas optativas do BMAT
+            if (OPTATIVAS_INTERNAS_BMAT[codigoBase]) return true;
+
+            // 2. Verifica nas optativas do BCET
+            for (const opt of OPTATIVAS_BCET) {
+                if (opt.codigo === codigoBase) return true;
+            }
+
+            // 3. Verifica se tem equivalência para optativa do BCET
+            const equivalencia = OPTATIVAS_BMAT_PARA_BCET[codigoBase];
+            if (equivalencia) {
+                for (const opt of OPTATIVAS_BCET) {
+                    if (opt.codigo === equivalencia) return true;
+                }
+            }
+
+            return false;
+        }
+
+        // ============================================================
+        // ===== BUG #13 CORRIGIDO: getEquivalenciaOptativa =====
+        // ============================================================
+        function getEquivalenciaOptativa(codigo) {
+            const codigoBase = normalizarCodigo(codigo);
+
+            // Verifica se é optativa BMAT → optativa BCET
+            if (OPTATIVAS_BMAT_PARA_BCET[codigoBase]) {
+                return {
+                    equivalente: OPTATIVAS_BMAT_PARA_BCET[codigoBase],
+                    tipo: 'optativa_para_optativa'
+                };
+            }
+
+            // Verifica se é optativa BMAT → obrigatória BCET
+            if (OPTATIVAS_BMAT_PARA_OBRIGATORIAS_BCET[codigoBase]) {
+                return {
+                    equivalente: OPTATIVAS_BMAT_PARA_OBRIGATORIAS_BCET[codigoBase],
+                    tipo: 'optativa_para_obrigatoria'
+                };
+            }
+
+            // Verifica se é optativa BCET → optativa BMAT (inverso)
+            for (const [bmat, bcet] of Object.entries(OPTATIVAS_BMAT_PARA_BCET)) {
+                if (bcet === codigoBase) {
+                    return {
+                        equivalente: bmat,
+                        tipo: 'optativa_para_optativa_inverso'
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        // ============================================================
+        // FUNÇÃO normalizarCodigo
+        // ============================================================
+        function normalizarCodigo(codigo) {
+            let codigoBase = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
+            if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
+                codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
+            }
+            return codigoBase;
+        }
+
+        // ============================================================
         // FUNÇÃO disciplinaExisteNoCurriculo
         // ============================================================
         function disciplinaExisteNoCurriculo(codigo) {
             if (!codigo) return false;
 
-            let codigoBase = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
-
-            if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
-                codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
-            }
+            const codigoBase = normalizarCodigo(codigo);
 
             const curriculo = getCurriculo();
             for (const sem of curriculo) {
@@ -2029,7 +2094,14 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                     }
                 }
             }
-            if (isOptativa(codigoBase)) return true;
+
+            // Verifica se é optativa global
+            if (isOptativaGlobal(codigoBase)) return true;
+
+            // Verifica se tem equivalência
+            const equiv = getEquivalenciaOptativa(codigoBase);
+            if (equiv) return true;
+
             return false;
         }
 
@@ -2037,11 +2109,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         // FUNÇÃO getCargaHorariaCorreta
         // ============================================================
         function getCargaHorariaCorreta(codigo) {
-            let codigoBase = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
-
-            if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
-                codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
-            }
+            const codigoBase = normalizarCodigo(codigo);
 
             const curriculo = getCurriculo();
             for (const sem of curriculo) {
@@ -2055,8 +2123,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         }
 
         // ============================================================
-        // SELEÇÃO DE CURSO - COM PRESERVAÇÃO DE HISTÓRICO
-        // ===== BUG #4 CORRIGIDO: Optativas não são perdidas =====
+        // ===== BUG #4 CORRIGIDO: SELEÇÃO DE CURSO =====
         // ============================================================
         function selecionarCurso(curso) {
             if (!alunoAtivoId || !alunos[alunoAtivoId]) {
@@ -2069,12 +2136,8 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
 
             const aluno = alunos[alunoAtivoId];
 
-            // Inicializa histórico completo se não existir
-            if (!aluno.historico_completo) {
-                aluno.historico_completo = {};
-            }
+            if (!aluno.historico_completo) aluno.historico_completo = {};
 
-            // Salva todas as disciplinas do progresso atual no histórico completo
             for (const codigo in aluno.progresso) {
                 if (!aluno.historico_completo[codigo]) {
                     aluno.historico_completo[codigo] = {
@@ -2087,10 +2150,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                 }
             }
 
-            // Salva as optativas no histórico
-            if (!aluno.historico_optativas) {
-                aluno.historico_optativas = {};
-            }
+            if (!aluno.historico_optativas) aluno.historico_optativas = {};
             for (const slot in aluno.optativas) {
                 if (!aluno.historico_optativas[slot]) {
                     aluno.historico_optativas[slot] = {
@@ -2101,13 +2161,11 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                 }
             }
 
-            // ALTERA O CURSO
             cursoAtivo = curso;
             document.getElementById('cursoBMAT').className = curso === 'bmat' ? 'active' : '';
             document.getElementById('cursoBCET').className = curso === 'bcet' ? 'active' : '';
             aluno.curso = curso;
 
-            // RECONSTRÓI O PROGRESSO A PARTIR DO HISTÓRICO COMPLETO
             const curriculo = getCurriculo();
             const codigosDoCurso = new Set();
             const optSlotsDoCurso = new Set();
@@ -2125,18 +2183,15 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             const novoProgresso = {};
             const novasOptativas = {};
 
-            // Restaura disciplinas do currículo
             for (const codigo of codigosDoCurso) {
                 if (aluno.historico_completo[codigo]) {
                     novoProgresso[codigo] = aluno.historico_completo[codigo].status;
                 }
             }
 
-            // ===== BUG #4 CORRIGIDO: Verifica no historico_completo primeiro =====
             for (const slot of optSlotsDoCurso) {
                 if (aluno.historico_optativas && aluno.historico_optativas[slot]) {
                     const optCod = aluno.historico_optativas[slot].codigo;
-                    // Verifica se a disciplina existe no histórico completo
                     if (aluno.historico_completo && aluno.historico_completo[optCod]) {
                         novasOptativas[slot] = optCod;
                         novoProgresso[optCod] = aluno.historico_completo[optCod].status;
@@ -2292,7 +2347,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         }
 
         // ============================================================
-        // TOGGLE DISCIPLINE - COM PRESERVAÇÃO DE HISTÓRICO
+        // TOGGLE DISCIPLINE
         // ============================================================
         function toggleDiscipline(alunoId, codigo) {
             const aluno = alunos[alunoId];
@@ -2397,8 +2452,36 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         }
 
         // ============================================================
-        // MODAL DE OPTATIVAS
+        // ===== BUG #12 CORRIGIDO: MODAL DE OPTATIVAS =====
         // ============================================================
+        function getTodasOptativas() {
+            const todas = [];
+            const codigosVistos = new Set();
+
+            for (const opt of OPTATIVAS_BMAT_OPT1) {
+                if (!codigosVistos.has(opt.codigo)) {
+                    todas.push({ ...opt, origem: 'bmat', slot: 'OPT1' });
+                    codigosVistos.add(opt.codigo);
+                }
+            }
+
+            for (const opt of OPTATIVAS_BMAT_OUTRAS) {
+                if (!codigosVistos.has(opt.codigo)) {
+                    todas.push({ ...opt, origem: 'bmat', slot: 'OPT2-OPT5' });
+                    codigosVistos.add(opt.codigo);
+                }
+            }
+
+            for (const opt of OPTATIVAS_BCET) {
+                if (!codigosVistos.has(opt.codigo)) {
+                    todas.push({ ...opt, origem: 'bcet', slot: 'OPT_BCET' });
+                    codigosVistos.add(opt.codigo);
+                }
+            }
+
+            return todas;
+        }
+
         function abrirModalOptativa(alunoId, optCodigo) {
             const aluno = alunos[alunoId];
             if (!aluno) return;
@@ -2416,13 +2499,23 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             };
             const optLabel = labels[optCodigo] || 'Optativa';
 
-            let optativasDisponiveis;
-            if (cursoAtivo === 'bmat' && optCodigo === 'OPT1') {
-                optativasDisponiveis = OPTATIVAS_BMAT_OPT1;
-            } else if (cursoAtivo === 'bmat' && (optCodigo === 'OPT2' || optCodigo === 'OPT3' || optCodigo === 'OPT4' || optCodigo === 'OPT5')) {
-                optativasDisponiveis = OPTATIVAS_BMAT_OUTRAS;
+            const optativasDisponiveis = getTodasOptativas();
+
+            // Optativas válidas no curso atual
+            const optativasValidas = new Set();
+            if (cursoAtivo === 'bmat') {
+                for (const opt of OPTATIVAS_BMAT_OPT1) optativasValidas.add(opt.codigo);
+                for (const opt of OPTATIVAS_BMAT_OUTRAS) optativasValidas.add(opt.codigo);
             } else {
-                optativasDisponiveis = getOptativasDisponiveis();
+                for (const opt of OPTATIVAS_BCET) optativasValidas.add(opt.codigo);
+            }
+
+            // Optativas já alocadas em outros slots
+            const slotsOcupados = new Set();
+            for (const slot in aluno.optativas) {
+                if (slot !== optCodigo && aluno.optativas[slot]) {
+                    slotsOcupados.add(aluno.optativas[slot]);
+                }
             }
 
             document.getElementById('optModalTitle').textContent = `Selecionar ${optLabel}`;
@@ -2434,24 +2527,49 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             for (const opt of optativasDisponiveis) {
                 const div = document.createElement('div');
                 const isSelected = aluno.optativas[optCodigo] === opt.codigo;
+                const isOcupado = slotsOcupados.has(opt.codigo);
+                const isValida = optativasValidas.has(opt.codigo);
+                const isEquiv = aluno.equiv && aluno.equiv[opt.codigo];
+
                 div.className = `opt-item ${isSelected ? 'selected' : ''}`;
+
+                if (isOcupado && !isSelected) {
+                    div.style.opacity = '0.5';
+                    div.style.cursor = 'not-allowed';
+                    div.title = 'Já selecionada em outro semestre';
+                }
+
+                if (!isValida && !isSelected) {
+                    div.style.borderColor = '#ff6f00';
+                    div.style.background = '#fff3e0';
+                }
+
+                if (isEquiv && isSelected) {
+                    div.style.borderColor = '#7c4dff';
+                    div.style.background = '#ede7f6';
+                }
+
                 const preDisplay = opt.pre === 'Nenhum' ? 'Sem pré-requisito' : `Pré: ${opt.pre}`;
+                const origemLabel = opt.origem === 'bmat' ? '📐' : '📘';
+                const statusLabel = isEquiv ? ' 🔗 Equiv.' : '';
+                const invalidaLabel = !isValida && !isSelected ? ' ⚠️' : '';
+
                 div.innerHTML = `
                         <span class="opt-code">${opt.codigo}</span>
-                        ${opt.nome}
+                        ${opt.nome} ${origemLabel}
                         <span class="opt-pre">${preDisplay}</span>
                         ${isSelected ? ' ✅ Selecionada' : ''}
+                        ${statusLabel}
+                        ${invalidaLabel}
                     `;
-                div.onclick = () => selecionarOptativa(opt.codigo);
-                list.appendChild(div);
-            }
 
-            const optAtual = aluno.optativas[optCodigo];
-            if (optAtual) {
-                const statusAtual = aluno.progresso[optAtual] || 'pending';
-                const statusText = statusAtual === 'done' ? '✅ Cursada' : '🟡 Cursando';
-                document.getElementById('optModalSub').textContent =
-                    `Escolha a disciplina optativa para ${aluno.nome} (Atual: ${optAtual} - ${statusText})`;
+                if (isOcupado && !isSelected) {
+                    div.onclick = () => showToast(`⚠️ ${opt.codigo} já selecionada em outro semestre`, 'error');
+                } else {
+                    div.onclick = () => selecionarOptativa(opt.codigo);
+                }
+
+                list.appendChild(div);
             }
 
             document.getElementById('optModal').classList.add('show');
@@ -2471,6 +2589,17 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                 if (slot === optCodigo) continue;
                 if (aluno.optativas[slot] === codigo) {
                     showToast(`⚠️ A optativa ${codigo} já foi selecionada em outro semestre!`, 'error');
+                    return;
+                }
+            }
+
+            if (!isOptativaGlobal(codigo)) {
+                showToast(`⚠️ ${codigo} não é uma optativa válida em nenhum currículo!`, 'error');
+                return;
+            }
+
+            if (!isOptativa(codigo)) {
+                if (!confirm(`⚠️ ${codigo} não é uma optativa válida no curso atual (${cursoAtivo}).\n\nDeseja mesmo assim selecioná-la?`)) {
                     return;
                 }
             }
@@ -2620,9 +2749,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         });
 
         // ============================================================
-        // IMPORTAÇÃO DE HISTÓRICO - CORRIGIDA
-        // ===== BUG #2 CORRIGIDO: Evita duplicação =====
-        // ===== BUG #3 CORRIGIDO: Regex aprimorada =====
+        // ===== BUG #2, #3, #5 CORRIGIDOS: IMPORTAÇÃO =====
         // ============================================================
         async function importarHistorico(event) {
             const file = event.target.files[0];
@@ -2651,7 +2778,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                 }
 
                 const todasOcorrencias = [];
-                // ===== BUG #3 CORRIGIDO: Regex com suporte a apóstrofo e hífen =====
                 const regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
 
                 let match;
@@ -2682,11 +2808,9 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
 
                 const aluno = alunos[alunoAtivoId];
 
-                // Inicializa histórico
                 if (!aluno.historico_completo) aluno.historico_completo = {};
                 if (!aluno.historico_optativas) aluno.historico_optativas = {};
 
-                // Processa por semestre
                 const semestresOrdenados = ['2021.1', '2021.2', '2022.1', '2022.2', '2023.1', '2023.2', '2024.1', '2024.2', '2025.1', '2025.2', '2026.1'];
                 const optativasCursadas = [];
                 let countAPR = 0,
@@ -2699,25 +2823,19 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                     porSemestre[occ.periodo].push(occ);
                 }
 
-                // ===== BUG #2 CORRIGIDO: Set para rastrear disciplinas processadas =====
                 const disciplinasProcessadas = new Set();
 
                 for (const semestre of semestresOrdenados) {
                     if (!porSemestre[semestre]) continue;
 
                     for (const occ of porSemestre[semestre]) {
-                        let codigoBase = occ.codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
-                        if (MAPA_CODIGOS_OBSOLETOS[codigoBase]) {
-                            codigoBase = MAPA_CODIGOS_OBSOLETOS[codigoBase];
-                        }
+                        const codigoBase = normalizarCodigo(occ.codigo);
 
-                        // ===== BUG #2 CORRIGIDO: Verifica se já foi processada =====
                         const chaveUnica = `${semestre}_${codigoBase}`;
                         if (disciplinasProcessadas.has(chaveUnica)) continue;
                         disciplinasProcessadas.add(chaveUnica);
 
-                        // Valida se a disciplina existe no currículo
-                        if (!disciplinaExisteNoCurriculo(codigoBase) && !isOptativa(codigoBase)) {
+                        if (!disciplinaExisteNoCurriculo(codigoBase) && !isOptativaGlobal(codigoBase)) {
                             continue;
                         }
 
@@ -2731,7 +2849,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                             countMATR++; } else if (temREP) { statusFinal = 'not-started';
                             countREP++; }
 
-                        // Só adiciona se ainda não foi processada ou se for status melhor
                         if (!aluno.progresso[codigoBase] || aluno.progresso[codigoBase] === 'not-started' || statusFinal === 'done') {
                             aluno.progresso[codigoBase] = statusFinal;
                             aluno.historico_completo[codigoBase] = {
@@ -2741,22 +2858,40 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                             };
                         }
 
-                        if (isOptativa(codigoBase) && statusFinal === 'done') {
+                        if (isOptativaGlobal(codigoBase) && statusFinal === 'done') {
                             if (!optativasCursadas.includes(codigoBase)) {
                                 optativasCursadas.push(codigoBase);
+                            }
+                        }
+
+                        // ===== BUG #11 CORRIGIDO: Verifica equivalência para optativa =====
+                        const equiv = getEquivalenciaOptativa(codigoBase);
+                        if (equiv && statusFinal === 'done') {
+                            const equivCod = equiv.equivalente;
+                            if (equiv.tipo === 'optativa_para_optativa' && isOptativa(equivCod)) {
+                                if (!optativasCursadas.includes(equivCod)) {
+                                    optativasCursadas.push(equivCod);
+                                    aluno.progresso[equivCod] = 'done';
+                                    aluno.equiv[equivCod] = { via: codigoBase };
+                                }
                             }
                         }
                     }
                 }
 
-                // ============================================================
-                // FORÇA RECONHECIMENTO DE GCET200 E GCET218
-                // ============================================================
+                // ===== BUG #11 CORRIGIDO: Força reconhecimento de optativas específicas =====
                 const optativasForcadas = ['GCET200', 'GCET218', 'GCET673', 'GCET675'];
                 for (const codigo of optativasForcadas) {
-                    if (aluno.progresso[codigo] === 'done') {
+                    if (aluno.progresso[codigo] === 'done' || aluno.progresso[codigo] === 'pending') {
                         if (!optativasCursadas.includes(codigo)) {
                             optativasCursadas.push(codigo);
+                        }
+                    }
+                    // Verifica equivalência
+                    const equiv = getEquivalenciaOptativa(codigo);
+                    if (equiv && aluno.progresso[equiv.equivalente] === 'done') {
+                        if (!optativasCursadas.includes(equiv.equivalente)) {
+                            optativasCursadas.push(equiv.equivalente);
                         }
                     }
                 }
@@ -2764,13 +2899,23 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                 // Preenche slots de optativas
                 const slots = ['OPT_BCET_1', 'OPT_BCET_2', 'OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
                 const slotsDisponiveis = slots.filter(slot => !aluno.optativas[slot]);
-                for (let i = 0; i < Math.min(optativasCursadas.length, slotsDisponiveis.length); i++) {
+
+                // Ordena por prioridade: done > pending
+                const optativasPriorizadas = optativasCursadas.sort((a, b) => {
+                    const statusA = aluno.progresso[a] || 'not-started';
+                    const statusB = aluno.progresso[b] || 'not-started';
+                    if (statusA === 'done' && statusB !== 'done') return -1;
+                    if (statusB === 'done' && statusA !== 'done') return 1;
+                    return 0;
+                });
+
+                for (let i = 0; i < Math.min(optativasPriorizadas.length, slotsDisponiveis.length); i++) {
                     const slot = slotsDisponiveis[i];
-                    const codigo = optativasCursadas[i];
+                    const codigo = optativasPriorizadas[i];
                     aluno.optativas[slot] = codigo;
                     aluno.historico_optativas[slot] = {
                         codigo: codigo,
-                        origem: cursoAtivo,
+                        origem: 'importado',
                         data: new Date().toISOString()
                     };
                     if (aluno.progresso[codigo] !== 'done') {
@@ -2780,7 +2925,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
 
                 aluno.curso = cursoAtivo;
 
-                // Aplica equivalências
                 recalcularEquivalencias(alunoAtivoId);
 
                 renderFluxograma(alunoAtivoId);
@@ -2822,7 +2966,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             if (!aluno.quebras) aluno.quebras = {};
             if (!aluno.equiv) aluno.equiv = {};
 
-            // ===== BUG #10 CORRIGIDO: Contagem inclui slots de optativa =====
             const total = getTotalDisciplinas(alunoId);
             const done = countStatus(alunoId, 'done');
             const pending = countStatus(alunoId, 'pending');
@@ -2877,7 +3020,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                                 let finalClass = statusClass;
                                 if (isEquiv && status === 'done') finalClass = 'equiv-done';
                                 if (isQuebra) finalClass = 'quebra';
-                                // ===== BUG #9 CORRIGIDO: Verifica pré-requisitos nas extras =====
                                 const prereqCheck = verificarPreRequisitos(alunoId, d.codigo);
                                 const isBlocked = prereqCheck.status === 'blocked';
                                 const onClick = isBlocked ? `onclick="abrirModalQuebra('${alunoId}','${d.codigo}')"` :
@@ -3082,10 +3224,8 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
         }
 
         // ============================================================
-        // FUNÇÕES DE CONTAGEM
-        // ===== BUG #10 CORRIGIDO: Slots de optativa sempre contados =====
+        // ===== BUG #10 CORRIGIDO: Contagem de disciplinas =====
         // ============================================================
-
         function getTotalDisciplinas(alunoId) {
             const aluno = alunos[alunoId];
             if (!aluno) return 0;
@@ -3094,7 +3234,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             for (const sem of curriculo) {
                 for (const disc of sem.disciplinas) {
                     if (disc.isOptativa) {
-                        // ===== BUG #10 CORRIGIDO: Sempre conta o slot =====
                         count++;
                     } else {
                         count++;
@@ -3155,6 +3294,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                 if (codigosDoCurso.has(codigo)) continue;
                 if (isOptativa(codigo)) continue;
                 if (aluno.equiv && aluno.equiv[codigo]) continue;
+                if (!aluno.progresso[codigo] || aluno.progresso[codigo] === 'not-started') continue;
 
                 extras.push({
                     codigo: codigo,
@@ -3419,8 +3559,12 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             }
 
             const nomesExistentes = new Set();
+            const matriculasExistentes = new Set();
             for (const id in alunos) {
                 nomesExistentes.add(alunos[id].nome.toLowerCase().trim());
+                if (alunos[id].matricula) {
+                    matriculasExistentes.add(alunos[id].matricula);
+                }
             }
 
             let count = 0;
@@ -3433,6 +3577,10 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
 
                 const nomeLower = nome.toLowerCase().trim();
                 if (nomesExistentes.has(nomeLower)) {
+                    ignorados++;
+                    continue;
+                }
+                if (matricula && matriculasExistentes.has(matricula)) {
                     ignorados++;
                     continue;
                 }
@@ -3451,6 +3599,7 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
                     dadosPessoais: {}
                 };
                 nomesExistentes.add(nomeLower);
+                if (matricula) matriculasExistentes.add(matricula);
                 count++;
             }
 
@@ -3633,7 +3782,6 @@ Perfeito! Aqui está o código HTML completo e final com TODOS os bugs corrigido
             el.className = `toast ${type} show`;
             clearTimeout(toastTimeout);
 
-            // ===== BUG #6 CORRIGIDO: Toast fecha ao clicar =====
             el.onclick = function() {
                 el.classList.remove('show');
                 clearTimeout(toastTimeout);
