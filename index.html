@@ -1524,7 +1524,7 @@
                 ]}
             ],
 
-            // === NOMES DAS DISCIPLINAS ===
+            // === NOMES DAS DISCIPLINAS (BMAT + BCET) ===
             nomesDisciplinas: {
                 'GCET146': 'Cálculo Diferencial e Integral I',
                 'GCET147': 'Cálculo Diferencial e Integral II',
@@ -1647,15 +1647,10 @@
         // 2. LÓGICA DE NEGÓCIO (FUNÇÕES PURAS)
         // ============================================================
 
-        // 2.1 Normalização de código - CORRIGIDA
+        // 2.1 Normalização de código
         function normalizarCodigo(codigo) {
             if (!codigo) return '';
-            // Remove #, @, espaços extras e sufixos .P, .T, .PRATICA, .TEORICA
-            let base = codigo.replace(/^[#@]\s*/, '')
-                             .replace(/\.[PT].*$/, '')
-                             .replace(/\.PRATICA$/, '')
-                             .replace(/\.TEORICA$/, '');
-            base = base.trim();
+            let base = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
             return CONFIG.codigosObsoletos[base] || base;
         }
 
@@ -1720,7 +1715,7 @@
             return [];
         }
 
-        // 2.7 Processa disciplinas do histórico - CORRIGIDA
+        // 2.7 Processa disciplinas do histórico
         function processarHistorico(disciplinasPDF, cursoAtual) {
             const resultado = {
                 disciplinas: {},
@@ -1742,46 +1737,24 @@
                 if (temAprovacao) {
                     resultado.disciplinas[codigo] = { status: 'done', origem: 'historico' };
 
-                    // ============================================================
-                    // CORREÇÃO 1: EQUIVALÊNCIAS DUPLAS (FÍSICAS I, II, III, IV)
-                    // ============================================================
+                    // Verifica equivalência (antigo → novo)
                     const equiv = getEquivalencia(codigo, 'antigo_para_novo');
                     if (equiv) {
                         if (equiv.tipo === 'simples') {
                             resultado.disciplinas[equiv.codigo] = { status: 'done', origem: 'equivalencia' };
                             resultado.equivalencias[equiv.codigo] = { via: codigo };
                         } else if (equiv.tipo === 'dupla') {
-                            // Verifica se TODAS as disciplinas da dupla foram cursadas
-                            const todasCursadas = equiv.codigos.every(sub => 
-                                resultado.disciplinas[sub]?.status === 'done'
-                            );
-                            if (todasCursadas) {
-                                // Marca a disciplina original como cursada via equivalência
-                                resultado.disciplinas[codigo] = { status: 'done', origem: 'equivalencia' };
-                                resultado.equivalencias[codigo] = { via: equiv.codigos.join(' + ') };
+                            for (const sub of equiv.codigos) {
+                                resultado.disciplinas[sub] = { status: 'done', origem: 'equivalencia' };
+                                resultado.equivalencias[sub] = { via: codigo };
                             }
                         }
                     }
 
-                    // ============================================================
-                    // CORREÇÃO 2: OPTATIVAS COM EQUIVALÊNCIA PARA O BCET
-                    // ============================================================
+                    // Verifica se é optativa
                     if (isOptativa(codigo, cursoAtual) || isOptativaGlobal(codigo)) {
                         if (!resultado.optativas.includes(codigo)) {
                             resultado.optativas.push(codigo);
-                        }
-                        // Verifica se esta optativa tem equivalência para o BCET
-                        const equivOpt = getEquivalencia(codigo, 'antigo_para_novo');
-                        if (equivOpt && equivOpt.tipo === 'simples') {
-                            const equivalente = equivOpt.codigo;
-                            // Se o equivalente é optativa no BCET, adiciona também
-                            if (isOptativa(equivalente, 'bcet')) {
-                                if (!resultado.optativas.includes(equivalente)) {
-                                    resultado.optativas.push(equivalente);
-                                    resultado.disciplinas[equivalente] = { status: 'done', origem: 'equivalencia' };
-                                    resultado.equivalencias[equivalente] = { via: codigo };
-                                }
-                            }
                         }
                     }
 
@@ -1793,23 +1766,14 @@
             return resultado;
         }
 
-        // 2.8 Aloca optativas - CORRIGIDA
+        // 2.8 Aloca optativas
         function alocarOptativas(optativasCursadas, slotsExistentes, slotsDisponiveis) {
             const resultado = { ...slotsExistentes };
             const jaAlocadas = new Set(Object.values(slotsExistentes));
             const disponiveis = optativasCursadas.filter(c => !jaAlocadas.has(c));
 
-            // ============================================================
-            // CORREÇÃO: Prioridade para optativas do BCET
-            // ============================================================
-            const prioridade = { 
-                'GCET1061': 1,  // via GCET200
-                'GCET1062': 2,  // via GCET675
-                'GCET200': 3, 
-                'GCET218': 4, 
-                'GCET673': 5, 
-                'GCET675': 6 
-            };
+            // Prioridade: GCET200, GCET218, GCET673, GCET675 primeiro
+            const prioridade = { 'GCET200': 1, 'GCET218': 2, 'GCET673': 3, 'GCET675': 4 };
             disponiveis.sort((a, b) => (prioridade[a] || 99) - (prioridade[b] || 99));
 
             for (let i = 0; i < Math.min(disponiveis.length, slotsDisponiveis.length); i++) {
@@ -2662,7 +2626,7 @@
             return extras;
         }
 
-        // 4.17 Importar histórico - CORRIGIDA
+        // 4.17 Importar histórico
         async function importarHistorico(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -2689,17 +2653,16 @@
                     textoCompleto += pageText + '\n';
                 }
 
-                // Regex com suporte a # e @
-                const regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([#@]?\s*)([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
-
                 const todasOcorrencias = [];
+                const regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
+
                 let match;
                 while ((match = regex.exec(textoCompleto)) !== null) {
                     const periodo = match[1];
                     const nome = match[2].trim();
                     const situacao = match[3];
-                    const codigo = match[5].trim(); // Grupo 5 é o código
-                    const ch = parseInt(match[6]);
+                    const codigo = match[4].trim();
+                    const ch = parseInt(match[5]);
 
                     if (codigo.includes('ENADE') || nome.includes('ENADE')) continue;
 
@@ -2722,7 +2685,7 @@
                 const aluno = state.alunos[state.alunoAtivoId];
                 const curso = aluno.curso || 'bmat';
 
-                // Processa o histórico com as correções
+                // Processa o histórico
                 const resultado = processarHistorico(todasOcorrencias, curso);
 
                 // Aplica ao aluno
@@ -3168,7 +3131,7 @@
         });
 
         // ============================================================
-        // 6. EXPOSIÇÃO GLOBAL
+        // 6. EXPOSIÇÃO GLOBAL (para chamadas inline no HTML)
         // ============================================================
 
         window.addAlunoCompleto = addAlunoCompleto;
