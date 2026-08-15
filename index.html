@@ -277,7 +277,7 @@
             background: #f5f5f5;
             border-radius: 8px;
             font-size: 12px;
-            max-height: 300px;
+            max-height: 500px;
             overflow-y: auto;
             display: none;
         }
@@ -292,6 +292,9 @@
         }
         .import-preview .info {
             color: #0d47a1;
+        }
+        .import-preview .warning {
+            color: #e65100;
         }
 
         .fluxograma-wrapper {
@@ -333,6 +336,10 @@
         .aluno-header .stats-badge .pending-count {
             background: #ffeb3b;
             color: #333;
+        }
+        .aluno-header .stats-badge .planned-count {
+            background: #ce93d8;
+            color: #1a237e;
         }
         .aluno-header .stats-badge .total-count {
             background: #e0e0e0;
@@ -381,6 +388,10 @@
         .legend-color.quebra {
             background: #ff6f00;
             border-color: #e65100;
+        }
+        .legend-color.planned {
+            background: #ce93d8;
+            border-color: #7b1fa2;
         }
 
         .semester-grid {
@@ -519,6 +530,14 @@
             border-radius: 8px;
             margin-left: 4px;
         }
+        .discipline .planned-badge {
+            font-size: 8px;
+            background: #7b1fa2;
+            color: white;
+            padding: 1px 6px;
+            border-radius: 8px;
+            margin-left: 4px;
+        }
 
         .discipline.done {
             background: #4caf50;
@@ -629,6 +648,26 @@
         .discipline.quebra .quebra-badge {
             background: rgba(255, 255, 255, 0.3);
             color: #fff;
+        }
+
+        .discipline.planned {
+            background: #ce93d8;
+            border-color: #7b1fa2;
+            color: #1a237e;
+        }
+        .discipline.planned .code {
+            color: #4a148c;
+        }
+        .discipline.planned .hours {
+            color: #4a148c;
+        }
+        .discipline.planned .prereq-badge {
+            background: rgba(255, 255, 255, 0.4);
+            color: #4a148c;
+        }
+        .discipline.planned .planned-badge {
+            background: rgba(255, 255, 255, 0.4);
+            color: #4a148c;
         }
 
         .discipline.prereq-ok {
@@ -797,6 +836,9 @@
         }
         .toast.info {
             background: #0d47a1;
+        }
+        .toast.warning {
+            background: #e65100;
         }
 
         .no-aluno {
@@ -984,6 +1026,10 @@
             background: #ff6f00;
             border-color: #e65100;
         }
+        #pdf-capture-area .pdf-legend .color.planned {
+            background: #ce93d8;
+            border-color: #7b1fa2;
+        }
         #pdf-capture-area .pdf-grid {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -1103,6 +1149,17 @@
         #pdf-capture-area .pdf-disc.quebra .hours {
             color: #ffe0b2;
         }
+        #pdf-capture-area .pdf-disc.planned {
+            background: #ce93d8;
+            border-color: #7b1fa2;
+            color: #1a237e;
+        }
+        #pdf-capture-area .pdf-disc.planned .code {
+            color: #4a148c;
+        }
+        #pdf-capture-area .pdf-disc.planned .hours {
+            color: #4a148c;
+        }
         #pdf-capture-area .pdf-disc .badge {
             font-size: 7px;
             padding: 1px 4px;
@@ -1119,6 +1176,9 @@
         }
         #pdf-capture-area .pdf-disc .badge.quebra {
             background: #e65100;
+        }
+        #pdf-capture-area .pdf-disc .badge.planned {
+            background: #4a148c;
         }
         #pdf-capture-area .pdf-disc .badge.prereq {
             background: rgba(0, 0, 0, 0.12);
@@ -1188,6 +1248,202 @@
         }
         footer .text-muted {
             color: #999;
+        }
+
+        /* ===== MODAL DE PRÉ-MATRÍCULA ===== */
+        .pre-matricula-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        .pre-matricula-modal .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 600px;
+            width: 100%;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+        }
+        .pre-matricula-modal .modal-content h2 {
+            color: #1a237e;
+            margin: 0 0 4px 0;
+        }
+        .pre-matricula-modal .modal-content .subtitle {
+            color: #666;
+            margin-bottom: 16px;
+            font-size: 13px;
+        }
+        .pre-matricula-modal .modal-content .disciplines-list {
+            flex: 1;
+            overflow-y: auto;
+            max-height: 400px;
+            padding: 10px;
+        }
+        .pre-matricula-modal .modal-content .semester-label {
+            font-weight: bold;
+            color: #1a237e;
+            margin: 12px 0 4px 0;
+        }
+        .pre-matricula-modal .modal-content .discipline-item {
+            display: block;
+            padding: 6px 10px;
+            margin: 2px 0;
+            background: #f5f5f5;
+            border-radius: 4px;
+            cursor: pointer;
+            border-left: 3px solid #e0e0e0;
+        }
+        .pre-matricula-modal .modal-content .discipline-item.planned {
+            background: #f3e5f5;
+            border-left-color: #7b1fa2;
+        }
+        .pre-matricula-modal .modal-content .discipline-item input[type="checkbox"] {
+            margin-right: 8px;
+        }
+        .pre-matricula-modal .modal-content .discipline-item .hours {
+            float: right;
+            color: #666;
+            font-size: 12px;
+        }
+        .pre-matricula-modal .modal-content .discipline-item .planned-label {
+            margin-left: 8px;
+            font-size: 11px;
+            color: #7b1fa2;
+        }
+        .pre-matricula-modal .modal-content .modal-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .pre-matricula-modal .modal-content .modal-actions .btn-save {
+            flex: 1;
+            padding: 10px 20px;
+            background: #1a237e;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .pre-matricula-modal .modal-content .modal-actions .btn-save:hover {
+            background: #0d1445;
+        }
+        .pre-matricula-modal .modal-content .modal-actions .btn-cancel {
+            padding: 10px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        .pre-matricula-modal .modal-content .modal-actions .btn-cancel:hover {
+            background: #bdbdbd;
+        }
+        .pre-matricula-modal .modal-content .footer-note {
+            margin-top: 8px;
+            font-size: 12px;
+            color: #666;
+            text-align: center;
+        }
+
+        /* ===== MODAL DE CONFIRMAÇÃO ===== */
+        .confirm-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1001;
+            padding: 20px;
+        }
+        .confirm-modal .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+        }
+        .confirm-modal .modal-content h3 {
+            color: #1a237e;
+            margin: 0 0 8px 0;
+        }
+        .confirm-modal .modal-content .summary {
+            background: #f5f5f5;
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        .confirm-modal .modal-content .summary p {
+            margin: 0;
+            font-size: 13px;
+            color: #666;
+        }
+        .confirm-modal .modal-content .summary .list {
+            font-size: 13px;
+            color: #333;
+            margin-top: 4px;
+            white-space: pre-line;
+        }
+        .confirm-modal .modal-content .question {
+            font-size: 14px;
+            color: #333;
+            margin: 0 0 16px 0;
+        }
+        .confirm-modal .modal-content .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .confirm-modal .modal-content .actions .btn-yes {
+            flex: 1;
+            padding: 12px 20px;
+            background: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .confirm-modal .modal-content .actions .btn-yes:hover {
+            background: #1b5e20;
+        }
+        .confirm-modal .modal-content .actions .btn-no {
+            flex: 1;
+            padding: 12px 20px;
+            background: #e0e0e0;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        .confirm-modal .modal-content .actions .btn-no:hover {
+            background: #bdbdbd;
+        }
+        .confirm-modal .modal-content .footer-note {
+            margin-top: 12px;
+            font-size: 11px;
+            color: #999;
+            text-align: center;
         }
     </style>
 </head>
@@ -1310,12 +1566,7 @@
         // ============================================================
 
         const CONFIG = {
-            // === MAPA DE CÓDIGOS OBSOLETOS ===
-            codigosObsoletos: {
-                'GCETAN': 'GCET678'
-            },
-
-            // === EQUIVALÊNCIAS OFICIAIS (PPC p. 211-214) ===
+            codigosObsoletos: { 'GCETAN': 'GCET678' },
             equivalencias: {
                 simples: {
                     'GCET146': 'GCET987', 'GCET147': 'GCET992', 'GCET148': 'GCET993',
@@ -1348,8 +1599,6 @@
                     'GCET729': ['GCET1030', 'GCET1031']
                 }
             },
-
-            // === OPTATIVAS DO BMAT ===
             optativasBMAT: {
                 opt1: [
                     { codigo: 'GCET152', nome: 'Cálculo Numérico II', pre: 'GCET059' },
@@ -1386,8 +1635,6 @@
                     { codigo: 'GCF247', nome: 'Língua Brasileira de Sinais - LIBRAS', pre: 'Nenhum' }
                 ]
             },
-
-            // === OPTATIVAS DO BCET ===
             optativasBCET: [
                 { codigo: 'GCET1055', nome: 'Biomatemática', pre: 'GCET993' },
                 { codigo: 'GCET1056', nome: 'Geometria Espacial', pre: 'GCET1050' },
@@ -1400,8 +1647,6 @@
                 { codigo: 'GCET1063', nome: 'Fundamentos de Lógica e Teoria dos Conjuntos', pre: 'Nenhum' },
                 { codigo: 'GCF247', nome: 'Libras', pre: 'Nenhum' }
             ],
-
-            // === PRÉ-REQUISITOS DO BMAT ===
             prerequisitosBMAT: {
                 'GCET146': [], 'GCET095': [], 'GCET061': [], 'GCET150': [], 'GCET066': [],
                 'GCCA283': [], 'GCET147': ['GCET146'], 'GCET099': ['GCET095'], 'GCET065': [],
@@ -1423,8 +1668,6 @@
                 'GCET674': ['GCET178'], 'GCET675': ['GCET173'], 'GCET676': ['GCET177'],
                 'GCETIMC': ['GCET174'], 'GCETMD': ['GCET174'], 'GCF247': []
             },
-
-            // === PRÉ-REQUISITOS DO BCET ===
             prerequisitosBCET: {
                 'GCCA1358': [], 'GCET985': [], 'GCET986': [], 'GCET987': [], 'GCET988': [],
                 'GCET989': ['GCET988'], 'GCET990': [], 'GCET060': ['GCET987'],
@@ -1442,89 +1685,77 @@
                 'GCET1059': ['GCET987'], 'GCET1060': ['GCET991'], 'GCET1061': [],
                 'GCET1062': [], 'GCET1063': [], 'GCF247': []
             },
-
-            // === CURRÍCULO BMAT ===
             curriculoBMAT: [
-                { nome: '1º Semestre', cls: 's1', disciplinas: [
-                    { codigo: 'GCET146', horas: '85h' }, { codigo: 'GCET095', horas: '85h' },
-                    { codigo: 'GCET061', horas: '68h' }, { codigo: 'GCET150', horas: '68h' },
-                    { codigo: 'GCET066', horas: '68h' }, { codigo: 'GCCA283', horas: '68h' }
-                ]},
-                { nome: '2º Semestre', cls: 's2', disciplinas: [
-                    { codigo: 'GCET147', horas: '85h' }, { codigo: 'GCET099', horas: '85h' },
-                    { codigo: 'GCET065', horas: '68h' }, { codigo: 'GCET151', horas: '68h' },
-                    { codigo: 'GCCA235', horas: '68h' }, { codigo: 'GCCA310', horas: '34h' }
-                ]},
-                { nome: '3º Semestre', cls: 's3', disciplinas: [
-                    { codigo: 'GCET148', horas: '85h' }, { codigo: 'GCET102', horas: '85h' },
-                    { codigo: 'GCET060', horas: '68h' }, { codigo: 'GCET059', horas: '68h' },
-                    { codigo: 'GCET174', horas: '68h' }
-                ]},
-                { nome: '4º Semestre', cls: 's4', disciplinas: [
-                    { codigo: 'GCET149', horas: '85h' }, { codigo: 'GCET106', horas: '85h' },
-                    { codigo: 'GCET172', horas: '85h' }, { codigo: 'GCET175', horas: '68h' },
-                    { codigo: 'GCET510', horas: '68h' }
-                ]},
-                { nome: '5º Semestre', cls: 's5', disciplinas: [
-                    { codigo: 'GCET173', horas: '85h' }, { codigo: 'GCET176', horas: '68h' },
-                    { codigo: 'GCET178', horas: '68h' }, { codigo: 'GCET511', horas: '68h' },
-                    { codigo: 'GCET663', horas: '68h' }
-                ]},
-                { nome: '6º Semestre', cls: 's6', disciplinas: [
-                    { codigo: 'GCET161', horas: '51h' }, { codigo: 'GCET177', horas: '68h' },
-                    { codigo: 'GCET179', horas: '68h' }, { codigo: 'GCET180', horas: '85h' },
-                    { codigo: 'OPT1', horas: '68h', isOptativa: true }
-                ]},
-                { nome: '7º Semestre', cls: 's7', disciplinas: [
-                    { codigo: 'GCET189', horas: '68h' }, { codigo: 'GCET660', horas: '68h' },
-                    { codigo: 'GCET661', horas: '68h' }, { codigo: 'GCET678', horas: '68h' },
-                    { codigo: 'OPT2', horas: '68h', isOptativa: true }
-                ]},
-                { nome: '8º Semestre', cls: 's8', disciplinas: [
-                    { codigo: 'GCET677', horas: '17h' },
+                { nome: '1º Semestre', cls: 's1', disciplinas: [{ codigo: 'GCET146', horas: '85h' },
+                    { codigo: 'GCET095', horas: '85h' }, { codigo: 'GCET061', horas: '68h' },
+                    { codigo: 'GCET150', horas: '68h' }, { codigo: 'GCET066', horas: '68h' },
+                    { codigo: 'GCCA283', horas: '68h' }
+                ] },
+                { nome: '2º Semestre', cls: 's2', disciplinas: [{ codigo: 'GCET147', horas: '85h' },
+                    { codigo: 'GCET099', horas: '85h' }, { codigo: 'GCET065', horas: '68h' },
+                    { codigo: 'GCET151', horas: '68h' }, { codigo: 'GCCA235', horas: '68h' },
+                    { codigo: 'GCCA310', horas: '34h' }
+                ] },
+                { nome: '3º Semestre', cls: 's3', disciplinas: [{ codigo: 'GCET148', horas: '85h' },
+                    { codigo: 'GCET102', horas: '85h' }, { codigo: 'GCET060', horas: '68h' },
+                    { codigo: 'GCET059', horas: '68h' }, { codigo: 'GCET174', horas: '68h' }
+                ] },
+                { nome: '4º Semestre', cls: 's4', disciplinas: [{ codigo: 'GCET149', horas: '85h' },
+                    { codigo: 'GCET106', horas: '85h' }, { codigo: 'GCET172', horas: '85h' },
+                    { codigo: 'GCET175', horas: '68h' }, { codigo: 'GCET510', horas: '68h' }
+                ] },
+                { nome: '5º Semestre', cls: 's5', disciplinas: [{ codigo: 'GCET173', horas: '85h' },
+                    { codigo: 'GCET176', horas: '68h' }, { codigo: 'GCET178', horas: '68h' },
+                    { codigo: 'GCET511', horas: '68h' }, { codigo: 'GCET663', horas: '68h' }
+                ] },
+                { nome: '6º Semestre', cls: 's6', disciplinas: [{ codigo: 'GCET161', horas: '51h' },
+                    { codigo: 'GCET177', horas: '68h' }, { codigo: 'GCET179', horas: '68h' },
+                    { codigo: 'GCET180', horas: '85h' }, { codigo: 'OPT1', horas: '68h',
+                        isOptativa: true }
+                ] },
+                { nome: '7º Semestre', cls: 's7', disciplinas: [{ codigo: 'GCET189', horas: '68h' },
+                    { codigo: 'GCET660', horas: '68h' }, { codigo: 'GCET661', horas: '68h' },
+                    { codigo: 'GCET678', horas: '68h' }, { codigo: 'OPT2', horas: '68h',
+                        isOptativa: true }
+                ] },
+                { nome: '8º Semestre', cls: 's8', disciplinas: [{ codigo: 'GCET677', horas: '17h' },
                     { codigo: 'OPT3', horas: '68h', isOptativa: true },
                     { codigo: 'OPT4', horas: '68h', isOptativa: true },
                     { codigo: 'OPT5', horas: '68h', isOptativa: true }
-                ]}
+                ] }
             ],
-
-            // === CURRÍCULO BCET ===
             curriculoBCET: [
-                { nome: '1º Semestre', cls: 's1', disciplinas: [
-                    { codigo: 'GCCA1358', horas: '34h' }, { codigo: 'GCET985', horas: '68h' },
-                    { codigo: 'GCET986', horas: '68h' }, { codigo: 'GCET987', horas: '102h' },
-                    { codigo: 'GCET988', horas: '34h' }, { codigo: 'GCET989', horas: '34h' }
-                ]},
-                { nome: '2º Semestre', cls: 's2', disciplinas: [
-                    { codigo: 'GCET990', horas: '68h' }, { codigo: 'GCET060', horas: '68h' },
-                    { codigo: 'GCET991', horas: '68h' }, { codigo: 'GCET992', horas: '102h' },
-                    { codigo: 'GCET821', horas: '68h' }, { codigo: 'GCET825', horas: '34h' }
-                ]},
-                { nome: '3º Semestre', cls: 's3', disciplinas: [
-                    { codigo: 'GCET995', horas: '68h' }, { codigo: 'GCET1044', horas: '68h' },
-                    { codigo: 'GCCA283', horas: '68h' }, { codigo: 'GCET993', horas: '102h' },
-                    { codigo: 'GCET822', horas: '68h' }, { codigo: 'GCET826', horas: '34h' }
-                ]},
-                { nome: '4º Semestre', cls: 's4', disciplinas: [
-                    { codigo: 'GCET996', horas: '68h' }, { codigo: 'GCET1045', horas: '68h' },
-                    { codigo: 'GCET1046', horas: '68h' }, { codigo: 'GCET994', horas: '68h' },
-                    { codigo: 'GCET823', horas: '68h' }, { codigo: 'GCET827', horas: '34h' }
-                ]},
-                { nome: '5º Semestre', cls: 's5', disciplinas: [
-                    { codigo: 'GCET997', horas: '68h' }, { codigo: 'GCET1047', horas: '68h' },
-                    { codigo: 'GCET1048', horas: '68h' }, { codigo: 'GCET1049', horas: '68h' },
-                    { codigo: 'GCET1050', horas: '68h' },
+                { nome: '1º Semestre', cls: 's1', disciplinas: [{ codigo: 'GCCA1358', horas: '34h' },
+                    { codigo: 'GCET985', horas: '68h' }, { codigo: 'GCET986', horas: '68h' },
+                    { codigo: 'GCET987', horas: '102h' }, { codigo: 'GCET988', horas: '34h' },
+                    { codigo: 'GCET989', horas: '34h' }
+                ] },
+                { nome: '2º Semestre', cls: 's2', disciplinas: [{ codigo: 'GCET990', horas: '68h' },
+                    { codigo: 'GCET060', horas: '68h' }, { codigo: 'GCET991', horas: '68h' },
+                    { codigo: 'GCET992', horas: '102h' }, { codigo: 'GCET821', horas: '68h' },
+                    { codigo: 'GCET825', horas: '34h' }
+                ] },
+                { nome: '3º Semestre', cls: 's3', disciplinas: [{ codigo: 'GCET995', horas: '68h' },
+                    { codigo: 'GCET1044', horas: '68h' }, { codigo: 'GCCA283', horas: '68h' },
+                    { codigo: 'GCET993', horas: '102h' }, { codigo: 'GCET822', horas: '68h' },
+                    { codigo: 'GCET826', horas: '34h' }
+                ] },
+                { nome: '4º Semestre', cls: 's4', disciplinas: [{ codigo: 'GCET996', horas: '68h' },
+                    { codigo: 'GCET1045', horas: '68h' }, { codigo: 'GCET1046', horas: '68h' },
+                    { codigo: 'GCET994', horas: '68h' }, { codigo: 'GCET823', horas: '68h' },
+                    { codigo: 'GCET827', horas: '34h' }
+                ] },
+                { nome: '5º Semestre', cls: 's5', disciplinas: [{ codigo: 'GCET997', horas: '68h' },
+                    { codigo: 'GCET1047', horas: '68h' }, { codigo: 'GCET1048', horas: '68h' },
+                    { codigo: 'GCET1049', horas: '68h' }, { codigo: 'GCET1050', horas: '68h' },
                     { codigo: 'OPT_BCET_1', horas: '68h', isOptativa: true }
-                ]},
-                { nome: '6º Semestre', cls: 's6', disciplinas: [
-                    { codigo: 'GCET998', horas: '68h' }, { codigo: 'GCET1051', horas: '68h' },
-                    { codigo: 'GCET1052', horas: '68h' }, { codigo: 'GCET1053', horas: '68h' },
-                    { codigo: 'GCET1054', horas: '68h' },
+                ] },
+                { nome: '6º Semestre', cls: 's6', disciplinas: [{ codigo: 'GCET998', horas: '68h' },
+                    { codigo: 'GCET1051', horas: '68h' }, { codigo: 'GCET1052', horas: '68h' },
+                    { codigo: 'GCET1053', horas: '68h' }, { codigo: 'GCET1054', horas: '68h' },
                     { codigo: 'OPT_BCET_2', horas: '68h', isOptativa: true }
-                ]}
+                ] }
             ],
-
-            // === NOMES DAS DISCIPLINAS (BMAT + BCET) ===
             nomesDisciplinas: {
                 'GCET146': 'Cálculo Diferencial e Integral I',
                 'GCET147': 'Cálculo Diferencial e Integral II',
@@ -1644,17 +1875,19 @@
         };
 
         // ============================================================
-        // 2. LÓGICA DE NEGÓCIO (FUNÇÕES PURAS)
+        // 2. FUNÇÕES AUXILIARES
         // ============================================================
 
-        // 2.1 Normalização de código
         function normalizarCodigo(codigo) {
             if (!codigo) return '';
-            let base = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
+            let base = codigo.replace(/^[#@]\s*/, '')
+                .replace(/\.[PT].*$/, '')
+                .replace(/\.PRATICA$/, '')
+                .replace(/\.TEORICA$/, '');
+            base = base.trim();
             return CONFIG.codigosObsoletos[base] || base;
         }
 
-        // 2.2 Verifica se é optativa no curso atual
         function isOptativa(codigo, curso) {
             const base = normalizarCodigo(codigo);
             if (curso === 'bmat') {
@@ -1667,7 +1900,6 @@
             return false;
         }
 
-        // 2.3 Verifica se é optativa em qualquer curso
         function isOptativaGlobal(codigo) {
             const base = normalizarCodigo(codigo);
             const todas = [
@@ -1678,7 +1910,6 @@
             return todas.some(o => o.codigo === base);
         }
 
-        // 2.4 Obtém equivalência
         function getEquivalencia(codigo, direcao) {
             const base = normalizarCodigo(codigo);
             const simples = CONFIG.equivalencias.simples;
@@ -1703,132 +1934,25 @@
             return null;
         }
 
-        // 2.5 Obtém nome da disciplina
         function getNomeDisciplina(codigo) {
             return CONFIG.nomesDisciplinas[codigo] || codigo;
         }
 
-        // 2.6 Obtém pré-requisitos
         function getPreRequisitos(codigo, curso) {
             if (curso === 'bmat') return CONFIG.prerequisitosBMAT[codigo] || [];
             if (curso === 'bcet') return CONFIG.prerequisitosBCET[codigo] || [];
             return [];
         }
 
-        // 2.7 Processa disciplinas do histórico
-        function processarHistorico(disciplinasPDF, cursoAtual) {
-            const resultado = {
-                disciplinas: {},
-                optativas: [],
-                equivalencias: {}
-            };
-
-            const agrupado = {};
-            for (const disc of disciplinasPDF) {
-                const base = normalizarCodigo(disc.codigo);
-                if (!agrupado[base]) agrupado[base] = { situacoes: [], semestre: disc.semestre };
-                agrupado[base].situacoes.push(disc.situacao);
-            }
-
-            for (const [codigo, info] of Object.entries(agrupado)) {
-                const temAprovacao = info.situacoes.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
-                const temMatricula = info.situacoes.some(s => s === 'MATR');
-
-                if (temAprovacao) {
-                    resultado.disciplinas[codigo] = { status: 'done', origem: 'historico' };
-
-                    // Verifica equivalência (antigo → novo)
-                    const equiv = getEquivalencia(codigo, 'antigo_para_novo');
-                    if (equiv) {
-                        if (equiv.tipo === 'simples') {
-                            resultado.disciplinas[equiv.codigo] = { status: 'done', origem: 'equivalencia' };
-                            resultado.equivalencias[equiv.codigo] = { via: codigo };
-                        } else if (equiv.tipo === 'dupla') {
-                            for (const sub of equiv.codigos) {
-                                resultado.disciplinas[sub] = { status: 'done', origem: 'equivalencia' };
-                                resultado.equivalencias[sub] = { via: codigo };
-                            }
-                        }
-                    }
-
-                    // Verifica se é optativa
-                    if (isOptativa(codigo, cursoAtual) || isOptativaGlobal(codigo)) {
-                        if (!resultado.optativas.includes(codigo)) {
-                            resultado.optativas.push(codigo);
-                        }
-                    }
-
-                } else if (temMatricula) {
-                    resultado.disciplinas[codigo] = { status: 'pending', origem: 'historico' };
-                }
-            }
-
-            return resultado;
+        function getCurriculo(curso) {
+            return curso === 'bmat' ? CONFIG.curriculoBMAT : CONFIG.curriculoBCET;
         }
 
-        // 2.8 Aloca optativas
-        function alocarOptativas(optativasCursadas, slotsExistentes, slotsDisponiveis) {
-            const resultado = { ...slotsExistentes };
-            const jaAlocadas = new Set(Object.values(slotsExistentes));
-            const disponiveis = optativasCursadas.filter(c => !jaAlocadas.has(c));
-
-            // Prioridade: GCET200, GCET218, GCET673, GCET675 primeiro
-            const prioridade = { 'GCET200': 1, 'GCET218': 2, 'GCET673': 3, 'GCET675': 4 };
-            disponiveis.sort((a, b) => (prioridade[a] || 99) - (prioridade[b] || 99));
-
-            for (let i = 0; i < Math.min(disponiveis.length, slotsDisponiveis.length); i++) {
-                resultado[slotsDisponiveis[i]] = disponiveis[i];
-            }
-
-            return resultado;
+        function getSlotsOptativa(curso) {
+            if (curso === 'bmat') return ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
+            return ['OPT_BCET_1', 'OPT_BCET_2'];
         }
 
-        // 2.9 Calcula progresso
-        function calcularProgresso(curriculo, disciplinas, optativas) {
-            let total = 0,
-                done = 0,
-                pending = 0;
-
-            for (const semestre of curriculo) {
-                for (const disc of semestre.disciplinas) {
-                    if (disc.isOptativa) {
-                        total++;
-                        const codigo = optativas[disc.codigo];
-                        if (codigo && disciplinas[codigo]?.status === 'done') done++;
-                        else if (codigo && disciplinas[codigo]?.status === 'pending') pending++;
-                    } else {
-                        total++;
-                        const status = disciplinas[disc.codigo]?.status || 'not-started';
-                        if (status === 'done') done++;
-                        else if (status === 'pending') pending++;
-                    }
-                }
-            }
-
-            return { total, done, pending, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
-        }
-
-        // 2.10 Verifica se pré-requisitos estão cumpridos
-        function verificarPreRequisitos(codigo, curso, disciplinas, quebras) {
-            const prereqs = getPreRequisitos(codigo, curso);
-            if (prereqs.length === 0) return { status: 'none', lista: [] };
-            if (quebras && quebras[codigo]) return { status: 'quebra', lista: prereqs, quebra: true };
-
-            const resultados = [];
-            let todosOk = true,
-                temPendente = false;
-            for (const pre of prereqs) {
-                const status = disciplinas[pre]?.status || 'not-started';
-                resultados.push({ codigo: pre, status });
-                if (status === 'not-started') todosOk = false;
-                if (status === 'pending') temPendente = true;
-            }
-            if (todosOk) return { status: 'ok', lista: resultados };
-            if (temPendente) return { status: 'pending', lista: resultados };
-            return { status: 'blocked', lista: resultados };
-        }
-
-        // 2.11 Obtém todas as optativas (BMAT + BCET)
         function getTodasOptativas() {
             const todas = [];
             const codigosVistos = new Set();
@@ -1855,19 +1979,542 @@
             return todas;
         }
 
-        // 2.12 Obtém currículo do curso atual
-        function getCurriculo(curso) {
-            return curso === 'bmat' ? CONFIG.curriculoBMAT : CONFIG.curriculoBCET;
+        // ============================================================
+        // 3. LÓGICA DE NEGÓCIO
+        // ============================================================
+
+        function processarHistorico(disciplinasPDF, cursoAtual) {
+            const resultado = { disciplinas: {}, optativas: [], equivalencias: {} };
+
+            const agrupado = {};
+            for (const disc of disciplinasPDF) {
+                const base = normalizarCodigo(disc.codigo);
+                if (!agrupado[base]) agrupado[base] = { situacoes: [], semestre: disc.semestre };
+                agrupado[base].situacoes.push(disc.situacao);
+            }
+
+            for (const [codigo, info] of Object.entries(agrupado)) {
+                const temAprovacao = info.situacoes.some(s => s === 'APR' || s === 'DISP' || s === 'DISPCN');
+                const temMatricula = info.situacoes.some(s => s === 'MATR');
+
+                if (temAprovacao) {
+                    resultado.disciplinas[codigo] = { status: 'done', origem: 'historico' };
+
+                    const equiv = getEquivalencia(codigo, 'antigo_para_novo');
+                    if (equiv) {
+                        if (equiv.tipo === 'simples') {
+                            resultado.disciplinas[equiv.codigo] = { status: 'done', origem: 'equivalencia' };
+                            resultado.equivalencias[equiv.codigo] = { via: codigo };
+                        } else if (equiv.tipo === 'dupla') {
+                            const todasCursadas = equiv.codigos.every(sub =>
+                                resultado.disciplinas[sub]?.status === 'done'
+                            );
+                            if (todasCursadas) {
+                                resultado.disciplinas[codigo] = { status: 'done', origem: 'equivalencia' };
+                                resultado.equivalencias[codigo] = { via: equiv.codigos.join(' + ') };
+                            }
+                        }
+                    }
+
+                    if (isOptativa(codigo, cursoAtual) || isOptativaGlobal(codigo)) {
+                        if (!resultado.optativas.includes(codigo)) {
+                            resultado.optativas.push(codigo);
+                        }
+                        const equivOpt = getEquivalencia(codigo, 'antigo_para_novo');
+                        if (equivOpt && equivOpt.tipo === 'simples') {
+                            const equivalente = equivOpt.codigo;
+                            if (isOptativa(equivalente, 'bcet') && !resultado.optativas.includes(equivalente)) {
+                                resultado.optativas.push(equivalente);
+                                resultado.disciplinas[equivalente] = { status: 'done', origem: 'equivalencia' };
+                                resultado.equivalencias[equivalente] = { via: codigo };
+                            }
+                        }
+                    }
+
+                } else if (temMatricula) {
+                    resultado.disciplinas[codigo] = { status: 'pending', origem: 'historico' };
+                }
+            }
+
+            return resultado;
         }
 
-        // 2.13 Obtém slots de optativa do curso atual
-        function getSlotsOptativa(curso) {
-            if (curso === 'bmat') return ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
-            return ['OPT_BCET_1', 'OPT_BCET_2'];
+        function alocarOptativas(optativasCursadas, slotsExistentes, slotsDisponiveis) {
+            const resultado = { ...slotsExistentes };
+            const jaAlocadas = new Set(Object.values(slotsExistentes));
+            const disponiveis = optativasCursadas.filter(c => !jaAlocadas.has(c));
+
+            const prioridade = {
+                'GCET1061': 1, 'GCET1062': 2,
+                'GCET200': 3, 'GCET218': 4,
+                'GCET673': 5, 'GCET675': 6
+            };
+            disponiveis.sort((a, b) => (prioridade[a] || 99) - (prioridade[b] || 99));
+
+            for (let i = 0; i < Math.min(disponiveis.length, slotsDisponiveis.length); i++) {
+                resultado[slotsDisponiveis[i]] = disponiveis[i];
+            }
+
+            return resultado;
+        }
+
+        function calcularProgresso(curriculo, disciplinas, optativas) {
+            let total = 0,
+                done = 0,
+                pending = 0,
+                planned = 0;
+
+            for (const semestre of curriculo) {
+                for (const disc of semestre.disciplinas) {
+                    if (disc.isOptativa) {
+                        total++;
+                        const codigo = optativas[disc.codigo];
+                        if (codigo && disciplinas[codigo]?.status === 'done') done++;
+                        else if (codigo && disciplinas[codigo]?.status === 'pending') pending++;
+                        else if (codigo && disciplinas[codigo]?.status === 'planned') planned++;
+                    } else {
+                        total++;
+                        const status = disciplinas[disc.codigo]?.status || 'not-started';
+                        if (status === 'done') done++;
+                        else if (status === 'pending') pending++;
+                        else if (status === 'planned') planned++;
+                    }
+                }
+            }
+
+            return { total, done, pending, planned, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
+        }
+
+        function verificarPreRequisitos(codigo, curso, disciplinas, quebras) {
+            const prereqs = getPreRequisitos(codigo, curso);
+            if (prereqs.length === 0) return { status: 'none', lista: [] };
+            if (quebras && quebras[codigo]) return { status: 'quebra', lista: prereqs, quebra: true };
+
+            const resultados = [];
+            let todosOk = true,
+                temPendente = false;
+            for (const pre of prereqs) {
+                const status = disciplinas[pre]?.status || 'not-started';
+                resultados.push({ codigo: pre, status });
+                if (status === 'not-started') todosOk = false;
+                if (status === 'pending') temPendente = true;
+            }
+            if (todosOk) return { status: 'ok', lista: resultados };
+            if (temPendente) return { status: 'pending', lista: resultados };
+            return { status: 'blocked', lista: resultados };
         }
 
         // ============================================================
-        // 3. GERENCIAMENTO DE ESTADO
+        // 4. VALIDAÇÃO E VERIFICAÇÃO
+        // ============================================================
+
+        function verificarStatusCorrecoes(alunoId) {
+            const aluno = state.alunos[alunoId];
+            if (!aluno) return { fisicas: [], optativas: [], ignoradas: [], total: 0 };
+
+            const curso = aluno.curso || 'bmat';
+            const pendentes = { fisicas: [], optativas: [], ignoradas: [] };
+
+            if (curso === 'bmat') {
+                const fisicas = {
+                    'GCET095': { componentes: ['GCET821', 'GCET825'], nome: 'Física I' },
+                    'GCET099': { componentes: ['GCET822', 'GCET826'], nome: 'Física II' },
+                    'GCET102': { componentes: ['GCET823', 'GCET827'], nome: 'Física III' },
+                    'GCET106': { componentes: ['GCET824', 'GCET828'], nome: 'Física IV' }
+                };
+
+                for (const [original, info] of Object.entries(fisicas)) {
+                    const todasCursadas = info.componentes.every(c =>
+                        aluno.progresso[c]?.status === 'done'
+                    );
+                    const originalCursada = aluno.progresso[original]?.status === 'done';
+                    const isEquiv = aluno.equiv && aluno.equiv[original];
+
+                    if (todasCursadas && !originalCursada && !isEquiv) {
+                        pendentes.fisicas.push({
+                            codigo: original,
+                            nome: info.nome,
+                            componentes: info.componentes,
+                            sugestao: `Clique em ${original} e marque como "cursada via equivalência"`
+                        });
+                    }
+                }
+            }
+
+            if (curso === 'bcet') {
+                const optativasEsperadas = {
+                    'OPT_BCET_1': { esperado: 'GCET1061', via: 'GCET200', nome: 'Tópicos Especiais de Matemática I',
+                        semestre: '5º' },
+                    'OPT_BCET_2': { esperado: 'GCET1062', via: 'GCET675', nome: 'Tópicos Especiais de Matemática II',
+                        semestre: '6º' }
+                };
+
+                for (const [slot, info] of Object.entries(optativasEsperadas)) {
+                    const atual = aluno.optativas[slot];
+                    if (atual !== info.esperado) {
+                        pendentes.optativas.push({
+                            slot: slot,
+                            esperado: info.esperado,
+                            via: info.via,
+                            nome: info.nome,
+                            semestre: info.semestre,
+                            atual: atual || 'vazio',
+                            sugestao: `Clique em ${slot} e selecione ${info.esperado}`
+                        });
+                    }
+                }
+
+                const optativasQueViramObrigatorias = { 'GCET218': 'GCET1064', 'GCET673': 'GCET1045' };
+                for (const [bmat, bcet] of Object.entries(optativasQueViramObrigatorias)) {
+                    if (aluno.progresso[bmat]?.status === 'done' && aluno.progresso[bcet]?.status !== 'done') {
+                        pendentes.ignoradas.push({
+                            bmat: bmat,
+                            bcet: bcet,
+                            sugestao: `A disciplina ${bcet} deve ser marcada como cursada via equivalência de ${bmat}`
+                        });
+                    }
+                }
+            }
+
+            pendentes.total = pendentes.fisicas.length + pendentes.optativas.length + pendentes.ignoradas.length;
+            return pendentes;
+        }
+
+        // ============================================================
+        // 5. PRÉ-MATRÍCULA
+        // ============================================================
+
+        let planejamentoTemp = {};
+
+        function abrirPreMatricula() {
+            const aluno = state.alunos[state.alunoAtivoId];
+            if (!aluno) {
+                showToast('❌ Nenhum aluno selecionado.', 'error');
+                return;
+            }
+
+            const curso = aluno.curso || 'bmat';
+            const curriculo = getCurriculo(curso);
+
+            planejamentoTemp = {};
+            for (const codigo in aluno.progresso) {
+                if (aluno.progresso[codigo]?.status === 'planned') {
+                    planejamentoTemp[codigo] = true;
+                }
+            }
+
+            let html = `
+                <div class="disciplines-list">
+                    <p style="font-size:14px;color:#666;margin-bottom:12px;">
+                        Selecione as disciplinas que você planeja cursar no próximo semestre:
+                    </p>
+            `;
+
+            let totalDisciplinas = 0;
+            let totalPlanejadas = Object.keys(planejamentoTemp).length;
+
+            for (const semestre of curriculo) {
+                let temDisponiveis = false;
+                for (const disc of semestre.disciplinas) {
+                    if (disc.isOptativa) continue;
+                    const status = aluno.progresso[disc.codigo]?.status || 'not-started';
+                    if (status !== 'done' && status !== 'equiv-done') {
+                        temDisponiveis = true;
+                        break;
+                    }
+                }
+                if (!temDisponiveis) continue;
+
+                html += `<div class="semester-label">${semestre.nome}</div>`;
+
+                for (const disc of semestre.disciplinas) {
+                    if (disc.isOptativa) continue;
+
+                    const codigo = disc.codigo;
+                    const status = aluno.progresso[codigo]?.status || 'not-started';
+                    const isPlanned = status === 'planned';
+                    const isDone = status === 'done' || status === 'equiv-done';
+
+                    if (isDone) continue;
+
+                    totalDisciplinas++;
+                    const checked = isPlanned ? 'checked' : '';
+
+                    html += `
+                        <label class="discipline-item ${isPlanned ? 'planned' : ''}">
+                            <input type="checkbox" ${checked} 
+                                   onchange="togglePlanejamento('${codigo}')" 
+                                   style="margin-right:8px;">
+                            <strong>${codigo}</strong> - ${getNomeDisciplina(codigo)}
+                            <span class="hours">${disc.horas}</span>
+                            ${isPlanned ? '<span class="planned-label">📌 Planejada</span>' : ''}
+                        </label>
+                    `;
+                }
+            }
+
+            if (totalDisciplinas === 0) {
+                html += `
+                    <div style="text-align:center;padding:30px;color:#999;">
+                        <p>🎉 Todas as disciplinas do currículo já foram cursadas!</p>
+                        <p style="font-size:12px;">Não há disciplinas disponíveis para planejamento.</p>
+                    </div>
+                `;
+            }
+
+            html += `
+                </div>
+                <div class="modal-actions">
+                    <button class="btn-save" onclick="salvarPlanejamento()">
+                        💾 Salvar planejamento (${totalPlanejadas} selecionadas)
+                    </button>
+                    <button class="btn-cancel" onclick="fecharPreMatricula()">Cancelar</button>
+                </div>
+                <div class="footer-note">
+                    💡 Disciplinas em <span style="color:#7b1fa2;font-weight:bold;">roxo claro</span> serão marcadas como "cursará no próximo semestre"
+                </div>
+            `;
+
+            const modal = document.createElement('div');
+            modal.className = 'pre-matricula-modal';
+            modal.id = 'preMatriculaModal';
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h2>📋 Pré-matrícula</h2>
+                    <p class="subtitle">Planeje as disciplinas para o próximo semestre</p>
+                    ${html}
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function togglePlanejamento(codigo) {
+            const checkbox = event.target;
+            if (checkbox.checked) {
+                planejamentoTemp[codigo] = true;
+            } else {
+                delete planejamentoTemp[codigo];
+            }
+
+            const total = Object.keys(planejamentoTemp).length;
+            const btn = document.querySelector('#preMatriculaModal .btn-save');
+            if (btn) {
+                btn.textContent = `💾 Salvar planejamento (${total} selecionadas)`;
+            }
+        }
+
+        function salvarPlanejamento() {
+            const aluno = state.alunos[state.alunoAtivoId];
+            if (!aluno) {
+                showToast('❌ Nenhum aluno selecionado.', 'error');
+                return;
+            }
+
+            for (const codigo in aluno.progresso) {
+                if (aluno.progresso[codigo]?.status === 'planned') {
+                    delete aluno.progresso[codigo];
+                }
+            }
+
+            let count = 0;
+            let lista = [];
+            for (const codigo in planejamentoTemp) {
+                aluno.progresso[codigo] = {
+                    status: 'planned',
+                    origem: 'pre_matricula',
+                    data: new Date().toISOString()
+                };
+                if (!aluno.historico_completo) aluno.historico_completo = {};
+                aluno.historico_completo[codigo] = {
+                    status: 'planned',
+                    origem: 'pre_matricula',
+                    data: new Date().toISOString()
+                };
+                lista.push(`• ${codigo} - ${getNomeDisciplina(codigo)}`);
+                count++;
+            }
+
+            renderFluxograma(state.alunoAtivoId);
+            renderAlunoList();
+            saveData();
+
+            fecharPreMatricula();
+
+            const confirmModal = document.createElement('div');
+            confirmModal.className = 'confirm-modal';
+            confirmModal.id = 'confirmModal';
+            confirmModal.innerHTML = `
+                <div class="modal-content">
+                    <h3>✅ Planejamento salvo!</h3>
+                    <div class="summary">
+                        <p>📌 <strong>${count}</strong> disciplina(s) planejada(s):</p>
+                        <div class="list">${lista.join('\n')}</div>
+                    </div>
+                    <hr style="margin:12px 0;border-color:#e0e0e0;">
+                    <p class="question">❓ Você terminou de alocar todas as disciplinas do próximo semestre?</p>
+                    <div class="actions">
+                        <button class="btn-yes" onclick="finalizarPreMatricula()">✅ Sim, terminar e gerar PDF</button>
+                        <button class="btn-no" onclick="fecharConfirmModal()">❌ Não, continuar editando</button>
+                    </div>
+                    <p class="footer-note">💡 Se escolher "Sim", o PDF será gerado automaticamente.</p>
+                </div>
+            `;
+            document.body.appendChild(confirmModal);
+
+            planejamentoTemp = {};
+            showToast(`✅ ${count} disciplina(s) planejada(s)!`, 'success');
+        }
+
+        function finalizarPreMatricula() {
+            fecharConfirmModal();
+            showToast('📄 Gerando PDF com o planejamento...', 'info');
+            setTimeout(() => { gerarPDFVisual(); }, 500);
+        }
+
+        function fecharPreMatricula() {
+            const modal = document.getElementById('preMatriculaModal');
+            if (modal) modal.remove();
+        }
+
+        function fecharConfirmModal() {
+            const modal = document.getElementById('confirmModal');
+            if (modal) modal.remove();
+        }
+
+        // ============================================================
+        // 6. EXIBIÇÃO DE OPÇÕES PÓS-VALIDAÇÃO
+        // ============================================================
+
+        function exibirOpcoesPosValidacao() {
+            const preview = document.getElementById('importPreview');
+
+            preview.innerHTML = `
+                <div style="background:#e8f5e9;border:2px solid #2e7d32;border-radius:8px;padding:20px;margin-top:10px;">
+                    <h3 style="color:#1b5e20;margin:0 0 8px 0;">✅ TUDO CORRETO!</h3>
+                    <p style="margin:4px 0;color:#2e7d32;">
+                        Todas as verificações foram concluídas e o fluxograma está completo e correto.
+                    </p>
+
+                    <hr style="margin:16px 0;border-color:#a5d6a7;">
+
+                    <p style="font-weight:bold;color:#1a237e;margin:0 0 12px 0;">📋 O que você deseja fazer agora?</p>
+
+                    <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                        <button onclick="gerarPDFVisual()" style="flex:1;min-width:200px;padding:14px 20px;background:#1a237e;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                            📄 Gerar PDF
+                            <br><span style="font-weight:normal;font-size:12px;opacity:0.8;">Exportar o fluxograma completo</span>
+                        </button>
+
+                        <button onclick="abrirPreMatricula()" style="flex:1;min-width:200px;padding:14px 20px;background:#ce93d8;color:#1a237e;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                            📋 Fazer pré-matrícula
+                            <br><span style="font-weight:normal;font-size:12px;opacity:0.8;">Planejar disciplinas para o próximo semestre</span>
+                        </button>
+                    </div>
+
+                    <hr style="margin:16px 0;border-color:#a5d6a7;">
+
+                    <p style="margin:0;font-size:12px;color:#666;">
+                        💡 Você pode voltar ao fluxograma a qualquer momento para fazer ajustes manuais.
+                    </p>
+                </div>
+            `;
+        }
+
+        function verificarCorrecoes() {
+            if (!state.alunoAtivoId) {
+                showToast('❌ Nenhum aluno selecionado.', 'error');
+                return;
+            }
+
+            const pendentes = verificarStatusCorrecoes(state.alunoAtivoId);
+            const preview = document.getElementById('importPreview');
+
+            if (pendentes.total === 0) {
+                exibirOpcoesPosValidacao();
+                showToast('✅ Tudo correto!', 'success');
+                return;
+            }
+
+            let html = `
+                <div style="background:#ffebee;border:2px solid #c62828;border-radius:8px;padding:16px;margin-top:10px;">
+                    <h3 style="color:#b71c1c;margin:0 0 8px 0;">❌ ${pendentes.total} ERRO(S) ENCONTRADO(S)</h3>
+                    <p style="margin:4px 0;color:#c62828;font-size:13px;">
+                        Corrija os itens abaixo e clique em "Verificar novamente":
+                    </p>
+            `;
+
+            if (pendentes.fisicas.length > 0) {
+                html += `
+                    <div style="margin-top:8px;">
+                        <p style="font-weight:bold;color:#b71c1c;margin:0;">📌 Erros nas Físicas:</p>
+                        ${pendentes.fisicas.map(f => `
+                            <div style="padding:8px 10px;margin:4px 0;background:#fff8e1;border-left:3px solid #c62828;border-radius:4px;font-size:13px;">
+                                <strong>❌ ${f.codigo} (${f.nome})</strong>
+                                <span style="color:#666;font-size:12px;">
+                                    → ${f.componentes.join(' + ')} estão cursadas, mas ${f.codigo} não está como equivalência
+                                </span>
+                                <br>
+                                <span style="color:#bf360c;font-size:12px;">💡 ${f.sugestao}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            if (pendentes.optativas.length > 0) {
+                html += `
+                    <div style="margin-top:8px;">
+                        <p style="font-weight:bold;color:#b71c1c;margin:0;">📌 Erros nas Optativas:</p>
+                        ${pendentes.optativas.map(o => `
+                            <div style="padding:8px 10px;margin:4px 0;background:#fff8e1;border-left:3px solid #c62828;border-radius:4px;font-size:13px;">
+                                <strong>❌ ${o.slot}</strong>
+                                <span style="color:#666;font-size:12px;">
+                                    → Deve conter ${o.esperado} (${o.nome})
+                                    <br>
+                                    → Atual: ${o.atual} | Origem: ${o.via}
+                                </span>
+                                <br>
+                                <span style="color:#bf360c;font-size:12px;">💡 ${o.sugestao}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            if (pendentes.ignoradas.length > 0) {
+                html += `
+                    <div style="margin-top:8px;">
+                        <p style="font-weight:bold;color:#b71c1c;margin:0;">📌 Disciplinas que viraram obrigatórias:</p>
+                        ${pendentes.ignoradas.map(i => `
+                            <div style="padding:8px 10px;margin:4px 0;background:#fff8e1;border-left:3px solid #c62828;border-radius:4px;font-size:13px;">
+                                <strong>⚠️ ${i.bmat}</strong> → <strong>${i.bcet}</strong>
+                                <span style="color:#666;font-size:12px;">(optativa virou obrigatória)</span>
+                                <br>
+                                <span style="color:#bf360c;font-size:12px;">💡 ${i.sugestao}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+
+            html += `
+                    <div style="margin-top:12px;padding-top:8px;border-top:1px solid #ef9a9a;">
+                        <button onclick="verificarCorrecoes()" style="padding:8px 20px;background:#c62828;color:white;border:none;border-radius:4px;cursor:pointer;font-weight:600;">
+                            🔍 Verificar novamente
+                        </button>
+                        <span style="margin-left:10px;font-size:12px;color:#666;">
+                            ${pendentes.total} erro(s) encontrado(s)
+                        </span>
+                    </div>
+                </div>
+            `;
+
+            preview.innerHTML = html;
+            showToast(`❌ ${pendentes.total} erro(s) encontrado(s)`, 'error');
+        }
+
+        // ============================================================
+        // 7. FUNÇÕES DE ESTADO E INTERFACE
         // ============================================================
 
         let state = {
@@ -1877,11 +2524,9 @@
             cursoAtivo: 'bmat'
         };
 
-        // ============================================================
-        // 4. FUNÇÕES DE INTERFACE
-        // ============================================================
+        let modalContexto = null;
+        let quebraContexto = null;
 
-        // 4.1 Renderizar lista de alunos
         function renderAlunoList() {
             const container = document.getElementById('alunoList');
             const keys = Object.keys(state.alunos);
@@ -1912,14 +2557,12 @@
             }
         }
 
-        // 4.2 Selecionar aluno
         function selectAluno(id) {
             state.alunoAtivoId = id;
             renderAlunoList();
             renderFluxograma(id);
         }
 
-        // 4.3 Adicionar aluno
         function addAlunoCompleto() {
             const nomeInput = document.getElementById('newAlunoNome');
             const matriculaInput = document.getElementById('newAlunoMatricula');
@@ -1956,7 +2599,6 @@
             showToast(`✅ Aluno "${nome}" adicionado!`, 'success');
         }
 
-        // 4.4 Adicionar múltiplos alunos
         function addMultipleAlunos() {
             const texto = prompt('Digite os nomes dos alunos, um por linha. Para matrícula, use: Nome | Matrícula');
             if (!texto) return;
@@ -2011,7 +2653,6 @@
             showToast(msg, 'success');
         }
 
-        // 4.5 Deletar aluno
         function deleteAluno(id) {
             if (!confirm(`Remover aluno "${state.alunos[id].nome}"?`)) return;
             delete state.alunos[id];
@@ -2031,7 +2672,6 @@
             showToast('🗑️ Aluno removido.', 'info');
         }
 
-        // 4.6 Selecionar curso
         function selecionarCurso(curso) {
             state.cursoAtivo = curso;
             document.getElementById('cursoBMAT').className = curso === 'bmat' ? 'active' : '';
@@ -2046,7 +2686,6 @@
             showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`, 'info');
         }
 
-        // 4.7 Renderizar fluxograma
         function renderFluxograma(alunoId) {
             const aluno = state.alunos[alunoId];
             if (!aluno) {
@@ -2071,6 +2710,7 @@
                         <div class="stats-badge">
                             <span class="done-count">✅ ${progresso.done}</span>
                             <span class="pending-count">🟡 ${progresso.pending}</span>
+                            <span class="planned-count">📌 ${progresso.planned}</span>
                             <span class="total-count">📚 ${progresso.total}</span>
                             <span style="background:#1a237e;color:white;padding:2px 10px;border-radius:12px;font-size:12px;">${progresso.pct}%</span>
                         </div>
@@ -2082,6 +2722,10 @@
                         <div class="legend-item"><span class="legend-color equiv"></span> Equivalência</div>
                         <div class="legend-item"><span class="legend-color opt-selected"></span> Optativa</div>
                         <div class="legend-item"><span class="legend-color quebra"></span> Quebra</div>
+                        <div class="legend-item" style="background:#f3e5f5;padding:2px 8px;border-radius:12px;">
+                            <span class="legend-color" style="background:#ce93d8;border-color:#7b1fa2;"></span> 
+                            Cursará no próximo semestre
+                        </div>
                     </div>
                     <div class="semester-grid">
                 `;
@@ -2098,7 +2742,6 @@
                 html += `</div>`;
             }
 
-            // Disciplinas extras
             const extras = getDisciplinasExtras(alunoId);
             if (extras.length > 0) {
                 html += `
@@ -2108,7 +2751,7 @@
                                 const status = aluno.progresso[d.codigo]?.status || 'not-started';
                                 const isEquiv = aluno.equiv && aluno.equiv[d.codigo];
                                 const isQuebra = aluno.quebras && aluno.quebras[d.codigo];
-                                let finalClass = status === 'done' ? 'done' : 'not-started';
+                                let finalClass = status === 'done' ? 'done' : status === 'planned' ? 'planned' : 'not-started';
                                 if (isEquiv && status === 'done') finalClass = 'equiv-done';
                                 if (isQuebra) finalClass = 'quebra';
                                 const prereqCheck = verificarPreRequisitos(d.codigo, curso, aluno.progresso, aluno.quebras);
@@ -2121,6 +2764,7 @@
                                             <span class="hours">${d.ch || '68h'}</span>
                                             ${isEquiv ? '<span class="equiv-badge">🔗 Equiv.</span>' : ''}
                                             ${isQuebra ? '<span class="quebra-badge">🔓 QUEBRA</span>' : ''}
+                                            ${status === 'planned' ? '<span class="planned-badge">📌 Planejada</span>' : ''}
                                             <span class="quebra-badge">📄 Histórico</span>
                                         </div>
                                     `;
@@ -2133,24 +2777,38 @@
             document.getElementById('fluxogramaContent').innerHTML = html;
         }
 
-        // 4.8 Renderizar disciplina
+        function getStatusDisplay(codigo, aluno) {
+            const status = aluno.progresso[codigo]?.status || 'not-started';
+            const isEquiv = aluno.equiv && aluno.equiv[codigo];
+            const isOpt = isOptativa(codigo, aluno.curso || 'bmat');
+            const isQuebra = aluno.quebras && aluno.quebras[codigo];
+
+            if (isQuebra) return 'quebra';
+            if (isEquiv && status === 'done') return 'equiv-done';
+            if (status === 'planned') return 'planned';
+            if (isOpt && status === 'done') return 'opt-selected';
+            if (isOpt && status === 'pending') return 'opt-pending';
+            return status;
+        }
+
         function renderDisciplina(alunoId, disc) {
             const aluno = state.alunos[alunoId];
             const curso = aluno.curso || 'bmat';
             const codigo = disc.codigo;
 
-            const status = aluno.progresso[codigo]?.status || 'not-started';
+            const displayStatus = getStatusDisplay(codigo, aluno);
             const isEquiv = aluno.equiv && aluno.equiv[codigo];
             const isQuebra = aluno.quebras && aluno.quebras[codigo];
             const isOpt = isOptativa(codigo, curso);
 
             let classe = 'discipline';
-            if (isEquiv && status === 'done') classe += ' equiv-done';
-            else if (isOpt && status === 'done') classe += ' opt-selected';
-            else if (isOpt && status === 'pending') classe += ' opt-pending';
-            else if (isQuebra) classe += ' quebra';
-            else if (status === 'done') classe += ' done';
-            else if (status === 'pending') classe += ' pending';
+            if (displayStatus === 'equiv-done') classe += ' equiv-done';
+            else if (displayStatus === 'opt-selected') classe += ' opt-selected';
+            else if (displayStatus === 'opt-pending') classe += ' opt-pending';
+            else if (displayStatus === 'quebra') classe += ' quebra';
+            else if (displayStatus === 'planned') classe += ' planned';
+            else if (displayStatus === 'done') classe += ' done';
+            else if (displayStatus === 'pending') classe += ' pending';
             else classe += ' not-started';
 
             const prereqCheck = verificarPreRequisitos(codigo, curso, aluno.progresso, aluno.quebras);
@@ -2168,9 +2826,10 @@
             }
             if (isQuebra) badge += ` <span class="quebra-badge">🔓 QUEBRA</span>`;
             if (isOpt && !isEquiv) badge += ` <span class="opt-badge">📌 Opt.</span>`;
+            if (displayStatus === 'planned') badge += ` <span class="planned-badge">📌 Planejada</span>`;
 
             const prereqs = getPreRequisitos(codigo, curso);
-            if (prereqs.length > 0 && !isEquiv && prereqCheck.status !== 'quebra') {
+            if (prereqs.length > 0 && !isEquiv && prereqCheck.status !== 'quebra' && displayStatus !== 'planned') {
                 const feitos = prereqs.filter(p => aluno.progresso[p]?.status === 'done').length;
                 badge += `<span class="prereq-badge">${feitos}/${prereqs.length} pré-req</span>`;
             }
@@ -2191,7 +2850,6 @@
                 `;
         }
 
-        // 4.9 Renderizar optativa
         function renderOptativa(alunoId, disc) {
             const aluno = state.alunos[alunoId];
             const curso = aluno.curso || 'bmat';
@@ -2221,6 +2879,9 @@
                 } else if (optStatus === 'pending') {
                     status = 'opt-pending';
                     badge = `<span class="opt-badge">📌 Opt.</span>`;
+                } else if (optStatus === 'planned') {
+                    status = 'planned';
+                    badge = `<span class="planned-badge">📌 Planejada</span>`;
                 } else {
                     status = 'opt-selected';
                     badge = `<span class="opt-badge">📌 Opt.</span>`;
@@ -2238,6 +2899,7 @@
             else if (status === 'opt-selected') classe += ' opt-selected';
             else if (status === 'opt-pending') classe += ' opt-pending';
             else if (status === 'quebra') classe += ' quebra';
+            else if (status === 'planned') classe += ' planned';
             else if (status === 'done') classe += ' done';
             else if (status === 'pending') classe += ' pending';
             else classe += ' not-started';
@@ -2251,7 +2913,6 @@
                 `;
         }
 
-        // 4.10 Toggle discipline
         function toggleDiscipline(alunoId, codigo) {
             const aluno = state.alunos[alunoId];
             if (!aluno) return;
@@ -2266,13 +2927,11 @@
                 return;
             }
 
-            // Se for slot de optativa
             if (slots.includes(codigo)) {
                 abrirModalOptativa(alunoId, codigo);
                 return;
             }
 
-            // Verifica se é optativa selecionada
             let isOptativaSelecionada = false;
             for (const slot of slots) {
                 if (aluno.optativas[slot] === codigo) {
@@ -2282,8 +2941,12 @@
             }
 
             if (isOptativaSelecionada) {
+                const states = ['pending', 'done', 'planned'];
                 const current = aluno.progresso[codigo]?.status || 'pending';
-                const next = current === 'pending' ? 'done' : 'pending';
+                let nextIndex = (states.indexOf(current) + 1) % states.length;
+                // Se for 'planned', vai para 'pending' (volta ao início)
+                if (current === 'planned') nextIndex = 0;
+                const next = states[nextIndex];
                 aluno.progresso[codigo] = { status: next, origem: 'manual' };
                 aluno.historico_completo[codigo] = {
                     status: next,
@@ -2293,18 +2956,18 @@
                 renderFluxograma(alunoId);
                 renderAlunoList();
                 saveData();
-                showToast(`📌 ${codigo} ${next === 'done' ? '✅ cursada' : '🟡 cursando'}`, 'info');
+                const msg = next === 'done' ? '✅ cursada' : next === 'planned' ? '📌 planejada' : '🟡 cursando';
+                showToast(`📌 ${codigo} ${msg}`, 'info');
                 return;
             }
 
-            // Disciplina normal
             const prereqCheck = verificarPreRequisitos(codigo, curso, aluno.progresso, aluno.quebras);
             if (prereqCheck.status === 'blocked') {
                 abrirModalQuebra(alunoId, codigo);
                 return;
             }
 
-            const states = ['not-started', 'pending', 'done'];
+            const states = ['not-started', 'pending', 'done', 'planned'];
             const current = aluno.progresso[codigo]?.status || 'not-started';
             const nextIndex = (states.indexOf(current) + 1) % states.length;
             aluno.progresso[codigo] = { status: states[nextIndex], origem: 'manual' };
@@ -2319,7 +2982,158 @@
             saveData();
         }
 
-        // 4.11 Abrir modal optativa
+        function getDisciplinasExtras(alunoId) {
+            const aluno = state.alunos[alunoId];
+            if (!aluno) return [];
+
+            const curso = aluno.curso || 'bmat';
+            const curriculo = getCurriculo(curso);
+            const codigosDoCurso = new Set();
+            for (const sem of curriculo) {
+                for (const disc of sem.disciplinas) {
+                    if (!disc.isOptativa) codigosDoCurso.add(disc.codigo);
+                }
+            }
+
+            const extras = [];
+            for (const codigo in aluno.progresso) {
+                if (codigo.startsWith('OPT')) continue;
+                if (codigo.startsWith('OPT_BCET')) continue;
+                if (codigosDoCurso.has(codigo)) continue;
+                if (isOptativa(codigo, curso)) continue;
+                if (aluno.equiv && aluno.equiv[codigo]) continue;
+                if (aluno.progresso[codigo]?.status === 'not-started') continue;
+
+                extras.push({ codigo, ch: '68h' });
+            }
+
+            return extras;
+        }
+
+        // ============================================================
+        // 8. IMPORTAÇÃO
+        // ============================================================
+
+        async function importarHistorico(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            if (!state.alunoAtivoId || !state.alunos[state.alunoAtivoId]) {
+                showToast('❌ Selecione ou crie um aluno primeiro!', 'error');
+                event.target.value = '';
+                return;
+            }
+
+            const preview = document.getElementById('importPreview');
+            preview.innerHTML = `<div class="info">⏳ Processando PDF... <span class="loading"></span></div>`;
+            preview.classList.add('show');
+
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+                let textoCompleto = '';
+
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    textoCompleto += pageText + '\n';
+                }
+
+                const regex =
+                    /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([#@]?\s*)([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
+
+                const todasOcorrencias = [];
+                let match;
+                while ((match = regex.exec(textoCompleto)) !== null) {
+                    const periodo = match[1];
+                    const nome = match[2].trim();
+                    const situacao = match[3];
+                    const codigo = match[5].trim();
+                    const ch = parseInt(match[6]);
+
+                    if (codigo.includes('ENADE') || nome.includes('ENADE')) continue;
+
+                    todasOcorrencias.push({ periodo, codigo, nome, ch, situacao });
+                }
+
+                if (todasOcorrencias.length === 0) {
+                    preview.innerHTML = `<div class="error">❌ Nenhuma disciplina encontrada no PDF.</div>`;
+                    showToast('❌ Nenhuma disciplina encontrada.', 'error');
+                    event.target.value = '';
+                    return;
+                }
+
+                const aluno = state.alunos[state.alunoAtivoId];
+                const curso = aluno.curso || 'bmat';
+
+                const resultado = processarHistorico(todasOcorrencias, curso);
+
+                for (const [codigo, info] of Object.entries(resultado.disciplinas)) {
+                    aluno.progresso[codigo] = { status: info.status, origem: info.origem };
+                    if (info.origem === 'equivalencia' && resultado.equivalencias[codigo]) {
+                        aluno.equiv[codigo] = resultado.equivalencias[codigo];
+                    }
+                    aluno.historico_completo[codigo] = {
+                        status: info.status,
+                        origem: curso,
+                        data: new Date().toISOString()
+                    };
+                }
+
+                const slots = getSlotsOptativa(curso);
+                const slotsDisponiveis = slots.filter(s => !aluno.optativas[s]);
+                aluno.optativas = alocarOptativas(resultado.optativas, aluno.optativas, slotsDisponiveis);
+
+                for (const slot in aluno.optativas) {
+                    if (!aluno.historico_optativas[slot]) {
+                        aluno.historico_optativas[slot] = {
+                            codigo: aluno.optativas[slot],
+                            origem: 'importado',
+                            data: new Date().toISOString()
+                        };
+                    }
+                }
+
+                aluno.curso = curso;
+
+                renderFluxograma(state.alunoAtivoId);
+                renderAlunoList();
+                saveData();
+
+                const countAPR = Object.values(resultado.disciplinas).filter(d => d.status === 'done').length;
+                let html = `
+                        <div class="success">✅ Disciplinas processadas para <strong>${aluno.nome}</strong>!</div>
+                        <div class="info">📚 ${countAPR} disciplinas CURSADAS</div>
+                        <div class="info">📌 ${resultado.optativas.length} optativa(s) identificada(s)</div>
+                        ${Object.keys(resultado.equivalencias).length > 0 ? `<div class="info">🔗 ${Object.keys(resultado.equivalencias).length} equivalência(s) aplicada(s)</div>` : ''}
+                    `;
+
+                preview.innerHTML = html;
+
+                // Verifica se há pendências
+                const pendentes = verificarStatusCorrecoes(state.alunoAtivoId);
+                if (pendentes.total === 0) {
+                    exibirOpcoesPosValidacao();
+                } else {
+                    verificarCorrecoes();
+                }
+
+                showToast(`✅ ${countAPR} disciplinas processadas!`, 'success');
+
+            } catch (error) {
+                console.error('❌ Erro ao importar:', error);
+                preview.innerHTML = `<div class="error">❌ Erro ao processar o PDF: ${error.message}</div>`;
+                showToast('❌ Erro ao importar o PDF', 'error');
+            }
+
+            event.target.value = '';
+        }
+
+        // ============================================================
+        // 9. MODAIS OPTATIVAS E QUEBRA
+        // ============================================================
+
         function abrirModalOptativa(alunoId, optCodigo) {
             const aluno = state.alunos[alunoId];
             if (!aluno) return;
@@ -2339,7 +3153,6 @@
 
             const todasOptativas = getTodasOptativas();
 
-            // Verifica optativas já alocadas
             const slotsOcupados = new Set();
             const slots = getSlotsOptativa(aluno.curso || 'bmat');
             for (const slot of slots) {
@@ -2355,7 +3168,6 @@
             const list = document.getElementById('optList');
             list.innerHTML = '';
 
-            // Filtra optativas já alocadas em outros slots
             const optativasFiltradas = todasOptativas.filter(opt => {
                 if (slotsOcupados.has(opt.codigo) && aluno.optativas[optCodigo] !== opt.codigo) {
                     return false;
@@ -2419,7 +3231,6 @@
             document.getElementById('optModal').classList.add('show');
         }
 
-        // 4.12 Selecionar optativa
         function selecionarOptativa(codigo) {
             if (!modalContexto) return;
             const { alunoId, optCodigo } = modalContexto;
@@ -2431,7 +3242,6 @@
 
             const slots = getSlotsOptativa(aluno.curso || 'bmat');
 
-            // Verifica duplicidade
             for (const slot of slots) {
                 if (slot === optCodigo) continue;
                 if (aluno.optativas[slot] === codigo) {
@@ -2440,20 +3250,17 @@
                 }
             }
 
-            // Verifica se é optativa global
             if (!isOptativaGlobal(codigo)) {
                 showToast(`⚠️ ${codigo} não é uma optativa válida!`, 'error');
                 return;
             }
 
-            // Aviso se não é válida no curso atual
             if (!isOptativa(codigo, aluno.curso || 'bmat')) {
                 if (!confirm(`⚠️ ${codigo} não é uma optativa válida no curso atual.\n\nDeseja mesmo assim selecioná-la?`)) {
                     return;
                 }
             }
 
-            // Verifica pré-requisitos
             const prereqs = getPreRequisitos(codigo, aluno.curso || 'bmat');
             if (prereqs.length > 0) {
                 const temTodos = prereqs.every(pre => aluno.progresso[pre]?.status === 'done');
@@ -2467,7 +3274,6 @@
                 }
             }
 
-            // Adiciona ou remove
             if (aluno.optativas[optCodigo] === codigo) {
                 delete aluno.optativas[optCodigo];
                 delete aluno.progresso[codigo];
@@ -2499,13 +3305,11 @@
             saveData();
         }
 
-        // 4.13 Fechar modal optativa
         function closeOptModal() {
             document.getElementById('optModal').classList.remove('show');
             modalContexto = null;
         }
 
-        // 4.14 Limpar optativa
         function clearOptativa() {
             if (!modalContexto) return;
             const { alunoId, optCodigo } = modalContexto;
@@ -2530,7 +3334,6 @@
             if (e.target === this) closeOptModal();
         });
 
-        // 4.15 Modal quebra
         function abrirModalQuebra(alunoId, codigo) {
             const aluno = state.alunos[alunoId];
             if (!aluno) return;
@@ -2597,277 +3400,10 @@
             if (e.target === this) fecharModalQuebra();
         });
 
-        // 4.16 Disciplinas extras
-        function getDisciplinasExtras(alunoId) {
-            const aluno = state.alunos[alunoId];
-            if (!aluno) return [];
+        // ============================================================
+        // 10. PDF
+        // ============================================================
 
-            const curso = aluno.curso || 'bmat';
-            const curriculo = getCurriculo(curso);
-            const codigosDoCurso = new Set();
-            for (const sem of curriculo) {
-                for (const disc of sem.disciplinas) {
-                    if (!disc.isOptativa) codigosDoCurso.add(disc.codigo);
-                }
-            }
-
-            const extras = [];
-            for (const codigo in aluno.progresso) {
-                if (codigo.startsWith('OPT')) continue;
-                if (codigo.startsWith('OPT_BCET')) continue;
-                if (codigosDoCurso.has(codigo)) continue;
-                if (isOptativa(codigo, curso)) continue;
-                if (aluno.equiv && aluno.equiv[codigo]) continue;
-                if (aluno.progresso[codigo]?.status === 'not-started') continue;
-
-                extras.push({ codigo, ch: '68h' });
-            }
-
-            return extras;
-        }
-
-        // 4.17 Importar histórico
-        async function importarHistorico(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            if (!state.alunoAtivoId || !state.alunos[state.alunoAtivoId]) {
-                showToast('❌ Selecione ou crie um aluno primeiro!', 'error');
-                event.target.value = '';
-                return;
-            }
-
-            const preview = document.getElementById('importPreview');
-            preview.innerHTML = `<div class="info">⏳ Processando PDF... <span class="loading"></span></div>`;
-            preview.classList.add('show');
-
-            try {
-                const arrayBuffer = await file.arrayBuffer();
-                const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-                let textoCompleto = '';
-
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const textContent = await page.getTextContent();
-                    const pageText = textContent.items.map(item => item.str).join(' ');
-                    textoCompleto += pageText + '\n';
-                }
-
-                const todasOcorrencias = [];
-                const regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
-
-                let match;
-                while ((match = regex.exec(textoCompleto)) !== null) {
-                    const periodo = match[1];
-                    const nome = match[2].trim();
-                    const situacao = match[3];
-                    const codigo = match[4].trim();
-                    const ch = parseInt(match[5]);
-
-                    if (codigo.includes('ENADE') || nome.includes('ENADE')) continue;
-
-                    todasOcorrencias.push({
-                        periodo: periodo,
-                        codigo: codigo,
-                        nome: nome,
-                        ch: ch,
-                        situacao: situacao
-                    });
-                }
-
-                if (todasOcorrencias.length === 0) {
-                    preview.innerHTML = `<div class="error">❌ Nenhuma disciplina encontrada no PDF.</div>`;
-                    showToast('❌ Nenhuma disciplina encontrada.', 'error');
-                    event.target.value = '';
-                    return;
-                }
-
-                const aluno = state.alunos[state.alunoAtivoId];
-                const curso = aluno.curso || 'bmat';
-
-                // Processa o histórico
-                const resultado = processarHistorico(todasOcorrencias, curso);
-
-                // Aplica ao aluno
-                for (const [codigo, info] of Object.entries(resultado.disciplinas)) {
-                    aluno.progresso[codigo] = { status: info.status, origem: info.origem };
-                    if (info.origem === 'equivalencia' && resultado.equivalencias[codigo]) {
-                        aluno.equiv[codigo] = resultado.equivalencias[codigo];
-                    }
-                    aluno.historico_completo[codigo] = {
-                        status: info.status,
-                        origem: curso,
-                        data: new Date().toISOString()
-                    };
-                }
-
-                // Aloca optativas
-                const slots = getSlotsOptativa(curso);
-                const slotsDisponiveis = slots.filter(s => !aluno.optativas[s]);
-                aluno.optativas = alocarOptativas(resultado.optativas, aluno.optativas, slotsDisponiveis);
-
-                // Salva histórico das optativas
-                for (const slot in aluno.optativas) {
-                    if (!aluno.historico_optativas[slot]) {
-                        aluno.historico_optativas[slot] = {
-                            codigo: aluno.optativas[slot],
-                            origem: 'importado',
-                            data: new Date().toISOString()
-                        };
-                    }
-                }
-
-                aluno.curso = curso;
-
-                renderFluxograma(state.alunoAtivoId);
-                renderAlunoList();
-                saveData();
-
-                const countAPR = Object.values(resultado.disciplinas).filter(d => d.status === 'done').length;
-                preview.innerHTML = `
-                        <div class="success">✅ Disciplinas processadas para <strong>${aluno.nome}</strong>!</div>
-                        <div class="info">📚 ${countAPR} disciplinas CURSADAS</div>
-                        <div class="info">📌 ${resultado.optativas.length} optativa(s) identificada(s)</div>
-                        ${Object.keys(resultado.equivalencias).length > 0 ? `<div class="info">🔗 ${Object.keys(resultado.equivalencias).length} equivalência(s) aplicada(s)</div>` : ''}
-                    `;
-
-                showToast(`✅ ${countAPR} disciplinas processadas!`, 'success');
-
-            } catch (error) {
-                console.error('❌ Erro ao importar:', error);
-                preview.innerHTML = `<div class="error">❌ Erro ao processar o PDF: ${error.message}</div>`;
-                showToast('❌ Erro ao importar o PDF', 'error');
-            }
-
-            event.target.value = '';
-        }
-
-        // 4.18 Atualizar contagem de alunos
-        function updateAlunoCount() {
-            document.getElementById('alunoCount').textContent = Object.keys(state.alunos).length;
-        }
-
-        // 4.19 Alternar versão
-        function alternarVersao() {
-            const grid = document.getElementById('mainGrid');
-            const btn = document.getElementById('btnToggleVersion');
-            if (grid.classList.contains('modo-mobile')) {
-                grid.classList.remove('modo-mobile');
-                grid.classList.add('clasica', 'modo-clasica');
-                document.body.classList.remove('modo-mobile');
-                document.body.classList.add('modo-clasica');
-                btn.textContent = '📱 Mobile';
-                btn.className = 'btn-toggle-version';
-            } else {
-                grid.classList.remove('clasica', 'modo-clasica');
-                grid.classList.add('modo-mobile');
-                document.body.classList.remove('modo-clasica');
-                document.body.classList.add('modo-mobile');
-                btn.textContent = '💻 Clássica';
-                btn.className = 'btn-toggle-version mobile';
-            }
-            if (state.alunoAtivoId && state.alunos[state.alunoAtivoId]) {
-                renderFluxograma(state.alunoAtivoId);
-            }
-            showToast(`📱 Versão ${grid.classList.contains('modo-mobile') ? 'Mobile' : 'Clássica'} ativada!`, 'info');
-        }
-
-        // 4.20 Toast
-        function showToast(msg, type = 'info') {
-            const el = document.getElementById('toast');
-            el.textContent = msg;
-            el.className = `toast ${type} show`;
-            clearTimeout(toastTimeout);
-            el.onclick = function() { el.classList.remove('show');
-                clearTimeout(toastTimeout); };
-            toastTimeout = setTimeout(() => el.classList.remove('show'), 4000);
-        }
-
-        let toastTimeout;
-
-        // 4.21 Salvar dados
-        function saveData() {
-            localStorage.setItem('gerenciador_bmat_bcet_status', JSON.stringify({
-                alunos: state.alunos,
-                nextId: state.nextId,
-                cursoAtivo: state.cursoAtivo
-            }));
-        }
-
-        // 4.22 Exportar dados
-        function exportAllData() {
-            const data = {
-                alunos: state.alunos,
-                nextId: state.nextId,
-                cursoAtivo: state.cursoAtivo,
-                exportado: new Date().toISOString()
-            };
-            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `alunos_${new Date().toISOString().slice(0, 10)}.json`;
-            a.click();
-            URL.revokeObjectURL(url);
-            showToast('📤 Dados exportados!', 'success');
-        }
-
-        // 4.23 Importar dados
-        function importAllData(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    if (data.alunos && typeof data.alunos === 'object') {
-                        state.alunos = data.alunos;
-                        state.nextId = data.nextId || 1;
-                        if (data.cursoAtivo) state.cursoAtivo = data.cursoAtivo;
-                        for (const id in state.alunos) {
-                            if (!state.alunos[id].progresso) state.alunos[id].progresso = {};
-                            if (!state.alunos[id].optativas) state.alunos[id].optativas = {};
-                            if (!state.alunos[id].quebras) state.alunos[id].quebras = {};
-                            if (!state.alunos[id].equiv) state.alunos[id].equiv = {};
-                            if (!state.alunos[id].historico_completo) state.alunos[id].historico_completo = {};
-                            if (!state.alunos[id].historico_optativas) state.alunos[id].historico_optativas = {};
-                            if (!state.alunos[id].curso) state.alunos[id].curso = 'bmat';
-                        }
-                        document.getElementById('cursoBMAT').className = state.cursoAtivo === 'bmat' ? 'active' : '';
-                        document.getElementById('cursoBCET').className = state.cursoAtivo === 'bcet' ? 'active' : '';
-                        const keys = Object.keys(state.alunos);
-                        state.alunoAtivoId = keys.length > 0 ? keys[0] : null;
-                        renderAlunoList();
-                        if (state.alunoAtivoId) renderFluxograma(state.alunoAtivoId);
-                        updateAlunoCount();
-                        saveData();
-                        showToast(`📥 Importados ${keys.length} alunos!`, 'success');
-                    } else {
-                        showToast('❌ Formato inválido.', 'error');
-                    }
-                } catch (err) {
-                    showToast('❌ Erro ao importar: ' + err.message, 'error');
-                }
-            };
-            reader.readAsText(file);
-            event.target.value = '';
-        }
-
-        // 4.24 Limpar todos os dados
-        function clearAllData() {
-            if (!confirm('⚠️ Tem certeza que deseja apagar TODOS os dados?')) return;
-            state.alunos = {};
-            state.nextId = 1;
-            state.alunoAtivoId = null;
-            renderAlunoList();
-            document.getElementById('fluxogramaContent').innerHTML =
-                `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
-            updateAlunoCount();
-            saveData();
-            showToast('🗑️ Todos os dados foram removidos.', 'info');
-        }
-
-        // 4.25 Gerar PDF
         function gerarPDFVisual() {
             if (!state.alunoAtivoId || !state.alunos[state.alunoAtivoId]) {
                 showToast('❌ Selecione um aluno primeiro!', 'error');
@@ -2904,6 +3440,9 @@
                             } else if (optStatus === 'done') {
                                 statusClass = 'opt-selected';
                                 badgeHtml = `<span class="badge opt">📌 Opt.</span>`;
+                            } else if (optStatus === 'planned') {
+                                statusClass = 'planned';
+                                badgeHtml = `<span class="badge planned">📌 Planejada</span>`;
                             } else {
                                 statusClass = 'not-started';
                             }
@@ -2925,6 +3464,9 @@
                             statusClass = 'done';
                         } else if (status === 'pending') {
                             statusClass = 'pending';
+                        } else if (status === 'planned') {
+                            statusClass = 'planned';
+                            badgeHtml = `<span class="badge planned">📌 Planejada</span>`;
                         } else {
                             statusClass = 'not-started';
                         }
@@ -2948,7 +3490,6 @@
                     `;
             }
 
-            // Disciplinas extras no PDF
             const extras = getDisciplinasExtras(state.alunoAtivoId);
             let extrasHtml = '';
             if (extras.length > 0) {
@@ -2958,7 +3499,7 @@
                             <div class="list">
                                 ${extras.map(d => {
                                     const status = aluno.progresso[d.codigo]?.status || 'not-started';
-                                    let statusClass = status === 'done' ? 'done' : 'not-started';
+                                    let statusClass = status === 'done' ? 'done' : status === 'planned' ? 'planned' : 'not-started';
                                     if (aluno.equiv && aluno.equiv[d.codigo]) statusClass = 'equiv-done';
                                     if (aluno.quebras && aluno.quebras[d.codigo]) statusClass = 'quebra';
                                     return `
@@ -2966,6 +3507,7 @@
                                             <span class="code">${d.codigo}</span>
                                             ${getNomeDisciplina(d.codigo) || d.codigo}
                                             <span class="hours">${d.ch || '68h'}</span>
+                                            ${status === 'planned' ? '<span class="badge planned">📌 Planejada</span>' : ''}
                                         </div>
                                     `;
                                 }).join('')}
@@ -2991,24 +3533,26 @@
                         <div style="display:flex;justify-content:center;gap:20px;margin:6px 0 8px 0;flex-wrap:wrap;font-size:11px;">
                             <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.done}</span><br><span style="color:#666;">✅ Cursadas</span></div>
                             <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.pending}</span><br><span style="color:#666;">🟡 Cursando</span></div>
+                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.planned}</span><br><span style="color:#7b1fa2;">📌 Planejadas</span></div>
                             <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.total}</span><br><span style="color:#666;">📚 Total</span></div>
                             <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.pct}%</span><br><span style="color:#666;">📊 Progresso</span></div>
                         </div>
 
                         <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;padding:4px 8px;background:#f8f9fa;border-radius:6px;font-size:10px;">
-                            <div style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;border:1px solid #ccc;background:#4caf50;display:inline-block;"></span> Cursada</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;border:1px solid #ccc;background:#ffeb3b;display:inline-block;"></span> Cursando</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;border:1px solid #ccc;background:#e0e0e0;display:inline-block;"></span> Não cursada</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;border:1px solid #4a148c;background:#7c4dff;display:inline-block;"></span> Equivalência</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;border:1px solid #1b5e20;background:#2e7d32;display:inline-block;"></span> Optativa</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;border-radius:2px;border:1px solid #e65100;background:#ff6f00;display:inline-block;"></span> Quebra</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color done"></span> Cursada</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color pending"></span> Cursando</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color not-started"></span> Não cursada</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color equiv"></span> Equivalência</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color opt"></span> Optativa</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color quebra"></span> Quebra</div>
+                            <div style="display:flex;align-items:center;gap:4px;"><span class="color planned"></span> Planejada</div>
                         </div>
 
-                        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;font-size:10px;">
+                        <div class="pdf-grid">
                             ${semestresHtml}
                         </div>
                         ${extrasHtml}
-                        <div style="text-align:center;margin-top:10px;padding-top:6px;border-top:1px solid #e0e0e0;font-size:8px;color:#999;">
+                        <div class="pdf-footer">
                             Relatório gerado automaticamente · BMAT/UFRB
                             <br>${new Date().toLocaleString('pt-BR')}
                         </div>
@@ -3050,7 +3594,9 @@
                     const y = (pdfHeight - finalHeight) / 2;
 
                     pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-                    pdf.save(`relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
+                    pdf.save(
+                        `relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`
+                    );
                     showToast('📄 PDF gerado com sucesso!', 'success');
                 }).catch(err => {
                     console.error('Erro ao capturar:', err);
@@ -3060,7 +3606,125 @@
         }
 
         // ============================================================
-        // 5. INICIALIZAÇÃO
+        // 11. UTILITÁRIOS
+        // ============================================================
+
+        function updateAlunoCount() {
+            document.getElementById('alunoCount').textContent = Object.keys(state.alunos).length;
+        }
+
+        function alternarVersao() {
+            const grid = document.getElementById('mainGrid');
+            const btn = document.getElementById('btnToggleVersion');
+            if (grid.classList.contains('modo-mobile')) {
+                grid.classList.remove('modo-mobile');
+                grid.classList.add('clasica', 'modo-clasica');
+                document.body.classList.remove('modo-mobile');
+                document.body.classList.add('modo-clasica');
+                btn.textContent = '📱 Mobile';
+                btn.className = 'btn-toggle-version';
+            } else {
+                grid.classList.remove('clasica', 'modo-clasica');
+                grid.classList.add('modo-mobile');
+                document.body.classList.remove('modo-clasica');
+                document.body.classList.add('modo-mobile');
+                btn.textContent = '💻 Clássica';
+                btn.className = 'btn-toggle-version mobile';
+            }
+            if (state.alunoAtivoId && state.alunos[state.alunoAtivoId]) {
+                renderFluxograma(state.alunoAtivoId);
+            }
+            showToast(`📱 Versão ${grid.classList.contains('modo-mobile') ? 'Mobile' : 'Clássica'} ativada!`, 'info');
+        }
+
+        function showToast(msg, type = 'info') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = `toast ${type} show`;
+            clearTimeout(toastTimeout);
+            el.onclick = function() { el.classList.remove('show');
+                clearTimeout(toastTimeout); };
+            toastTimeout = setTimeout(() => el.classList.remove('show'), 4000);
+        }
+
+        let toastTimeout;
+
+        function saveData() {
+            localStorage.setItem('gerenciador_bmat_bcet_status', JSON.stringify({
+                alunos: state.alunos,
+                nextId: state.nextId,
+                cursoAtivo: state.cursoAtivo
+            }));
+        }
+
+        function exportAllData() {
+            const data = { alunos: state.alunos, nextId: state.nextId, cursoAtivo: state.cursoAtivo,
+                exportado: new Date().toISOString() };
+            const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alunos_${new Date().toISOString().slice(0, 10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('📤 Dados exportados!', 'success');
+        }
+
+        function importAllData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (data.alunos && typeof data.alunos === 'object') {
+                        state.alunos = data.alunos;
+                        state.nextId = data.nextId || 1;
+                        if (data.cursoAtivo) state.cursoAtivo = data.cursoAtivo;
+                        for (const id in state.alunos) {
+                            if (!state.alunos[id].progresso) state.alunos[id].progresso = {};
+                            if (!state.alunos[id].optativas) state.alunos[id].optativas = {};
+                            if (!state.alunos[id].quebras) state.alunos[id].quebras = {};
+                            if (!state.alunos[id].equiv) state.alunos[id].equiv = {};
+                            if (!state.alunos[id].historico_completo) state.alunos[id].historico_completo = {};
+                            if (!state.alunos[id].historico_optativas) state.alunos[id].historico_optativas = {};
+                            if (!state.alunos[id].curso) state.alunos[id].curso = 'bmat';
+                        }
+                        document.getElementById('cursoBMAT').className = state.cursoAtivo === 'bmat' ? 'active' : '';
+                        document.getElementById('cursoBCET').className = state.cursoAtivo === 'bcet' ? 'active' : '';
+                        const keys = Object.keys(state.alunos);
+                        state.alunoAtivoId = keys.length > 0 ? keys[0] : null;
+                        renderAlunoList();
+                        if (state.alunoAtivoId) renderFluxograma(state.alunoAtivoId);
+                        updateAlunoCount();
+                        saveData();
+                        showToast(`📥 Importados ${keys.length} alunos!`, 'success');
+                    } else {
+                        showToast('❌ Formato inválido.', 'error');
+                    }
+                } catch (err) {
+                    showToast('❌ Erro ao importar: ' + err.message, 'error');
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        function clearAllData() {
+            if (!confirm('⚠️ Tem certeza que deseja apagar TODOS os dados?')) return;
+            state.alunos = {};
+            state.nextId = 1;
+            state.alunoAtivoId = null;
+            renderAlunoList();
+            document.getElementById('fluxogramaContent').innerHTML =
+                `<div class="no-aluno"><h3>👈 Adicione um aluno</h3><p>Use o formulário à esquerda ou importe um histórico.</p></div>`;
+            updateAlunoCount();
+            saveData();
+            showToast('🗑️ Todos os dados foram removidos.', 'info');
+        }
+
+        // ============================================================
+        // 12. INICIALIZAÇÃO
         // ============================================================
 
         document.addEventListener('DOMContentLoaded', function() {
@@ -3121,17 +3785,18 @@
             updateAlunoCount();
             saveData();
 
-            // Fechar modais com Escape
             document.addEventListener('keydown', function(e) {
                 if (e.key === 'Escape') {
                     closeOptModal();
                     fecharModalQuebra();
+                    fecharPreMatricula();
+                    fecharConfirmModal();
                 }
             });
         });
 
         // ============================================================
-        // 6. EXPOSIÇÃO GLOBAL (para chamadas inline no HTML)
+        // 13. EXPOSIÇÃO GLOBAL
         // ============================================================
 
         window.addAlunoCompleto = addAlunoCompleto;
@@ -3154,6 +3819,14 @@
         window.clearOptativa = clearOptativa;
         window.closeOptModal = closeOptModal;
         window.selecionarOptativa = selecionarOptativa;
+        window.abrirPreMatricula = abrirPreMatricula;
+        window.togglePlanejamento = togglePlanejamento;
+        window.salvarPlanejamento = salvarPlanejamento;
+        window.finalizarPreMatricula = finalizarPreMatricula;
+        window.fecharPreMatricula = fecharPreMatricula;
+        window.fecharConfirmModal = fecharConfirmModal;
+        window.verificarCorrecoes = verificarCorrecoes;
+        window.exibirOpcoesPosValidacao = exibirOpcoesPosValidacao;
     </script>
 
 </body>
