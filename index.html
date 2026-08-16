@@ -917,316 +917,6 @@
             }
         }
 
-        #pdf-capture-area {
-            position: absolute;
-            left: -9999px;
-            top: 0;
-            width: 1100px;
-            background: white;
-            padding: 20px;
-            z-index: 9999;
-            font-family: 'Segoe UI', Arial, sans-serif;
-        }
-        #pdf-capture-area .pdf-header {
-            text-align: center;
-            border-bottom: 2px solid #1a237e;
-            padding-bottom: 8px;
-            margin-bottom: 8px;
-        }
-        #pdf-capture-area .pdf-header h1 {
-            color: #1a237e;
-            font-size: 18px;
-            margin: 0;
-        }
-        #pdf-capture-area .pdf-header .sub {
-            color: #666;
-            font-size: 11px;
-        }
-        #pdf-capture-area .pdf-aluno {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 6px;
-            flex-wrap: wrap;
-            font-size: 13px;
-        }
-        #pdf-capture-area .pdf-aluno .nome {
-            font-size: 14px;
-            font-weight: bold;
-            color: #1a237e;
-        }
-        #pdf-capture-area .pdf-aluno .matricula {
-            font-size: 11px;
-            color: #666;
-        }
-        #pdf-capture-area .pdf-stats {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 6px 0 8px 0;
-            flex-wrap: wrap;
-            font-size: 11px;
-        }
-        #pdf-capture-area .pdf-stats .stat {
-            text-align: center;
-        }
-        #pdf-capture-area .pdf-stats .stat .num {
-            font-size: 18px;
-            font-weight: bold;
-            color: #1a237e;
-        }
-        #pdf-capture-area .pdf-stats .stat .label {
-            font-size: 10px;
-            color: #666;
-        }
-        #pdf-capture-area .pdf-legend {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-            justify-content: center;
-            margin-bottom: 8px;
-            padding: 4px 8px;
-            background: #f8f9fa;
-            border-radius: 6px;
-            font-size: 10px;
-        }
-        #pdf-capture-area .pdf-legend .item {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-        #pdf-capture-area .pdf-legend .color {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
-            border: 1px solid #ccc;
-            display: inline-block;
-            flex-shrink: 0;
-        }
-        #pdf-capture-area .pdf-legend .color.done {
-            background: #4caf50;
-        }
-        #pdf-capture-area .pdf-legend .color.pending {
-            background: #ffeb3b;
-        }
-        #pdf-capture-area .pdf-legend .color.not-started {
-            background: #e0e0e0;
-        }
-        #pdf-capture-area .pdf-legend .color.equiv {
-            background: #7c4dff;
-            border-color: #4a148c;
-        }
-        #pdf-capture-area .pdf-legend .color.opt {
-            background: #2e7d32;
-            border-color: #1b5e20;
-        }
-        #pdf-capture-area .pdf-legend .color.quebra {
-            background: #ff6f00;
-            border-color: #e65100;
-        }
-        #pdf-capture-area .pdf-legend .color.planned {
-            background: #ce93d8;
-            border-color: #7b1fa2;
-        }
-        #pdf-capture-area .pdf-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-            font-size: 10px;
-        }
-        #pdf-capture-area .pdf-semester {
-            border: 1px solid #e0e0e0;
-            border-radius: 6px;
-            padding: 6px;
-            background: #fafafa;
-        }
-        #pdf-capture-area .pdf-semester .title {
-            font-weight: bold;
-            font-size: 11px;
-            text-align: center;
-            padding: 3px;
-            margin: -6px -6px 6px -6px;
-            border-radius: 5px 5px 0 0;
-            color: white;
-        }
-        #pdf-capture-area .pdf-semester .title.s1 {
-            background: #01579b;
-        }
-        #pdf-capture-area .pdf-semester .title.s2 {
-            background: #4a148c;
-        }
-        #pdf-capture-area .pdf-semester .title.s3 {
-            background: #1b5e20;
-        }
-        #pdf-capture-area .pdf-semester .title.s4 {
-            background: #e65100;
-        }
-        #pdf-capture-area .pdf-semester .title.s5 {
-            background: #880e4f;
-        }
-        #pdf-capture-area .pdf-semester .title.s6 {
-            background: #006064;
-        }
-        #pdf-capture-area .pdf-semester .title.s7 {
-            background: #33691e;
-        }
-        #pdf-capture-area .pdf-semester .title.s8 {
-            background: #f57f17;
-        }
-        #pdf-capture-area .pdf-disc {
-            display: block;
-            padding: 3px 5px;
-            margin-bottom: 2px;
-            border: 1px solid #ddd;
-            border-radius: 3px;
-            font-size: 9px;
-            font-weight: 500;
-            color: #333;
-        }
-        #pdf-capture-area .pdf-disc .code {
-            font-weight: bold;
-            color: #1a237e;
-        }
-        #pdf-capture-area .pdf-disc .hours {
-            float: right;
-            color: #666;
-        }
-        #pdf-capture-area .pdf-disc.done {
-            background: #4caf50;
-            border-color: #2e7d32;
-            color: white;
-        }
-        #pdf-capture-area .pdf-disc.done .code {
-            color: #fff;
-        }
-        #pdf-capture-area .pdf-disc.done .hours {
-            color: #e8f5e9;
-        }
-        #pdf-capture-area .pdf-disc.pending {
-            background: #ffeb3b;
-            border-color: #f9a825;
-            color: #333;
-        }
-        #pdf-capture-area .pdf-disc.pending .code {
-            color: #e65100;
-        }
-        #pdf-capture-area .pdf-disc.not-started {
-            background: #e0e0e0;
-            border-color: #bdbdbd;
-        }
-        #pdf-capture-area .pdf-disc.opt-selected {
-            background: #2e7d32;
-            border-color: #1b5e20;
-            color: white;
-        }
-        #pdf-capture-area .pdf-disc.opt-selected .code {
-            color: #fff;
-        }
-        #pdf-capture-area .pdf-disc.opt-selected .hours {
-            color: #e8f5e9;
-        }
-        #pdf-capture-area .pdf-disc.equiv-done {
-            background: #7c4dff;
-            border-color: #4a148c;
-            color: white;
-        }
-        #pdf-capture-area .pdf-disc.equiv-done .code {
-            color: #fff;
-        }
-        #pdf-capture-area .pdf-disc.equiv-done .hours {
-            color: #e8eaf6;
-        }
-        #pdf-capture-area .pdf-disc.quebra {
-            background: #ff6f00;
-            border-color: #e65100;
-            color: white;
-        }
-        #pdf-capture-area .pdf-disc.quebra .code {
-            color: #fff;
-        }
-        #pdf-capture-area .pdf-disc.quebra .hours {
-            color: #ffe0b2;
-        }
-        #pdf-capture-area .pdf-disc.planned {
-            background: #ce93d8;
-            border-color: #7b1fa2;
-            color: #1a237e;
-        }
-        #pdf-capture-area .pdf-disc.planned .code {
-            color: #4a148c;
-        }
-        #pdf-capture-area .pdf-disc.planned .hours {
-            color: #4a148c;
-        }
-        #pdf-capture-area .pdf-disc .badge {
-            font-size: 7px;
-            padding: 1px 4px;
-            border-radius: 4px;
-            margin-left: 2px;
-            display: inline-block;
-            color: white;
-        }
-        #pdf-capture-area .pdf-disc .badge.equiv {
-            background: #4a148c;
-        }
-        #pdf-capture-area .pdf-disc .badge.opt {
-            background: #1b5e20;
-        }
-        #pdf-capture-area .pdf-disc .badge.quebra {
-            background: #e65100;
-        }
-        #pdf-capture-area .pdf-disc .badge.planned {
-            background: #4a148c;
-        }
-        #pdf-capture-area .pdf-disc .badge.prereq {
-            background: rgba(0, 0, 0, 0.12);
-            color: #333;
-        }
-        #pdf-capture-area .pdf-extras {
-            margin-top: 10px;
-            border-top: 1px solid #e0e0e0;
-            padding-top: 8px;
-        }
-        #pdf-capture-area .pdf-extras .title {
-            font-weight: bold;
-            font-size: 11px;
-            color: #ff6f00;
-            margin-bottom: 4px;
-        }
-        #pdf-capture-area .pdf-extras .list {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 3px;
-        }
-        #pdf-capture-area .pdf-extras .list .pdf-disc {
-            flex: 0 0 auto;
-            min-width: 100px;
-        }
-        #pdf-capture-area .pdf-footer {
-            text-align: center;
-            margin-top: 10px;
-            padding-top: 6px;
-            border-top: 1px solid #e0e0e0;
-            font-size: 8px;
-            color: #999;
-        }
-
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #888;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #555;
-        }
-
         footer {
             text-align: center;
             font-size: 11px;
@@ -1266,7 +956,7 @@
             background: white;
             border-radius: 16px;
             padding: 24px;
-            max-width: 600px;
+            max-width: 700px;
             width: 100%;
             max-height: 90vh;
             display: flex;
@@ -1285,8 +975,20 @@
         .pre-matricula-modal .modal-content .disciplines-list {
             flex: 1;
             overflow-y: auto;
-            max-height: 400px;
+            max-height: 500px;
             padding: 10px;
+        }
+        .pre-matricula-modal .modal-content .section-title {
+            font-weight: bold;
+            color: #1a237e;
+            margin: 16px 0 8px 0;
+            padding-top: 12px;
+            border-top: 2px solid #e0e0e0;
+        }
+        .pre-matricula-modal .modal-content .section-title:first-of-type {
+            border-top: none;
+            margin-top: 0;
+            padding-top: 0;
         }
         .pre-matricula-modal .modal-content .semester-label {
             font-weight: bold;
@@ -1306,6 +1008,13 @@
             background: #f3e5f5;
             border-left-color: #7b1fa2;
         }
+        .pre-matricula-modal .modal-content .discipline-item.optativa-item {
+            border-left-color: #4a148c;
+        }
+        .pre-matricula-modal .modal-content .discipline-item.optativa-item.planned {
+            background: #e1bee7;
+            border-left-color: #4a148c;
+        }
         .pre-matricula-modal .modal-content .discipline-item input[type="checkbox"] {
             margin-right: 8px;
         }
@@ -1318,6 +1027,17 @@
             margin-left: 8px;
             font-size: 11px;
             color: #7b1fa2;
+        }
+        .pre-matricula-modal .modal-content .discipline-item .opt-label {
+            margin-left: 8px;
+            font-size: 11px;
+            color: #4a148c;
+            font-weight: bold;
+        }
+        .pre-matricula-modal .modal-content .empty-message {
+            text-align: center;
+            padding: 20px;
+            color: #999;
         }
         .pre-matricula-modal .modal-content .modal-actions {
             display: flex;
@@ -1521,8 +1241,6 @@
         Baseado nos PPCs BMAT (2013) e BCET (2025) ·
         <span class="text-muted">Desenvolvido por Rodrigo Aguiar von Flach com assistência de ferramentas de IA generativa.</span>
     </footer>
-
-    <div id="pdf-capture-area"></div>
 
     <!-- MODAL OPTATIVAS -->
     <div class="modal-overlay" id="optModal">
@@ -3401,7 +3119,7 @@
         }
 
         // ============================================================
-        // 5. NOVAS FUNÇÕES DE VALIDAÇÃO E PRÉ-MATRÍCULA
+        // 5. NOVAS FUNÇÕES DE VALIDAÇÃO E PRÉ-MATRÍCULA (COM OPTATIVAS)
         // ============================================================
 
         let planejamentoTemp = {};
@@ -3617,7 +3335,7 @@
             showToast(`❌ ${pendentes.total} erro(s) encontrado(s)`, 'error');
         }
 
-        // 5.4 Abrir modal de pré-matrícula
+        // 5.4 Abrir modal de pré-matrícula (COM OPTATIVAS)
         function abrirPreMatricula() {
             const aluno = state.alunos[state.alunoAtivoId];
             if (!aluno) {
@@ -3628,6 +3346,7 @@
             const curso = aluno.curso || 'bmat';
             const curriculo = getCurriculo(curso);
 
+            // Inicializa planejamento temporário
             planejamentoTemp = {};
             for (const codigo in aluno.progresso) {
                 if (aluno.progresso[codigo]?.status === 'planned') {
@@ -3642,8 +3361,14 @@
                     </p>
             `;
 
-            let totalDisciplinas = 0;
             let totalPlanejadas = Object.keys(planejamentoTemp).length;
+
+            // ============================================================
+            // SEÇÃO 1: DISCIPLINAS OBRIGATÓRIAS
+            // ============================================================
+            html += `<div class="section-title">📚 DISCIPLINAS OBRIGATÓRIAS</div>`;
+
+            let temObrigatoria = false;
 
             for (const semestre of curriculo) {
                 let temDisponiveis = false;
@@ -3669,7 +3394,7 @@
 
                     if (isDone) continue;
 
-                    totalDisciplinas++;
+                    temObrigatoria = true;
                     const checked = isPlanned ? 'checked' : '';
 
                     html += `
@@ -3685,20 +3410,87 @@
                 }
             }
 
-            if (totalDisciplinas === 0) {
+            if (!temObrigatoria) {
+                html += `<div class="empty-message">✅ Todas as disciplinas obrigatórias já foram cursadas!</div>`;
+            }
+
+            // ============================================================
+            // SEÇÃO 2: OPTATIVAS
+            // ============================================================
+            html += `<div class="section-title">📌 OPTATIVAS DISPONÍVEIS</div>`;
+
+            const todasOptativas = getTodasOptativas();
+            const slotsDisponiveis = ['OPT3', 'OPT4', 'OPT5'];
+            const slotsOcupados = new Set();
+
+            // Verifica optativas já alocadas
+            for (const slot of ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5']) {
+                if (aluno.optativas[slot]) {
+                    slotsOcupados.add(aluno.optativas[slot]);
+                }
+            }
+
+            const optativasDisponiveis = todasOptativas.filter(opt => {
+                // Já foi cursada?
+                if (aluno.progresso[opt.codigo]?.status === 'done') return false;
+                // Já está alocada em algum slot?
+                if (slotsOcupados.has(opt.codigo)) return false;
+                // Já está planejada?
+                if (planejamentoTemp[opt.codigo]) return true;
+                return true;
+            });
+
+            // Remove duplicatas
+            const optativasUnicas = [];
+            const codigosVistos = new Set();
+            for (const opt of optativasDisponiveis) {
+                if (!codigosVistos.has(opt.codigo)) {
+                    optativasUnicas.push(opt);
+                    codigosVistos.add(opt.codigo);
+                }
+            }
+
+            let temOptativa = false;
+
+            for (const opt of optativasUnicas) {
+                const isPlanned = planejamentoTemp[opt.codigo] || false;
+                const checked = isPlanned ? 'checked' : '';
+                const slotsOcupadosLista = [];
+                for (const slot of ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5']) {
+                    if (aluno.optativas[slot] === opt.codigo) {
+                        slotsOcupadosLista.push(slot);
+                    }
+                }
+                const ocupadoStr = slotsOcupadosLista.length > 0 ? ` (já alocada em ${slotsOcupadosLista.join(', ')})` : '';
+
+                temOptativa = true;
                 html += `
-                    <div style="text-align:center;padding:30px;color:#999;">
-                        <p>🎉 Todas as disciplinas do currículo já foram cursadas!</p>
-                        <p style="font-size:12px;">Não há disciplinas disponíveis para planejamento.</p>
-                    </div>
+                    <label class="discipline-item optativa-item ${isPlanned ? 'planned' : ''}">
+                        <input type="checkbox" ${checked} 
+                               onchange="togglePlanejamento('${opt.codigo}')" 
+                               style="margin-right:8px;">
+                        <strong>${opt.codigo}</strong> - ${opt.nome}
+                        <span class="opt-label">optativa</span>
+                        <span class="hours">68h</span>
+                        ${isPlanned ? '<span class="planned-label">📌 Planejada</span>' : ''}
+                        ${ocupadoStr}
+                    </label>
                 `;
             }
 
+            if (!temOptativa) {
+                html += `<div class="empty-message">🎉 Todas as optativas disponíveis já estão alocadas!</div>`;
+            }
+
+            // ============================================================
+            // RODAPÉ DO MODAL
+            // ============================================================
+            const totalSelecionadas = Object.keys(planejamentoTemp).length;
             html += `
                 </div>
                 <div class="modal-actions">
                     <button class="btn-save" onclick="salvarPlanejamento()">
-                        💾 Salvar planejamento (${totalPlanejadas} selecionadas)
+                        💾 Salvar planejamento (${totalSelecionadas} selecionadas)
                     </button>
                     <button class="btn-cancel" onclick="fecharPreMatricula()">Cancelar</button>
                 </div>
@@ -3736,7 +3528,7 @@
             }
         }
 
-        // 5.6 Salvar planejamento
+        // 5.6 Salvar planejamento (COM OPTATIVAS)
         function salvarPlanejamento() {
             const aluno = state.alunos[state.alunoAtivoId];
             if (!aluno) {
@@ -3744,15 +3536,38 @@
                 return;
             }
 
+            // Remove todas as disciplinas marcadas como 'planned'
             for (const codigo in aluno.progresso) {
                 if (aluno.progresso[codigo]?.status === 'planned') {
                     delete aluno.progresso[codigo];
                 }
             }
 
-            let count = 0;
-            let lista = [];
+            // Remove optativas planejadas dos slots
+            for (const slot of ['OPT3', 'OPT4', 'OPT5']) {
+                if (aluno.optativas[slot]) {
+                    const codigo = aluno.optativas[slot];
+                    if (aluno.progresso[codigo]?.status === 'planned') {
+                        delete aluno.optativas[slot];
+                    }
+                }
+            }
+
+            // Separa obrigatórias e optativas
+            const obrigatoriasPlanejadas = [];
+            const optativasPlanejadas = [];
+
             for (const codigo in planejamentoTemp) {
+                if (isOptativaGlobal(codigo)) {
+                    optativasPlanejadas.push(codigo);
+                } else {
+                    obrigatoriasPlanejadas.push(codigo);
+                }
+            }
+
+            // Salva obrigatórias
+            let countObrigatorias = 0;
+            for (const codigo of obrigatoriasPlanejadas) {
                 aluno.progresso[codigo] = {
                     status: 'planned',
                     origem: 'pre_matricula',
@@ -3764,8 +3579,52 @@
                     origem: 'pre_matricula',
                     data: new Date().toISOString()
                 };
-                lista.push(`• ${codigo} - ${getNomeDisciplina(codigo)}`);
-                count++;
+                countObrigatorias++;
+            }
+
+            // Aloca optativas planejadas
+            const slotsDisponiveis = ['OPT3', 'OPT4', 'OPT5'];
+            const slotsJaOcupados = new Set();
+            for (const slot of ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5']) {
+                if (aluno.optativas[slot]) {
+                    slotsJaOcupados.add(aluno.optativas[slot]);
+                }
+            }
+
+            // Ordena optativas por prioridade
+            const prioridade = { 'GCET200': 1, 'GCET218': 2, 'GCET673': 3, 'GCET675': 4 };
+            optativasPlanejadas.sort((a, b) => (prioridade[a] || 99) - (prioridade[b] || 99));
+
+            let countOptativas = 0;
+            let slotsIndex = 0;
+            const listaOptativas = [];
+
+            for (const codigo of optativasPlanejadas) {
+                if (slotsIndex >= slotsDisponiveis.length) break;
+                if (slotsJaOcupados.has(codigo)) continue;
+
+                const slot = slotsDisponiveis[slotsIndex];
+                aluno.optativas[slot] = codigo;
+                aluno.progresso[codigo] = {
+                    status: 'planned',
+                    origem: 'pre_matricula',
+                    data: new Date().toISOString()
+                };
+                if (!aluno.historico_completo) aluno.historico_completo = {};
+                aluno.historico_completo[codigo] = {
+                    status: 'planned',
+                    origem: 'pre_matricula',
+                    data: new Date().toISOString()
+                };
+                if (!aluno.historico_optativas) aluno.historico_optativas = {};
+                aluno.historico_optativas[slot] = {
+                    codigo: codigo,
+                    origem: 'pre_matricula',
+                    data: new Date().toISOString()
+                };
+                listaOptativas.push(`${slot}: ${codigo}`);
+                slotsIndex++;
+                countOptativas++;
             }
 
             renderFluxograma(state.alunoAtivoId);
@@ -3774,6 +3633,24 @@
 
             fecharPreMatricula();
 
+            // Monta resumo
+            let lista = [];
+            if (countObrigatorias > 0) {
+                lista.push(`📚 Obrigatórias (${countObrigatorias}):`);
+                for (const codigo of obrigatoriasPlanejadas) {
+                    lista.push(`  • ${codigo} - ${getNomeDisciplina(codigo)}`);
+                }
+            }
+            if (countOptativas > 0) {
+                lista.push(`\n📌 Optativas planejadas (${countOptativas}):`);
+                for (const item of listaOptativas) {
+                    const [slot, codigo] = item.split(': ');
+                    lista.push(`  • ${slot}: ${codigo} - ${getNomeDisciplina(codigo)}`);
+                }
+            }
+
+            const resumo = lista.join('\n');
+
             const confirmModal = document.createElement('div');
             confirmModal.className = 'confirm-modal';
             confirmModal.id = 'confirmModal';
@@ -3781,8 +3658,8 @@
                 <div class="modal-content">
                     <h3>✅ Planejamento salvo!</h3>
                     <div class="summary">
-                        <p>📌 <strong>${count}</strong> disciplina(s) planejada(s):</p>
-                        <div class="list">${lista.join('\n')}</div>
+                        <p>📌 <strong>${countObrigatorias + countOptativas}</strong> disciplina(s) planejada(s):</p>
+                        <div class="list">${resumo}</div>
                     </div>
                     <hr style="margin:12px 0;border-color:#e0e0e0;">
                     <p class="question">❓ Você terminou de alocar todas as disciplinas do próximo semestre?</p>
@@ -3796,7 +3673,7 @@
             document.body.appendChild(confirmModal);
 
             planejamentoTemp = {};
-            showToast(`✅ ${count} disciplina(s) planejada(s)!`, 'success');
+            showToast(`✅ ${countObrigatorias + countOptativas} disciplina(s) planejada(s)!`, 'success');
         }
 
         // 5.7 Finalizar pré-matrícula
