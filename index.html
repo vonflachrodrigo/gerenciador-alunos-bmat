@@ -7,8 +7,6 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js">
-    </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
     </script>
     <style>
@@ -1457,7 +1455,7 @@
             </h1>
             <div class="header-actions">
                 <button class="btn-toggle-version" id="btnToggleVersion" onclick="alternarVersao()" aria-label="Alternar entre versão Mobile e Clássica">📱 Mobile</button>
-                <button class="btn-pdf" onclick="gerarPDFVisual()" aria-label="Gerar PDF do fluxograma atual">📄 PDF</button>
+                <button class="btn-pdf" onclick="gerarPDFVisual()" aria-label="Gerar relatório PDF">📄 PDF</button>
                 <button class="btn-info" onclick="exportAllData()" aria-label="Exportar todos os dados em JSON">📤</button>
                 <button class="btn-warning" onclick="document.getElementById('importInput').click()" aria-label="Importar dados de arquivo JSON">📥</button>
                 <input type="file" id="importInput" style="display:none" accept=".json" onchange="importAllData(event)">
@@ -2039,7 +2037,7 @@
             return resultado;
         }
 
-        // 2.9 Calcula progresso (MODIFICADO: adiciona planned)
+        // 2.9 Calcula progresso
         function calcularProgresso(curriculo, disciplinas, optativas) {
             let total = 0,
                 done = 0,
@@ -2143,7 +2141,7 @@
         // 4. FUNÇÕES DE INTERFACE
         // ============================================================
 
-        // 4.1 Renderizar lista de alunos (MODIFICADO: mostra planned)
+        // 4.1 Renderizar lista de alunos
         function renderAlunoList() {
             const container = document.getElementById('alunoList');
             const keys = Object.keys(state.alunos);
@@ -2308,7 +2306,7 @@
             showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`, 'info');
         }
 
-        // 4.7 Renderizar fluxograma (MODIFICADO: adiciona legend planned)
+        // 4.7 Renderizar fluxograma
         function renderFluxograma(alunoId) {
             const aluno = state.alunos[alunoId];
             if (!aluno) {
@@ -2401,7 +2399,7 @@
             document.getElementById('fluxogramaContent').innerHTML = html;
         }
 
-        // 4.8 Renderizar disciplina (MODIFICADO: adiciona planned)
+        // 4.8 Renderizar disciplina
         function renderDisciplina(alunoId, disc) {
             const aluno = state.alunos[alunoId];
             const curso = aluno.curso || 'bmat';
@@ -2461,7 +2459,7 @@
                 `;
         }
 
-        // 4.9 Renderizar optativa (MODIFICADO: adiciona planned)
+        // 4.9 Renderizar optativa
         function renderOptativa(alunoId, disc) {
             const aluno = state.alunos[alunoId];
             const curso = aluno.curso || 'bmat';
@@ -2525,7 +2523,7 @@
                 `;
         }
 
-        // 4.10 Toggle discipline (MODIFICADO: adiciona planned no ciclo)
+        // 4.10 Toggle discipline
         function toggleDiscipline(alunoId, codigo) {
             const aluno = state.alunos[alunoId];
             if (!aluno) return;
@@ -2904,7 +2902,7 @@
             return extras;
         }
 
-        // 4.17 Importar histórico (MODIFICADO: adiciona validação)
+        // 4.17 Importar histórico
         async function importarHistorico(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -3157,7 +3155,10 @@
             showToast('🗑️ Todos os dados foram removidos.', 'info');
         }
 
-        // 4.25 Gerar PDF (MODIFICADO: suporte a planned)
+        // ============================================================
+        // 4.25 GERAR PDF - RELATÓRIO ESTRUTURADO
+        // ============================================================
+
         function gerarPDFVisual() {
             if (!state.alunoAtivoId || !state.alunos[state.alunoAtivoId]) {
                 showToast('❌ Selecione um aluno primeiro!', 'error');
@@ -3170,192 +3171,219 @@
             const progresso = calcularProgresso(curriculo, aluno.progresso, aluno.optativas);
             const cursoLabel = curso === 'bcet' ? 'BCET - Itinerário Matemática (PPC 2025)' : 'BMAT (PPC 2013)';
 
-            let semestresHtml = '';
+            const linhas = [];
+            const separador = '='.repeat(60);
+            const separador2 = '-'.repeat(60);
+
+            // ============================================================
+            // CABEÇALHO
+            // ============================================================
+            linhas.push('RELATÓRIO ACADÊMICO');
+            linhas.push(separador);
+            linhas.push(`Aluno: ${aluno.nome}`);
+            if (aluno.matricula) linhas.push(`Matrícula: ${aluno.matricula}`);
+            linhas.push(`Curso: ${cursoLabel}`);
+            linhas.push(`Progresso: ${progresso.done}/${progresso.total} (${progresso.pct}%)`);
+            if (progresso.planned > 0) linhas.push(`📌 Planejadas: ${progresso.planned} disciplinas`);
+            linhas.push(`Data: ${new Date().toLocaleDateString('pt-BR')}`);
+            linhas.push('');
+
+            // ============================================================
+            // DISCIPLINAS POR SEMESTRE
+            // ============================================================
+            linhas.push('📚 DISCIPLINAS POR SEMESTRE');
+            linhas.push(separador);
+
             for (const semestre of curriculo) {
-                let discHtml = '';
+                let temDisciplinas = false;
+                for (const disc of semestre.disciplinas) {
+                    const codigo = disc.codigo;
+                    if (disc.isOptativa) {
+                        const optCod = aluno.optativas[codigo];
+                        if (optCod) {
+                            temDisciplinas = true;
+                            break;
+                        }
+                    } else {
+                        const status = aluno.progresso[codigo]?.status || 'not-started';
+                        if (status !== 'not-started') {
+                            temDisciplinas = true;
+                            break;
+                        }
+                    }
+                }
+                if (!temDisciplinas) continue;
+
+                linhas.push(`\n${semestre.nome}:`);
                 for (const disc of semestre.disciplinas) {
                     let codigo = disc.codigo;
-                    let nome = getNomeDisciplina(codigo) || codigo;
-                    let horas = disc.horas || '68h';
-                    let statusClass = 'not-started';
-                    let badgeHtml = '';
+                    let nome = getNomeDisciplina(codigo);
+                    let status = 'not-started';
+                    let emoji = '⚪';
+                    let badge = '';
 
                     if (disc.isOptativa) {
                         const optCod = aluno.optativas[codigo];
                         if (optCod) {
-                            const todasOptativas = getTodasOptativas();
-                            const optInfo = todasOptativas.find(o => o.codigo === optCod);
                             codigo = optCod;
-                            nome = optInfo ? optInfo.nome : 'Optativa';
+                            nome = getNomeDisciplina(optCod) || optCod;
                             const optStatus = aluno.progresso[optCod]?.status || 'not-started';
-                            if (aluno.equiv && aluno.equiv[optCod]) {
-                                statusClass = 'equiv-done';
-                                badgeHtml = `<span class="badge equiv">🔗 Equiv.</span>`;
-                            } else if (optStatus === 'done') {
-                                statusClass = 'opt-selected';
-                                badgeHtml = `<span class="badge opt">📌 Opt.</span>`;
-                            } else if (optStatus === 'planned') {
-                                statusClass = 'planned';
-                                badgeHtml = `<span class="badge planned">📌 Planejada</span>`;
-                            } else {
-                                statusClass = 'not-started';
-                            }
+                            status = optStatus;
+                            if (status === 'done') { emoji = '✅';
+                                badge = ' (optativa)'; } else if (status === 'pending') { emoji = '🟡';
+                                badge = ' (optativa)'; } else if (status === 'planned') { emoji = '📌';
+                                badge = ' (planejada)'; }
                         } else {
+                            emoji = '⚪';
                             nome = 'Optativa (não selecionada)';
-                            statusClass = 'not-started';
+                            badge = '';
                         }
                     } else {
-                        const status = aluno.progresso[codigo]?.status || 'not-started';
+                        status = aluno.progresso[codigo]?.status || 'not-started';
+                        if (status === 'done') { emoji = '✅'; } else if (status === 'pending') { emoji = '🟡'; } else if (
+                            status === 'planned') { emoji = '📌'; } else { emoji = '⚪'; }
+
                         const isEquiv = aluno.equiv && aluno.equiv[codigo];
-                        const isQuebra = aluno.quebras && aluno.quebras[codigo];
                         if (isEquiv && status === 'done') {
-                            statusClass = 'equiv-done';
-                            badgeHtml = `<span class="badge equiv">🔗 Equiv.</span>`;
-                        } else if (isQuebra) {
-                            statusClass = 'quebra';
-                            badgeHtml = `<span class="badge quebra">🔓 Quebra</span>`;
-                        } else if (status === 'done') {
-                            statusClass = 'done';
-                        } else if (status === 'pending') {
-                            statusClass = 'pending';
-                        } else if (status === 'planned') {
-                            statusClass = 'planned';
-                            badgeHtml = `<span class="badge planned">📌 Planejada</span>`;
-                        } else {
-                            statusClass = 'not-started';
+                            const equivInfo = aluno.equiv[codigo];
+                            badge = ` (equiv. via ${equivInfo.via})`;
                         }
                     }
 
-                    discHtml += `
-                            <div class="pdf-disc ${statusClass}">
-                                <span class="code">${codigo}</span>
-                                ${nome}
-                                <span class="hours">${horas}</span>
-                                ${badgeHtml}
-                            </div>
-                        `;
+                    const horas = disc.horas || '68h';
+                    linhas.push(`  ${emoji} ${codigo} - ${nome} (${horas})${badge}`);
                 }
-
-                semestresHtml += `
-                        <div class="pdf-semester">
-                            <div class="title ${semestre.cls}">${semestre.nome}</div>
-                            ${discHtml}
-                        </div>
-                    `;
             }
 
-            // Disciplinas extras no PDF
-            const extras = getDisciplinasExtras(state.alunoAtivoId);
-            let extrasHtml = '';
-            if (extras.length > 0) {
-                extrasHtml = `
-                        <div class="pdf-extras">
-                            <div class="title">📋 Disciplinas Extras</div>
-                            <div class="list">
-                                ${extras.map(d => {
-                                    const status = aluno.progresso[d.codigo]?.status || 'not-started';
-                                    let statusClass = status === 'done' ? 'done' : status === 'planned' ? 'planned' : 'not-started';
-                                    if (aluno.equiv && aluno.equiv[d.codigo]) statusClass = 'equiv-done';
-                                    if (aluno.quebras && aluno.quebras[d.codigo]) statusClass = 'quebra';
-                                    return `
-                                        <div class="pdf-disc ${statusClass}">
-                                            <span class="code">${d.codigo}</span>
-                                            ${getNomeDisciplina(d.codigo) || d.codigo}
-                                            <span class="hours">${d.ch || '68h'}</span>
-                                            ${status === 'planned' ? '<span class="badge planned">📌 Planejada</span>' : ''}
-                                        </div>
-                                    `;
-                                }).join('')}
-                            </div>
-                        </div>
-                    `;
+            // ============================================================
+            // EQUIVALÊNCIAS
+            // ============================================================
+            if (Object.keys(aluno.equiv || {}).length > 0) {
+                linhas.push('');
+                linhas.push('🔗 EQUIVALÊNCIAS APLICADAS');
+                linhas.push(separador);
+                for (const [codigo, info] of Object.entries(aluno.equiv)) {
+                    linhas.push(`  ${codigo} → via ${info.via}`);
+                }
             }
 
-            const pdfHtml = `
-                    <div style="padding:15px;background:white;font-family:'Segoe UI',Arial,sans-serif;max-width:1100px;margin:0 auto;font-size:11px;">
-                        <div style="text-align:center;border-bottom:2px solid #1a237e;padding-bottom:8px;margin-bottom:8px;">
-                            <h1 style="color:#1a237e;font-size:18px;margin:0;">📐 Universidade Federal do Recôncavo da Bahia</h1>
-                            <h2 style="color:#1a237e;font-size:14px;margin:2px 0;">Bacharelado em Matemática</h2>
-                            <div style="color:#666;font-size:11px;">${cursoLabel}</div>
-                        </div>
+            // ============================================================
+            // OPTATIVAS SELECIONADAS
+            // ============================================================
+            const optativasSelecionadas = Object.entries(aluno.optativas || {});
+            if (optativasSelecionadas.length > 0) {
+                linhas.push('');
+                linhas.push('📌 OPTATIVAS SELECIONADAS');
+                linhas.push(separador);
+                for (const [slot, codigo] of optativasSelecionadas) {
+                    const nome = getNomeDisciplina(codigo) || codigo;
+                    const status = aluno.progresso[codigo]?.status || 'not-started';
+                    const emoji = status === 'done' ? '✅' : status === 'planned' ? '📌' : '🟡';
+                    linhas.push(`  ${slot}: ${codigo} - ${nome} ${emoji}`);
+                }
+            }
 
-                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;font-size:13px;">
-                            <span style="font-size:14px;font-weight:bold;color:#1a237e;">👨‍🎓 ${aluno.nome}</span>
-                            ${aluno.matricula ? `<span style="font-size:11px;color:#666;">Matrícula: ${aluno.matricula}</span>` : ''}
-                            <span style="font-size:11px;color:#666;">${new Date().toLocaleDateString('pt-BR')}</span>
-                        </div>
+            // ============================================================
+            // PLANEJAMENTO PARA PRÓXIMO SEMESTRE
+            // ============================================================
+            const planejadas = Object.entries(aluno.progresso || {}).filter(
+                ([codigo, info]) => info?.status === 'planned'
+            );
+            if (planejadas.length > 0) {
+                linhas.push('');
+                linhas.push('📋 PLANEJAMENTO PARA PRÓXIMO SEMESTRE');
+                linhas.push(separador);
+                for (const [codigo, info] of planejadas) {
+                    const nome = getNomeDisciplina(codigo) || codigo;
+                    const horas = '68h'; // TODO: buscar carga horária correta
+                    linhas.push(`  📌 ${codigo} - ${nome} (${horas})`);
+                }
+            }
 
-                        <div style="display:flex;justify-content:center;gap:20px;margin:6px 0 8px 0;flex-wrap:wrap;font-size:11px;">
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.done}</span><br><span style="color:#666;">✅ Cursadas</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.pending}</span><br><span style="color:#666;">🟡 Cursando</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.planned}</span><br><span style="color:#7b1fa2;">📌 Planejadas</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.total}</span><br><span style="color:#666;">📚 Total</span></div>
-                            <div style="text-align:center;"><span style="font-size:18px;font-weight:bold;color:#1a237e;">${progresso.pct}%</span><br><span style="color:#666;">📊 Progresso</span></div>
-                        </div>
+            // ============================================================
+            // DISCIPLINAS PENDENTES
+            // ============================================================
+            const pendentes = [];
+            for (const semestre of curriculo) {
+                for (const disc of semestre.disciplinas) {
+                    const codigo = disc.codigo;
+                    if (disc.isOptativa) {
+                        const optCod = aluno.optativas[codigo];
+                        if (!optCod) {
+                            pendentes.push({ codigo: codigo, nome: 'Optativa (não selecionada)', horas: disc.horas ||
+                                    '68h' });
+                        } else {
+                            const status = aluno.progresso[optCod]?.status || 'not-started';
+                            if (status === 'not-started') {
+                                pendentes.push({ codigo: optCod, nome: getNomeDisciplina(optCod) || optCod, horas: disc
+                                        .horas || '68h' });
+                            }
+                        }
+                    } else {
+                        const status = aluno.progresso[codigo]?.status || 'not-started';
+                        if (status === 'not-started') {
+                            pendentes.push({ codigo: codigo, nome: getNomeDisciplina(codigo) || codigo, horas: disc.horas ||
+                                    '68h' });
+                        }
+                    }
+                }
+            }
 
-                        <div style="display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;padding:4px 8px;background:#f8f9fa;border-radius:6px;font-size:10px;">
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color done"></span> Cursada</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color pending"></span> Cursando</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color not-started"></span> Não cursada</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color equiv"></span> Equivalência</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color opt"></span> Optativa</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color quebra"></span> Quebra</div>
-                            <div style="display:flex;align-items:center;gap:4px;"><span class="color planned"></span> Planejada</div>
-                        </div>
+            if (pendentes.length > 0) {
+                linhas.push('');
+                linhas.push('📋 DISCIPLINAS PENDENTES');
+                linhas.push(separador);
+                for (const p of pendentes) {
+                    linhas.push(`  ⚪ ${p.codigo} - ${p.nome} (${p.horas})`);
+                }
+            }
 
-                        <div class="pdf-grid">
-                            ${semestresHtml}
-                        </div>
-                        ${extrasHtml}
-                        <div class="pdf-footer">
-                            Relatório gerado automaticamente · BMAT/UFRB
-                            <br>${new Date().toLocaleString('pt-BR')}
-                        </div>
-                    </div>
-                `;
+            // ============================================================
+            // RODAPÉ
+            // ============================================================
+            linhas.push('');
+            linhas.push(separador);
+            linhas.push(`Relatório gerado em ${new Date().toLocaleString('pt-BR')}`);
+            linhas.push('Gerenciador de Alunos - BMAT/BCET');
 
-            const captureArea = document.getElementById('pdf-capture-area');
-            captureArea.innerHTML = pdfHtml;
+            // ============================================================
+            // GERAR PDF
+            // ============================================================
+            const texto = linhas.join('\n');
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF({
+                orientation: 'portrait',
+                unit: 'mm',
+                format: 'a4'
+            });
 
-            showToast('⏳ Gerando PDF...', 'info');
+            const margin = 20;
+            const pageWidth = pdf.internal.pageSize.getWidth();
+            const pageHeight = pdf.internal.pageSize.getHeight();
+            const maxWidth = pageWidth - 2 * margin;
+            const lineHeight = 5.5;
+            let y = margin;
 
-            setTimeout(() => {
-                html2canvas(captureArea, {
-                    scale: 0.8,
-                    useCORS: true,
-                    logging: false,
-                    width: 1000,
-                    backgroundColor: '#ffffff',
-                    allowTaint: false
-                }).then(canvas => {
-                    const imgData = canvas.toDataURL('image/jpeg', 0.7);
-                    const { jsPDF } = window.jspdf;
-                    const pdf = new jsPDF({
-                        orientation: 'landscape',
-                        unit: 'mm',
-                        format: 'a4',
-                        compress: true,
-                        hotfixes: ['px_scaling']
-                    });
+            pdf.setFontSize(10);
+            pdf.setFont('helvetica', 'normal');
 
-                    const pdfWidth = pdf.internal.pageSize.getWidth();
-                    const pdfHeight = pdf.internal.pageSize.getHeight();
-                    const imgWidth = canvas.width;
-                    const imgHeight = canvas.height;
-                    const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
-                    const finalWidth = imgWidth * ratio;
-                    const finalHeight = imgHeight * ratio;
-                    const x = (pdfWidth - finalWidth) / 2;
-                    const y = (pdfHeight - finalHeight) / 2;
+            const lines = texto.split('\n');
+            for (const line of lines) {
+                const wrapped = pdf.splitTextToSize(line, maxWidth);
+                for (const w of wrapped) {
+                    if (y + lineHeight > pageHeight - margin) {
+                        pdf.addPage();
+                        y = margin;
+                    }
+                    pdf.text(w, margin, y);
+                    y += lineHeight;
+                }
+            }
 
-                    pdf.addImage(imgData, 'JPEG', x, y, finalWidth, finalHeight);
-                    pdf.save(`relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`);
-                    showToast('📄 PDF gerado com sucesso!', 'success');
-                }).catch(err => {
-                    console.error('Erro ao capturar:', err);
-                    showToast('❌ Erro ao gerar PDF: ' + err.message, 'error');
-                });
-            }, 500);
+            const nomeArquivo = `relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+            pdf.save(nomeArquivo);
+
+            showToast('📄 Relatório PDF gerado com sucesso!', 'success');
         }
 
         // ============================================================
