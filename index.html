@@ -3156,7 +3156,7 @@
         }
 
         // ============================================================
-        // 4.25 GERAR PDF - RELATÓRIO ESTRUTURADO
+        // 4.25 GERAR PDF - RELATÓRIO ESTRUTURADO COM LEGENDA
         // ============================================================
 
         function gerarPDFVisual() {
@@ -3184,14 +3184,14 @@
             if (aluno.matricula) linhas.push(`Matrícula: ${aluno.matricula}`);
             linhas.push(`Curso: ${cursoLabel}`);
             linhas.push(`Progresso: ${progresso.done}/${progresso.total} (${progresso.pct}%)`);
-            if (progresso.planned > 0) linhas.push(`📌 Planejadas: ${progresso.planned} disciplinas`);
+            if (progresso.planned > 0) linhas.push(`Planejadas: ${progresso.planned} disciplinas`);
             linhas.push(`Data: ${new Date().toLocaleDateString('pt-BR')}`);
             linhas.push('');
 
             // ============================================================
             // DISCIPLINAS POR SEMESTRE
             // ============================================================
-            linhas.push('📚 DISCIPLINAS POR SEMESTRE');
+            linhas.push('DISCIPLINAS POR SEMESTRE');
             linhas.push(separador);
 
             for (const semestre of curriculo) {
@@ -3219,7 +3219,7 @@
                     let codigo = disc.codigo;
                     let nome = getNomeDisciplina(codigo);
                     let status = 'not-started';
-                    let emoji = '⚪';
+                    let emoji = '  ';
                     let badge = '';
 
                     if (disc.isOptativa) {
@@ -3229,19 +3229,19 @@
                             nome = getNomeDisciplina(optCod) || optCod;
                             const optStatus = aluno.progresso[optCod]?.status || 'not-started';
                             status = optStatus;
-                            if (status === 'done') { emoji = '✅';
-                                badge = ' (optativa)'; } else if (status === 'pending') { emoji = '🟡';
-                                badge = ' (optativa)'; } else if (status === 'planned') { emoji = '📌';
-                                badge = ' (planejada)'; }
+                            if (status === 'done') { emoji = '[X]';
+                                badge = ' (optativa)'; } else if (status === 'pending') { emoji = '[~]';
+                                badge = ' (optativa)'; } else if (status === 'planned') { emoji = '[P]';
+                                badge = ' (optativa)'; }
                         } else {
-                            emoji = '⚪';
+                            emoji = '[ ]';
                             nome = 'Optativa (não selecionada)';
                             badge = '';
                         }
                     } else {
                         status = aluno.progresso[codigo]?.status || 'not-started';
-                        if (status === 'done') { emoji = '✅'; } else if (status === 'pending') { emoji = '🟡'; } else if (
-                            status === 'planned') { emoji = '📌'; } else { emoji = '⚪'; }
+                        if (status === 'done') { emoji = '[X]'; } else if (status === 'pending') { emoji = '[~]'; } else if (
+                            status === 'planned') { emoji = '[P]'; } else { emoji = '[ ]'; }
 
                         const isEquiv = aluno.equiv && aluno.equiv[codigo];
                         if (isEquiv && status === 'done') {
@@ -3260,10 +3260,10 @@
             // ============================================================
             if (Object.keys(aluno.equiv || {}).length > 0) {
                 linhas.push('');
-                linhas.push('🔗 EQUIVALÊNCIAS APLICADAS');
+                linhas.push('EQUIVALENCIAS APLICADAS');
                 linhas.push(separador);
                 for (const [codigo, info] of Object.entries(aluno.equiv)) {
-                    linhas.push(`  ${codigo} → via ${info.via}`);
+                    linhas.push(`  ${codigo} -> via ${info.via}`);
                 }
             }
 
@@ -3273,30 +3273,30 @@
             const optativasSelecionadas = Object.entries(aluno.optativas || {});
             if (optativasSelecionadas.length > 0) {
                 linhas.push('');
-                linhas.push('📌 OPTATIVAS SELECIONADAS');
+                linhas.push('OPTATIVAS SELECIONADAS');
                 linhas.push(separador);
                 for (const [slot, codigo] of optativasSelecionadas) {
                     const nome = getNomeDisciplina(codigo) || codigo;
                     const status = aluno.progresso[codigo]?.status || 'not-started';
-                    const emoji = status === 'done' ? '✅' : status === 'planned' ? '📌' : '🟡';
+                    const emoji = status === 'done' ? '[X]' : status === 'planned' ? '[P]' : '[~]';
                     linhas.push(`  ${slot}: ${codigo} - ${nome} ${emoji}`);
                 }
             }
 
             // ============================================================
-            // PLANEJAMENTO PARA PRÓXIMO SEMESTRE
+            // PLANEJADAS PARA PROXIMO SEMESTRE
             // ============================================================
             const planejadas = Object.entries(aluno.progresso || {}).filter(
                 ([codigo, info]) => info?.status === 'planned'
             );
             if (planejadas.length > 0) {
                 linhas.push('');
-                linhas.push('📋 PLANEJAMENTO PARA PRÓXIMO SEMESTRE');
+                linhas.push('PLANEJADAS PARA PROXIMO SEMESTRE');
                 linhas.push(separador);
                 for (const [codigo, info] of planejadas) {
                     const nome = getNomeDisciplina(codigo) || codigo;
-                    const horas = '68h'; // TODO: buscar carga horária correta
-                    linhas.push(`  📌 ${codigo} - ${nome} (${horas})`);
+                    const horas = '68h';
+                    linhas.push(`  [P] ${codigo} - ${nome} (${horas})`);
                 }
             }
 
@@ -3331,12 +3331,26 @@
 
             if (pendentes.length > 0) {
                 linhas.push('');
-                linhas.push('📋 DISCIPLINAS PENDENTES');
+                linhas.push('DISCIPLINAS PENDENTES');
                 linhas.push(separador);
                 for (const p of pendentes) {
-                    linhas.push(`  ⚪ ${p.codigo} - ${p.nome} (${p.horas})`);
+                    linhas.push(`  [ ] ${p.codigo} - ${p.nome} (${p.horas})`);
                 }
             }
+
+            // ============================================================
+            // LEGENDA
+            // ============================================================
+            linhas.push('');
+            linhas.push(separador);
+            linhas.push('LEGENDA');
+            linhas.push(separador);
+            linhas.push('  [X]  = Disciplina já cursada');
+            linhas.push('  [P]  = Disciplina planejada para o próximo semestre');
+            linhas.push('  [~]  = Disciplina em andamento (cursando)');
+            linhas.push('  [ ]  = Disciplina pendente (não cursada)');
+            linhas.push('  optativa = Disciplina optativa');
+            linhas.push('  equiv. via = Equivalência aplicada (cursou através de outra disciplina)');
 
             // ============================================================
             // RODAPÉ
