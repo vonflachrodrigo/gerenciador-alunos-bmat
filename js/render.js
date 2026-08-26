@@ -54,6 +54,7 @@ function renderFluxograma(gerenciador) {
 
     if (!aluno.progresso) aluno.progresso = {};
     if (!aluno.optativas) aluno.optativas = {};
+    if (!aluno.optativasPlanejadas) aluno.optativasPlanejadas = [];
     if (!aluno.quebras) aluno.quebras = {};
     if (!aluno.equiv) aluno.equiv = {};
 
@@ -61,6 +62,8 @@ function renderFluxograma(gerenciador) {
     const curriculo = getCurriculo(curso);
     const progresso = calcularProgresso(curriculo, aluno.progresso, aluno.optativas);
     const cursoLabel = curso === 'bcet' ? '📘 BCET - Matemática' : '📐 BMAT';
+
+    const stats = gerenciador.getEstatisticasOptativas(alunoId);
 
     let html = `
         <div class="aluno-header">
@@ -80,10 +83,6 @@ function renderFluxograma(gerenciador) {
             <div class="legend-item"><span class="legend-color equiv"></span> Equivalência</div>
             <div class="legend-item"><span class="legend-color opt-selected"></span> Optativa</div>
             <div class="legend-item"><span class="legend-color quebra"></span> Quebra</div>
-            <div class="legend-item" style="background:#f3e5f5;padding:2px 8px;border-radius:12px;">
-                <span class="legend-color" style="background:#ce93d8;border-color:#7b1fa2;"></span> 
-                Cursará no próximo semestre
-            </div>
         </div>
         <div class="semester-grid">
     `;
@@ -100,39 +99,44 @@ function renderFluxograma(gerenciador) {
         html += `</div>`;
     }
 
-    // Disciplinas extras
+    html += `</div>`;
+
+    html += renderOptativasPlanejadas(gerenciador);
+
     const extras = getDisciplinasExtras(gerenciador);
     if (extras.length > 0) {
         html += `
-            <div class="semester-card" style="grid-column:1/-1;border-color:#ff6f00;">
-                <div class="semester-title" style="background:#ff6f00;">📋 Disciplinas Extras</div>
-                ${extras.map(d => {
-                    const status = aluno.progresso[d.codigo]?.status || 'not-started';
-                    const isEquiv = aluno.equiv && aluno.equiv[d.codigo];
-                    const isQuebra = aluno.quebras && aluno.quebras[d.codigo];
-                    let finalClass = status === 'done' ? 'done' : status === 'planned' ? 'planned' : 'not-started';
-                    if (isEquiv && status === 'done') finalClass = 'equiv-done';
-                    if (isQuebra) finalClass = 'quebra';
-                    const prereqCheck = verificarPreRequisitos(d.codigo, curso, aluno.progresso, aluno.quebras);
-                    const isBlocked = prereqCheck.status === 'blocked';
-                    const onClick = isBlocked ? `onclick="window.abrirModalQuebraHandler('${d.codigo}')"` :
-                        `onclick="window.toggleDisciplinaHandler('${d.codigo}')"`;
-                    return `
-                        <div class="discipline ${finalClass}" ${onClick} style="border-color:#ff6f00;">
-                            <span class="code">${d.codigo}</span> ${getNomeDisciplina(d.codigo) || d.codigo}
-                            <span class="hours">${d.ch || '68h'}</span>
-                            ${isEquiv ? '<span class="equiv-badge">🔗 Equiv.</span>' : ''}
-                            ${isQuebra ? '<span class="quebra-badge">🔓 QUEBRA</span>' : ''}
-                            ${status === 'planned' ? '<span class="planned-badge">📌 Planejada</span>' : ''}
-                            <span class="quebra-badge">📄 Histórico</span>
-                        </div>
-                    `;
-                }).join('')}
+            <div style="margin-top:16px;padding:12px 16px;background:#fff3e0;border-radius:8px;border:2px solid #ff6f00;">
+                <div style="font-weight:bold;color:#e65100;font-size:14px;margin-bottom:8px;">
+                    📋 Disciplinas Extras (do histórico)
+                </div>
+                <div style="display:flex;flex-wrap:wrap;gap:6px;">
+                    ${extras.map(d => {
+                        const status = aluno.progresso[d.codigo]?.status || 'not-started';
+                        const isEquiv = aluno.equiv && aluno.equiv[d.codigo];
+                        const isQuebra = aluno.quebras && aluno.quebras[d.codigo];
+                        let finalClass = status === 'done' ? 'done' : status === 'planned' ? 'planned' : 'not-started';
+                        if (isEquiv && status === 'done') finalClass = 'equiv-done';
+                        if (isQuebra) finalClass = 'quebra';
+                        const onClick = `onclick="window.toggleDisciplinaHandler('${d.codigo}')"`;
+                        return `
+                            <div class="discipline ${finalClass}" ${onClick} style="display:inline-block;padding:4px 10px;margin:2px;border-radius:4px;border:1px solid #ddd;cursor:pointer;font-size:12px;">
+                                <span class="code">${d.codigo}</span> ${getNomeDisciplina(d.codigo) || d.codigo}
+                                <span class="hours">${d.ch || '68h'}</span>
+                                ${isEquiv ? '<span class="equiv-badge">🔗 Equiv.</span>' : ''}
+                                ${isQuebra ? '<span class="quebra-badge">🔓 QUEBRA</span>' : ''}
+                                ${status === 'planned' ? '<span class="planned-badge">📌 Planejada</span>' : ''}
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+                <div style="margin-top:6px;font-size:11px;color:#666;">
+                    💡 Disciplinas que estão no histórico mas não fazem parte do currículo atual.
+                </div>
             </div>
         `;
     }
 
-    html += `</div>`;
     container.innerHTML = html;
 }
 
@@ -201,65 +205,141 @@ function renderOptativa(gerenciador, disc) {
     const aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return '';
 
-    const curso = aluno.curso || 'bmat';
     const optCodigo = disc.codigo;
     const optSelecionada = aluno.optativas[optCodigo] || null;
-    let status = 'not-started';
-    let displayName = optCodigo;
-    let badge = '';
-    let classe = 'discipline';
 
-    if (optSelecionada) {
-        const optStatus = aluno.progresso[optSelecionada]?.status || 'not-started';
-        const isEquiv = aluno.equiv && aluno.equiv[optSelecionada];
-        const isQuebra = aluno.quebras && aluno.quebras[optSelecionada];
-
-        if (isEquiv && optStatus === 'done') {
-            status = 'equiv-done';
-            badge = `<span class="equiv-badge">🔗 Equiv.</span>`;
-            const equivInfo = aluno.equiv[optSelecionada];
-            if (equivInfo) badge += ` <span class="prereq-badge">via ${equivInfo.via}</span>`;
-        } else if (isQuebra) {
-            status = 'quebra';
-            badge = `<span class="quebra-badge">🔓 QUEBRA</span>`;
-        } else if (optStatus === 'done') {
-            status = 'opt-selected';
-            badge = `<span class="opt-badge">📌 Opt.</span>`;
-        } else if (optStatus === 'pending') {
-            status = 'opt-pending';
-            badge = `<span class="opt-badge">📌 Opt.</span>`;
-        } else if (optStatus === 'planned') {
-            status = 'planned';
-            badge = `<span class="planned-badge">📌 Planejada</span>`;
-        } else {
-            status = 'opt-selected';
-            badge = `<span class="opt-badge">📌 Opt.</span>`;
-        }
-
-        const todasOptativas = getTodasOptativas();
-        const optInfo = todasOptativas.find(o => o.codigo === optSelecionada);
-        displayName = `${optSelecionada} - ${optInfo ? optInfo.nome : 'Optativa'}`;
-    } else {
-        displayName = 'Optativa (selecionar)';
-        status = 'not-started';
+    // Se não tem disciplina selecionada, mostra botão para selecionar
+    if (!optSelecionada) {
+        return `
+            <button class="discipline not-started" onclick="window.abrirModalOptativa('${optCodigo}')">
+                <span class="code">${optCodigo}</span> Optativa (selecionar)
+                <span class="hours">${disc.horas}</span>
+                <span style="font-size:10px;color:#666;">(clique para selecionar)</span>
+            </button>
+        `;
     }
 
-    if (status === 'equiv-done') classe += ' equiv-done';
-    else if (status === 'opt-selected') classe += ' opt-selected';
-    else if (status === 'opt-pending') classe += ' opt-pending';
-    else if (status === 'quebra') classe += ' quebra';
-    else if (status === 'planned') classe += ' planned';
-    else if (status === 'done') classe += ' done';
-    else if (status === 'pending') classe += ' pending';
-    else classe += ' not-started';
+    // Tem disciplina selecionada - verifica status
+    const optStatus = aluno.progresso[optSelecionada]?.status || 'not-started';
+    const isEquiv = aluno.equiv && aluno.equiv[optSelecionada];
+    const isQuebra = aluno.quebras && aluno.quebras[optSelecionada];
+
+    let classe = 'discipline';
+    let badge = '';
+    const nomeDisciplina = getNomeDisciplina(optSelecionada) || optSelecionada;
+    let displayName = `${optSelecionada} - ${nomeDisciplina}`;
+
+    if (isEquiv && optStatus === 'done') {
+        classe += ' equiv-done';
+        badge = `<span class="equiv-badge">🔗 Equiv.</span>`;
+        const equivInfo = aluno.equiv[optSelecionada];
+        if (equivInfo) badge += ` <span class="prereq-badge">via ${equivInfo.via}</span>`;
+    } else if (isQuebra) {
+        classe += ' quebra';
+        badge = `<span class="quebra-badge">🔓 QUEBRA</span>`;
+    } else if (optStatus === 'done') {
+        classe += ' opt-selected';
+        badge = `<span class="opt-badge">📌 Opt.</span>`;
+    } else if (optStatus === 'pending') {
+        classe += ' opt-pending';
+        badge = `<span class="opt-badge">📌 Opt.</span>`;
+    } else if (optStatus === 'planned') {
+        classe += ' planned';
+        badge = `<span class="planned-badge">📌 Planejada</span>`;
+    } else {
+        classe += ' opt-selected';
+        badge = `<span class="opt-badge">📌 Opt.</span>`;
+    }
 
     return `
-        <button class="${classe}" onclick="window.toggleDisciplinaHandler('${optCodigo}')">
+        <button class="${classe}" onclick="window.abrirModalStatusOptativa('${optSelecionada}', '${optCodigo}')">
             <span class="code">${optCodigo}</span> ${displayName}
             <span class="hours">${disc.horas}</span>
             ${badge}
         </button>
     `;
+}
+
+function renderOptativasPlanejadas(gerenciador) {
+    const aluno = gerenciador.getAlunoAtivo();
+    if (!aluno) return '';
+
+    const planejadas = aluno.optativasPlanejadas || [];
+    const stats = gerenciador.getEstatisticasOptativas(gerenciador.alunoAtivoId);
+
+    if (planejadas.length === 0) {
+        return `
+            <div style="margin-top:16px;padding:12px 16px;background:#f8f9fa;border-radius:8px;border:2px dashed #ddd;text-align:center;">
+                <span style="color:#999;font-size:13px;">📌 Nenhuma optativa planejada (0 de 5)</span>
+                <button onclick="window.abrirPreMatriculaHandler()" style="margin-left:12px;padding:4px 12px;background:#7c4dff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
+                    Planejar
+                </button>
+            </div>
+        `;
+    }
+
+    let html = `
+        <div style="margin-top:16px;padding:12px 16px;background:#f3e5f5;border-radius:8px;border:2px solid #7b1fa2;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+                <div>
+                    <span style="font-weight:bold;color:#4a148c;font-size:15px;">📌 OPTATIVAS PLANEJADAS</span>
+                    <span style="margin-left:8px;font-size:12px;color:#666;">(${planejadas.length} de 5)</span>
+                </div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <button onclick="window.abrirPreMatriculaHandler()" style="padding:4px 12px;background:#7c4dff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
+                        📝 Planejar mais
+                    </button>
+                    ${planejadas.length > 0 ? `
+                        <button onclick="window.limparOptativasPlanejadasHandler()" style="padding:4px 12px;background:#ef5350;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
+                            🗑️ Limpar todas
+                        </button>
+                    ` : ''}
+                </div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+    `;
+
+    planejadas.forEach((codigo, index) => {
+        const nome = getNomeDisciplina(codigo) || codigo;
+        const prioridade = index + 1;
+        const emoji = ['1️⃣', '2️⃣', '3️⃣', '4️⃣', '5️⃣'][index] || `#${prioridade}`;
+
+        html += `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;background:white;border-radius:6px;border-left:4px solid #7b1fa2;gap:8px;flex-wrap:wrap;">
+                <div style="display:flex;align-items:center;gap:8px;flex:1;min-width:150px;">
+                    <span style="font-weight:bold;font-size:14px;color:#4a148c;">${emoji}</span>
+                    <span style="font-weight:500;font-size:13px;">${codigo}</span>
+                    <span style="font-size:12px;color:#666;">- ${nome}</span>
+                </div>
+                <div style="display:flex;gap:4px;">
+                    <button onclick="abrirModalStatusOptativa('${codigo}')" 
+                            style="padding:2px 10px;background:#7c4dff;color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px;">
+                        🔄 Status
+                    </button>
+                    <button onclick="window.removerOptativaPlanejadaHandler('${codigo}')" 
+                            style="padding:2px 10px;background:#ef5350;color:white;border:none;border-radius:4px;cursor:pointer;font-size:11px;">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+
+    html += `
+            </div>
+            ${stats && stats.faltando > 0 ? `
+                <div style="margin-top:8px;font-size:12px;color:#e65100;background:#fff3e0;padding:6px 12px;border-radius:4px;">
+                    ⚠️ Você ainda precisa cursar ${stats.faltando} optativa(s) para concluir o curso.
+                </div>
+            ` : stats && stats.concluido ? `
+                <div style="margin-top:8px;font-size:12px;color:#2e7d32;background:#e8f5e9;padding:6px 12px;border-radius:4px;">
+                    ✅ Todas as optativas foram cumpridas!
+                </div>
+            ` : ''}
+        </div>
+    `;
+
+    return html;
 }
 
 function getDisciplinasExtras(gerenciador) {

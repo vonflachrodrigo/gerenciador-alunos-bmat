@@ -88,16 +88,12 @@
         <span class="text-muted">Desenvolvido por Rodrigo Aguiar von Flach com assistência de ferramentas de IA generativa.</span>
     </footer>
 
-    <!-- MODAL OPTATIVAS -->
+    <!-- MODAL OPTATIVAS (2 ETAPAS) -->
     <div class="modal-overlay" id="optModal">
         <div class="modal">
             <h2 id="optModalTitle">Selecionar Optativa</h2>
             <div class="subtitle" id="optModalSub">Escolha a disciplina optativa</div>
             <div class="opt-list" id="optList"></div>
-            <div class="modal-actions">
-                <button class="btn-clear" onclick="clearOptativa()">🗑️ Limpar</button>
-                <button class="btn-cancel" onclick="closeOptModal()">Fechar</button>
-            </div>
         </div>
     </div>
 
@@ -121,10 +117,13 @@
     </div>
 
     <div class="toast" id="toast"></div>
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/GerenciadorAlunos.js"></script>   <!-- NOVO -->
-<script src="js/render.js"></script>               <!-- NOVO -->
-<script src="js/app.js"></script>
+
+    <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/GerenciadorAlunos.js"></script>
+    <script src="js/render.js"></script>
+    <script src="js/app.js"></script>
+
 </body>
 </html>
