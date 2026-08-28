@@ -8,6 +8,7 @@ const gerenciador = new GerenciadorAlunos();
 let modalContexto = null;
 let quebraContexto = null;
 let planejamentoTemp = {};
+let toastTimeout;
 
 // ============================================================
 // INICIALIZAÇÃO
@@ -55,6 +56,7 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'removerQuebra':
             case 'importarHistorico':
             case 'salvarPlanejamento':
+            case 'removerMatricula':
                 atualizarUI();
                 gerenciador.salvar();
                 break;
@@ -116,8 +118,6 @@ function showToast(msg, type = 'info') {
         clearTimeout(toastTimeout); };
     toastTimeout = setTimeout(() => el.classList.remove('show'), 4000);
 }
-
-let toastTimeout;
 
 // ============================================================
 // HANDLERS - ALUNOS
@@ -1485,15 +1485,6 @@ window.gerarPDFHandler = function() {
         }
     }
 
-    if (Object.keys(aluno.equiv || {}).length > 0) {
-        linhas.push('');
-        linhas.push('APENDICE - EQUIVALENCIAS APLICADAS');
-        linhas.push(separador);
-        for (const [codigo, info] of Object.entries(aluno.equiv)) {
-            linhas.push(`  ${codigo} -> via ${info.via}`);
-        }
-    }
-
     linhas.push('');
     linhas.push(separador);
     linhas.push('LEGENDA');
@@ -1574,6 +1565,44 @@ window.alternarVersaoHandler = function() {
 };
 
 // ============================================================
+// HANDLERS - MATRÍCULA (SIMPLIFICADO)
+// ============================================================
+
+window.removerMatriculaHandler = function(codigo) {
+    const aluno = gerenciador.getAlunoAtivo();
+    if (!aluno) return;
+
+    if (!confirm(`Remover ${codigo} das disciplinas em andamento?`)) return;
+
+    try {
+        // Remove apenas se for 'pending' com origem 'matricula_atual'
+        if (aluno.progresso[codigo]?.status === 'pending' && 
+            aluno.progresso[codigo]?.origem === 'matricula_atual') {
+            delete aluno.progresso[codigo];
+            if (aluno.historico_completo[codigo]?.origem === 'matricula_atual') {
+                delete aluno.historico_completo[codigo];
+            }
+            gerenciador._notifyListeners('removerMatricula', { alunoId: aluno.id, codigo });
+            atualizarUI();
+            showToast(`🗑️ ${codigo} removida das disciplinas em andamento.`, 'info');
+        } else {
+            showToast(`⚠️ ${codigo} não pode ser removida manualmente.`, 'error');
+        }
+    } catch (error) {
+        showToast(`❌ ${error.message}`, 'error');
+    }
+};
+
+// ============================================================
+// FUNÇÕES AUXILIARES
+// ============================================================
+
+function fecharConfirmModal() {
+    const modal = document.querySelector('.confirm-modal');
+    if (modal) modal.remove();
+}
+
+// ============================================================
 // EXPOSIÇÃO GLOBAL
 // ============================================================
 
@@ -1620,5 +1649,8 @@ window.clearAllData = window.clearAllDataHandler;
 window.gerarPDFVisual = window.gerarPDFHandler;
 
 window.alternarVersao = window.alternarVersaoHandler;
+
+window.removerMatriculaHandler = window.removerMatriculaHandler;
+window.fecharConfirmModal = fecharConfirmModal;
 
 window.showToast = showToast;
