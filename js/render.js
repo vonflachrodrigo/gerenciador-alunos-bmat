@@ -39,10 +39,14 @@ function renderAlunoList(gerenciador) {
 
 function renderFluxograma(gerenciador) {
     const container = document.getElementById('fluxogramaContent');
+    const headerContainer = document.getElementById('alunoHeader');
     const alunoId = gerenciador.alunoAtivoId;
     const aluno = gerenciador.getAlunoAtivo();
 
     if (!aluno) {
+        // Limpa o cabeçalho
+        if (headerContainer) headerContainer.innerHTML = '';
+        
         container.innerHTML = `
             <div class="no-aluno">
                 <h3>👈 Adicione um aluno</h3>
@@ -62,20 +66,30 @@ function renderFluxograma(gerenciador) {
     const curriculo = getCurriculo(curso);
     const progresso = calcularProgresso(curriculo, aluno.progresso, aluno.optativas);
     const cursoLabel = curso === 'bcet' ? '📘 BCET - Matemática' : '📐 BMAT';
-
     const stats = gerenciador.getEstatisticasOptativas(alunoId);
 
-    let html = `
-        <div class="aluno-header">
-            <h2>📘 ${aluno.nome} ${aluno.matricula ? `(${aluno.matricula})` : ''} - ${cursoLabel}</h2>
-            <div class="stats-badge">
-                <span class="done-count">✅ ${progresso.done}</span>
-                <span class="pending-count">🟡 ${progresso.pending}</span>
-                <span class="planned-count">📌 ${progresso.planned}</span>
-                <span class="total-count">📚 ${progresso.total}</span>
-                <span style="background:#1a237e;color:white;padding:2px 10px;border-radius:12px;font-size:12px;">${progresso.pct}%</span>
+    // ============================================================
+    // RENDERIZA O CABEÇALHO NO ELEMENTO SEPARADO (#alunoHeader)
+    // ============================================================
+    if (headerContainer) {
+        headerContainer.innerHTML = `
+            <div class="aluno-header">
+                <h2>📘 ${aluno.nome} ${aluno.matricula ? `(${aluno.matricula})` : ''} - ${cursoLabel}</h2>
+                <div class="stats-badge">
+                    <span class="done-count">✅ ${progresso.done}</span>
+                    <span class="pending-count">🟡 ${progresso.pending}</span>
+                    <span class="planned-count">📌 ${progresso.planned}</span>
+                    <span class="total-count">📚 ${progresso.total}</span>
+                    <span style="background:#1a237e;color:white;padding:2px 10px;border-radius:12px;font-size:12px;">${progresso.pct}%</span>
+                </div>
             </div>
-        </div>
+        `;
+    }
+
+    // ============================================================
+    // RENDERIZA O CONTEÚDO DO RELATÓRIO NO #fluxogramaContent
+    // ============================================================
+    let html = `
         <div class="legend">
             <div class="legend-item"><span class="legend-color done"></span> Cursada</div>
             <div class="legend-item"><span class="legend-color pending"></span> Cursando</div>

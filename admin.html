@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+    <title>Admin - Planejamento de Ofertas</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js">
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js">
+    </script>
+    <link rel="stylesheet" href="css/styles.css">
+
+    <style>
+        .login-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1a237e, #0d47a1);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+        .login-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        .login-box {
+            background: white;
+            border-radius: 16px;
+            padding: 40px;
+            max-width: 400px;
+            width: 100%;
+            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .login-box .logo { font-size: 48px; margin-bottom: 8px; }
+        .login-box h2 { color: #1a237e; margin: 0 0 4px 0; }
+        .login-box .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
+        .login-box .input-group { margin-bottom: 16px; text-align: left; }
+        .login-box .input-group label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 4px; }
+        .login-box .input-group input { width: 100%; padding: 12px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
+        .login-box .input-group input:focus { outline: none; border-color: #1a237e; }
+        .login-box .btn-login { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
+        .login-box .btn-login:hover { background: #0d1445; }
+        .login-box .error-msg { color: #c62828; font-size: 13px; margin-top: 8px; min-height: 20px; }
+        .login-box .footer-text { margin-top: 16px; font-size: 12px; color: #999; }
+        .login-box .footer-text a { color: #1a237e; text-decoration: none; }
+        .login-box .footer-text a:hover { text-decoration: underline; }
+
+        .admin-header {
+            background: linear-gradient(135deg, #1a237e, #0d47a1);
+            color: white;
+            padding: 12px 20px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .admin-header h1 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
+        .admin-header h1 small { font-size: 11px; font-weight: normal; opacity: 0.8; }
+        .admin-header .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+        .admin-header .admin-actions button { padding: 6px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 11px; transition: all 0.2s; }
+        .admin-header .admin-actions button:hover { transform: scale(1.05); }
+        .btn-logout { background: #ef5350; color: white; }
+        .btn-logout:hover { background: #c62828; }
+
+        .security-badge {
+            display: inline-block;
+            background: #ffeb3b;
+            color: #333;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .admin-grid {
+            display: grid;
+            grid-template-columns: 1fr 2fr;
+            gap: 16px;
+        }
+
+        .import-area-relatorio {
+            padding: 20px;
+            border: 3px dashed #4a148c;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: #f3e5f5;
+        }
+        .import-area-relatorio:hover {
+            background: #e1bee7;
+            border-color: #7b1fa2;
+            transform: scale(1.02);
+        }
+        .import-area-relatorio .icone {
+            font-size: 40px;
+            margin-bottom: 8px;
+        }
+        .import-area-relatorio .titulo {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a237e;
+        }
+        .import-area-relatorio .subtitulo {
+            font-size: 13px;
+            color: #666;
+            margin-top: 4px;
+        }
+
+        .consolidacao-tabela {
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #e0e0e0;
+        }
+        .consolidacao-tabela .cabecalho {
+            display: grid;
+            grid-template-columns: 3fr 1fr 2fr 1fr;
+            background: #1a237e;
+            color: white;
+            padding: 10px 14px;
+            font-weight: bold;
+            font-size: 13px;
+            gap: 8px;
+        }
+        .consolidacao-tabela .linha {
+            display: grid;
+            grid-template-columns: 3fr 1fr 2fr 1fr;
+            padding: 10px 14px;
+            border-bottom: 1px solid #e0e0e0;
+            gap: 8px;
+            align-items: center;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .consolidacao-tabela .linha:hover {
+            background: #f5f5f5;
+        }
+        .consolidacao-tabela .linha.ofertada {
+            background: #e8f5e9;
+        }
+        .consolidacao-tabela .linha.nao-ofertada {
+            background: #ffebee;
+        }
+        .consolidacao-tabela .linha .num-alunos {
+            text-align: center;
+            font-weight: bold;
+            font-size: 18px;
+            color: #1a237e;
+        }
+        .consolidacao-tabela .linha .lista-alunos {
+            font-size: 12px;
+            color: #333;
+            word-break: break-word;
+        }
+
+        .consolidacao-acoes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .consolidacao-resumo {
+            margin-top: 16px;
+            padding: 12px 16px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            justify-content: space-between;
+        }
+
+        .aluno-item-admin {
+            padding: 8px 12px;
+            border-radius: 6px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #f5f5f5;
+            border-left: 3px solid #1a237e;
+        }
+        .aluno-item-admin .nome {
+            font-weight: 500;
+            font-size: 14px;
+        }
+        .aluno-item-admin .progresso {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .panel-sem-borda {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        /* OCULTA O INPUT FILE */
+        #relatorioImport {
+            display: none !important;
+        }
+
+        @media (max-width: 992px) {
+            .admin-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .login-box { padding: 24px 20px; margin: 0 12px; }
+            .admin-header h1 { font-size: 15px; }
+            .admin-header h1 small { font-size: 10px; }
+        }
+        @media (max-width: 480px) {
+            .consolidacao-tabela .cabecalho,
+            .consolidacao-tabela .linha {
+                grid-template-columns: 1.5fr 0.6fr 1fr 0.8fr;
+                font-size: 10px;
+                gap: 2px;
+                padding: 6px 8px;
+            }
+            .consolidacao-tabela .linha .num-alunos { font-size: 12px; }
+            .btn-oferta { font-size: 9px; padding: 3px 6px; min-width: 50px; }
+            .import-area-relatorio { padding: 14px; }
+            .import-area-relatorio .icone { font-size: 30px; }
+            .import-area-relatorio .titulo { font-size: 14px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- TELA DE LOGIN -->
+    <div class="login-overlay" id="loginOverlay">
+        <div class="login-box">
+            <div class="logo">🔐</div>
+            <h2>Área Administrativa</h2>
+            <p class="subtitle">Planejamento de Ofertas - BMAT/BCET</p>
+
+            <div class="input-group">
+                <label for="loginSenha">Senha de acesso</label>
+                <input type="password" id="loginSenha" placeholder="Digite a senha..." onkeypress="if(event.key==='Enter') fazerLogin()">
+            </div>
+
+            <button class="btn-login" onclick="fazerLogin()">🔓 Acessar</button>
+            <div class="error-msg" id="loginErro"></div>
+
+            <div class="footer-text">
+                <a href="index.html">← Voltar para área do aluno</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- ADMIN APP -->
+    <div id="adminApp" style="display:none;">
+        <div class="container">
+
+            <!-- HEADER -->
+            <div class="admin-header">
+                <h1>
+                    📊 Admin - Planejamento de Ofertas
+                    <small>BMAT / BCET</small>
+                    <span class="security-badge">🔒 Restrito</span>
+                </h1>
+                <div class="admin-actions">
+                    <button class="btn-logout" onclick="fazerLogout()">🚪 Sair</button>
+                </div>
+            </div>
+
+            <!-- GRID PRINCIPAL -->
+            <div class="admin-grid">
+
+                <!-- PAINEL DE ALUNOS (APENAS VISUALIZAÇÃO) -->
+                <div class="panel-sem-borda">
+                    <div class="panel-title">
+                        👨‍🎓 Alunos Importados
+                        <span class="badge" id="alunoCount">0</span>
+                    </div>
+
+                    <div id="alunoList" style="max-height:300px;overflow-y:auto;">
+                        <div style="padding:16px;text-align:center;color:#999;">Nenhum aluno importado</div>
+                    </div>
+
+                    <!-- ÚNICO BOTÃO: IMPORTAR RELATÓRIOS -->
+                    <div style="margin-top:12px;">
+                        <div class="import-area-relatorio" onclick="document.getElementById('relatorioImport').click()">
+                            <div class="icone">📑</div>
+                            <div class="titulo">Importar Relatórios de Alunos</div>
+                            <div class="subtitulo">Clique aqui e selecione um ou mais PDFs</div>
+                            <input type="file" id="relatorioImport" accept=".pdf" multiple onchange="importarRelatoriosHandler(event)">
+                        </div>
+                        <div id="relatorioPreview" style="margin-top:8px;font-size:12px;display:none;"></div>
+                    </div>
+                </div>
+
+                <!-- CONSOLIDAÇÃO DE OFERTAS -->
+                <div class="panel-sem-borda">
+                    <div class="panel-title">
+                        📊 Consolidação de Ofertas
+                        <span class="badge" id="consolidacaoBadge">0</span>
+                    </div>
+                    <div id="consolidacaoContent">
+                        <div class="no-aluno">
+                            <h3>⏳ Carregando...</h3>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <footer>
+            <span>📐 Gerenciador de Alunos - Administração</span> ·
+            Baseado nos PPCs BMAT (2013) e BCET (2025) ·
+            <span class="text-muted">Acesso restrito ao coordenador</span>
+        </footer>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast"></div>
+
+    <!-- SCRIPTS -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/GerenciadorAlunos.js"></script>
+    <script src="js/admin.js"></script>
+
+</body>
+</html>

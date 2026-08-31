@@ -985,7 +985,7 @@ window.salvarPlanejamentoHandler = function() {
                     <span style="font-size:12px;color:#999;">(máximo 5)</span>
                 </p>
                 <div style="display:flex;gap:8px;margin:12px 0;">
-                    <input type="number" id="quantidadeOptativas" min="1" max="5" value="${Math.min(optativasSelecionadas.length, 5)}" 
+                    <input type="number" id="quantidadeOptativas" min="0" max="5" value="1" 
                            style="flex:1;padding:10px;border:2px solid #ddd;border-radius:8px;font-size:16px;text-align:center;">
                 </div>
                 <div style="display:flex;gap:10px;">
@@ -1030,8 +1030,8 @@ window.confirmarQuantidadeOptativas = function() {
     const input = document.getElementById('quantidadeOptativas');
     const quantidade = parseInt(input.value);
 
-    if (isNaN(quantidade) || quantidade < 1 || quantidade > 5) {
-        showToast('❌ Digite um número entre 1 e 5', 'error');
+    if (isNaN(quantidade) || quantidade < 0 || quantidade > 5) {
+        showToast('❌ Digite um número entre 0 e 5', 'error');
         return;
     }
 
@@ -1040,6 +1040,26 @@ window.confirmarQuantidadeOptativas = function() {
 
     const codigos = Object.keys(planejamentoTemp);
     const optativasSelecionadas = codigos.filter(c => isOptativaGlobal(c));
+
+    if (quantidade === 0) {
+        window.fecharQuantidadeModal();
+        const codigosFinais = codigos.filter(c => !isOptativaGlobal(c));
+
+        try {
+            const resultado = gerenciador.salvarPlanejamento(
+                aluno.id || gerenciador.alunoAtivoId,
+                codigosFinais,
+                []
+            );
+            window.fecharPreMatriculaHandler();
+            planejamentoTemp = {};
+            showToast(`✅ ${resultado.obrigatorias.length} disciplina(s) planejada(s)!`, 'success');
+            atualizarUI();
+        } catch (error) {
+            showToast(`❌ ${error.message}`, 'error');
+        }
+        return;
+    }
 
     if (quantidade > optativasSelecionadas.length) {
         showToast(`❌ Você só selecionou ${optativasSelecionadas.length} optativa(s)`, 'error');
@@ -1396,7 +1416,14 @@ window.gerarPDFHandler = function() {
     linhas.push('DISCIPLINAS POR SEMESTRE');
     linhas.push(separador);
 
+    // ============================================================
+    // MODIFICADO: SEMPRE exibe todos os semestres
+    // ============================================================
     for (const semestre of curriculo) {
+        linhas.push(`\n${semestre.nome}:`);
+        
+        // Verifica se há alguma disciplina com status diferente de 'not-started'
+        // Se não houver, ainda assim exibe as disciplinas com status atual
         let temDisciplinas = false;
         for (const disc of semestre.disciplinas) {
             const codigo = disc.codigo;
@@ -1413,9 +1440,21 @@ window.gerarPDFHandler = function() {
                 }
             }
         }
-        if (!temDisciplinas) continue;
+        
+        // Se não tem nenhuma disciplina com status diferente, ainda exibe o semestre
+        // com as disciplinas no estado atual (not-started)
+        if (!temDisciplinas) {
+            // Verifica se pelo menos uma disciplina existe no semestre
+            let temAlgumaDisciplina = false;
+            for (const disc of semestre.disciplinas) {
+                if (!disc.isOptativa) {
+                    temAlgumaDisciplina = true;
+                    break;
+                }
+            }
+            if (!temAlgumaDisciplina) continue;
+        }
 
-        linhas.push(`\n${semestre.nome}:`);
         for (const disc of semestre.disciplinas) {
             let codigo = disc.codigo;
             let nome = getNomeDisciplina(codigo);
@@ -1449,17 +1488,41 @@ window.gerarPDFHandler = function() {
         }
     }
 
+    // ============================================================
+    // SEÇÃO 1: OBRIGATÓRIAS PLANEJADAS (SEMPRE EXIBIDA)
+    // ============================================================
+    const obrigatoriasPlanejadas = [];
+    for (const [codigo, info] of Object.entries(aluno.progresso)) {
+        if (info.status === 'planned' && !isOptativaGlobal(codigo)) {
+            obrigatoriasPlanejadas.push(codigo);
+        }
+    }
+
     linhas.push('');
+    linhas.push('OBRIGATORIAS PLANEJADAS (Proximo Semestre):');
+    linhas.push(separador);
+
+    if (obrigatoriasPlanejadas.length > 0) {
+        for (const codigo of obrigatoriasPlanejadas) {
+            const nome = getNomeDisciplina(codigo) || codigo;
+            const horas = obterHorasDisciplina(codigo, curso) || '68h';
+            linhas.push(`  [P] ${codigo} - ${nome} (${horas})`);
+        }
+    } else {
+        linhas.push('  Nenhuma obrigatória planejada.');
+    }
+    linhas.push('');
+
+    // ============================================================
+    // SEÇÃO 2: RESUMO DE OPTATIVAS (APENAS LISTAS, SEM ESTATÍSTICAS)
+    // ============================================================
     linhas.push('RESUMO DE OPTATIVAS');
     linhas.push(separador);
 
     if (stats) {
-        linhas.push(`Total de optativas necessarias: ${stats.totalNecessario}`);
-        linhas.push(`Optativas ja cursadas: ${stats.cursadas}`);
-        linhas.push(`Optativas planejadas: ${stats.planejadas}`);
-        linhas.push(`Optativas faltando cursar: ${stats.faltando} ${stats.faltando === 0 ? '(OK)' : '(ATENCAO)'}`);
-        linhas.push('');
-
+        // ============================================================
+        // OPTATIVAS PLANEJADAS
+        // ============================================================
         if (stats.planejadasLista && stats.planejadasLista.length > 0) {
             linhas.push('Optativas Planejadas (Proximo Semestre):');
             stats.planejadasLista.forEach((codigo, index) => {
@@ -1469,6 +1532,9 @@ window.gerarPDFHandler = function() {
             linhas.push('');
         }
 
+        // ============================================================
+        // OPTATIVAS JÁ CURSADAS
+        // ============================================================
         if (stats.cursadasLista && stats.cursadasLista.length > 0) {
             linhas.push('Optativas ja cursadas:');
             stats.cursadasLista.forEach(codigo => {
@@ -1476,12 +1542,6 @@ window.gerarPDFHandler = function() {
                 linhas.push(`  [X] ${codigo} - ${nome}`);
             });
             linhas.push('');
-        }
-
-        if (stats.faltando > 0) {
-            linhas.push(`ATENCAO: Voce ainda precisa cursar ${stats.faltando} optativa(s) para concluir o curso.`);
-        } else if (stats.concluido) {
-            linhas.push('Todas as optativas foram cumpridas!');
         }
     }
 
@@ -1600,6 +1660,18 @@ window.removerMatriculaHandler = function(codigo) {
 function fecharConfirmModal() {
     const modal = document.querySelector('.confirm-modal');
     if (modal) modal.remove();
+}
+
+function obterHorasDisciplina(codigo, curso) {
+    const curriculo = getCurriculo(curso);
+    for (const semestre of curriculo) {
+        for (const disc of semestre.disciplinas) {
+            if (disc.codigo === codigo) {
+                return disc.horas || '68h';
+            }
+        }
+    }
+    return '68h';
 }
 
 // ============================================================
