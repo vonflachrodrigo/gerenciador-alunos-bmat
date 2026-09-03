@@ -1,5 +1,5 @@
 // ============================================================
-// ADMIN - VERSAO COMPLETA COM OPTATIVAS, PRIORIDADES E EXCECOES
+// ADMIN - VERSAO COMPLETA COM OPTATIVAS, PRIORIDADES, EXCECOES E STATUS DE ALUNOS
 // ============================================================
 
 console.log('Admin carregado!');
@@ -45,7 +45,8 @@ class GerenciadorSimples {
             curso: this.cursoAtivo,
             historico_completo: {},
             totalOptativasNecessarias: 0,
-            optativasCursadas: 0
+            optativasCursadas: 0,
+            status: 'normal' // 'normal' | 'concluinte' | 'ingressante'
         };
         this.salvar();
         this._notificar('adicionar', id);
@@ -122,6 +123,7 @@ class GerenciadorSimples {
                     if (!this.alunos[id].excecoes) this.alunos[id].excecoes = [];
                     if (!this.alunos[id].optativasInfo) this.alunos[id].optativasInfo = [];
                     if (!this.alunos[id].obrigatoriasPlanejadas) this.alunos[id].obrigatoriasPlanejadas = [];
+                    if (!this.alunos[id].status) this.alunos[id].status = 'normal';
                 }
                 
                 var keys = Object.keys(this.alunos);
@@ -450,7 +452,7 @@ function extrairOptativasPlanejadas(textoCompleto, excecoes) {
 }
 
 // ============================================================
-// CONSOLIDACAO - OBRIGATORIAS (inclui excecoes)
+// CONSOLIDACAO - OBRIGATORIAS (inclui excecoes e status)
 // ============================================================
 
 function getDisciplinasConsolidadas() {
@@ -461,6 +463,7 @@ function getDisciplinasConsolidadas() {
         var aluno = alunos[id];
         var obrigatorias = aluno.obrigatoriasPlanejadas || [];
         var excecoes = aluno.excecoes || [];
+        var status = aluno.status || 'normal';
 
         for (var i = 0; i < obrigatorias.length; i++) {
             var codigo = obrigatorias[i];
@@ -470,7 +473,12 @@ function getDisciplinasConsolidadas() {
                     codigo: codigo,
                     nome: getNomeDisciplina(codigo),
                     alunos: [],
-                    total: 0
+                    alunosConcluintes: [],
+                    alunosIngressantes: [],
+                    total: 0,
+                    totalConcluintes: 0,
+                    totalIngressantes: 0,
+                    temEspeciais: false
                 };
             }
 
@@ -480,8 +488,18 @@ function getDisciplinasConsolidadas() {
             }
 
             if (!jaExiste) {
-                mapa[codigo].alunos.push({ id: id, nome: aluno.nome });
+                mapa[codigo].alunos.push({ id: id, nome: aluno.nome, status: status });
                 mapa[codigo].total++;
+
+                if (status === 'concluinte') {
+                    mapa[codigo].alunosConcluintes.push({ id: id, nome: aluno.nome });
+                    mapa[codigo].totalConcluintes++;
+                    mapa[codigo].temEspeciais = true;
+                } else if (status === 'ingressante') {
+                    mapa[codigo].alunosIngressantes.push({ id: id, nome: aluno.nome });
+                    mapa[codigo].totalIngressantes++;
+                    mapa[codigo].temEspeciais = true;
+                }
             }
         }
 
@@ -496,7 +514,12 @@ function getDisciplinasConsolidadas() {
                         codigo: codigo,
                         nome: exc.nome || getNomeDisciplina(codigo),
                         alunos: [],
-                        total: 0
+                        alunosConcluintes: [],
+                        alunosIngressantes: [],
+                        total: 0,
+                        totalConcluintes: 0,
+                        totalIngressantes: 0,
+                        temEspeciais: false
                     };
                 }
 
@@ -506,8 +529,19 @@ function getDisciplinasConsolidadas() {
                 }
 
                 if (!jaExiste) {
-                    mapa[codigo].alunos.push({ id: id, nome: aluno.nome + ' (exceção)' });
+                    var nomeExibicao = aluno.nome + ' (exceção)';
+                    mapa[codigo].alunos.push({ id: id, nome: nomeExibicao, status: status });
                     mapa[codigo].total++;
+
+                    if (status === 'concluinte') {
+                        mapa[codigo].alunosConcluintes.push({ id: id, nome: nomeExibicao });
+                        mapa[codigo].totalConcluintes++;
+                        mapa[codigo].temEspeciais = true;
+                    } else if (status === 'ingressante') {
+                        mapa[codigo].alunosIngressantes.push({ id: id, nome: nomeExibicao });
+                        mapa[codigo].totalIngressantes++;
+                        mapa[codigo].temEspeciais = true;
+                    }
                 }
             }
         }
@@ -522,7 +556,7 @@ function getDisciplinasConsolidadas() {
 }
 
 // ============================================================
-// CONSOLIDACAO - OPTATIVAS (inclui excecoes)
+// CONSOLIDACAO - OPTATIVAS (inclui excecoes e status)
 // ============================================================
 
 function getOptativasConsolidadas() {
@@ -533,6 +567,7 @@ function getOptativasConsolidadas() {
         var aluno = alunos[id];
         var optativas = aluno.optativasInfo || [];
         var excecoes = aluno.excecoes || [];
+        var status = aluno.status || 'normal';
 
         for (var i = 0; i < optativas.length; i++) {
             var opt = optativas[i];
@@ -544,17 +579,22 @@ function getOptativasConsolidadas() {
                     codigo: codigo,
                     nome: getNomeDisciplina(codigo),
                     alunos: [],
+                    alunosConcluintes: [],
+                    alunosIngressantes: [],
                     alunosP1: [],
                     alunosP2: [],
                     alunosP3: [],
                     alunosP4: [],
                     alunosP5: [],
                     total: 0,
+                    totalConcluintes: 0,
+                    totalIngressantes: 0,
                     totalP1: 0,
                     totalP2: 0,
                     totalP3: 0,
                     totalP4: 0,
-                    totalP5: 0
+                    totalP5: 0,
+                    temEspeciais: false
                 };
             }
 
@@ -567,9 +607,20 @@ function getOptativasConsolidadas() {
                 mapa[codigo].alunos.push({ 
                     id: id, 
                     nome: aluno.nome,
-                    prioridade: prioridade
+                    prioridade: prioridade,
+                    status: status
                 });
                 mapa[codigo].total++;
+
+                if (status === 'concluinte') {
+                    mapa[codigo].alunosConcluintes.push({ id: id, nome: aluno.nome });
+                    mapa[codigo].totalConcluintes++;
+                    mapa[codigo].temEspeciais = true;
+                } else if (status === 'ingressante') {
+                    mapa[codigo].alunosIngressantes.push({ id: id, nome: aluno.nome });
+                    mapa[codigo].totalIngressantes++;
+                    mapa[codigo].temEspeciais = true;
+                }
 
                 if (prioridade === 1) {
                     mapa[codigo].alunosP1.push({ id: id, nome: aluno.nome });
@@ -602,17 +653,22 @@ function getOptativasConsolidadas() {
                         codigo: codigo,
                         nome: exc.nome || getNomeDisciplina(codigo),
                         alunos: [],
+                        alunosConcluintes: [],
+                        alunosIngressantes: [],
                         alunosP1: [],
                         alunosP2: [],
                         alunosP3: [],
                         alunosP4: [],
                         alunosP5: [],
                         total: 0,
+                        totalConcluintes: 0,
+                        totalIngressantes: 0,
                         totalP1: 0,
                         totalP2: 0,
                         totalP3: 0,
                         totalP4: 0,
-                        totalP5: 0
+                        totalP5: 0,
+                        temEspeciais: false
                     };
                 }
 
@@ -622,12 +678,24 @@ function getOptativasConsolidadas() {
                 }
 
                 if (!jaExiste) {
+                    var nomeExibicao = aluno.nome + ' (exceção)';
                     mapa[codigo].alunos.push({ 
                         id: id, 
-                        nome: aluno.nome + ' (exceção)',
-                        prioridade: prioridade
+                        nome: nomeExibicao,
+                        prioridade: prioridade,
+                        status: status
                     });
                     mapa[codigo].total++;
+
+                    if (status === 'concluinte') {
+                        mapa[codigo].alunosConcluintes.push({ id: id, nome: nomeExibicao });
+                        mapa[codigo].totalConcluintes++;
+                        mapa[codigo].temEspeciais = true;
+                    } else if (status === 'ingressante') {
+                        mapa[codigo].alunosIngressantes.push({ id: id, nome: nomeExibicao });
+                        mapa[codigo].totalIngressantes++;
+                        mapa[codigo].temEspeciais = true;
+                    }
                 }
             }
         }
@@ -695,7 +763,7 @@ function inicializarAdmin() {
 }
 
 // ============================================================
-// RENDER - LISTA DE ALUNOS
+// RENDER - LISTA DE ALUNOS (com status e filtro)
 // ============================================================
 
 function renderAlunoList() {
@@ -705,8 +773,20 @@ function renderAlunoList() {
     var alunos = gerenciador.getAlunos();
     var keys = Object.keys(alunos);
 
+    // Aplica filtro
+    var filtro = document.getElementById('statusFilter');
+    var filtroValor = filtro ? filtro.value : 'todos';
+
+    if (filtroValor !== 'todos') {
+        keys = keys.filter(function(id) {
+            return alunos[id].status === filtroValor;
+        });
+    }
+
     if (keys.length === 0) {
-        container.innerHTML = '<div style="padding:16px;text-align:center;color:#999;">Nenhum aluno importado</div>';
+        container.innerHTML = '<div style="padding:16px;text-align:center;color:#999;">' + 
+            (filtroValor !== 'todos' ? 'Nenhum aluno com este status' : 'Nenhum aluno importado') + 
+            '</div>';
         return;
     }
 
@@ -716,20 +796,55 @@ function renderAlunoList() {
         var aluno = alunos[id];
         var progresso = gerenciador.getProgresso(id);
         var pct = progresso ? progresso.pct || 0 : 0;
+        var status = aluno.status || 'normal';
 
         var div = document.createElement('div');
         div.className = 'aluno-item-admin';
-        div.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-radius:6px;margin-bottom:4px;background:#f5f5f5;border-left:3px solid #1a237e;';
+        
+        // Adiciona classe de status para destaque
+        if (status === 'concluinte') {
+            div.classList.add('status-concluinte');
+        } else if (status === 'ingressante') {
+            div.classList.add('status-ingressante');
+        }
         
         var matriculaStr = aluno.matricula ? ' (' + aluno.matricula + ')' : '';
 
-        var infoSpan = document.createElement('span');
-        infoSpan.className = 'nome';
-        infoSpan.textContent = aluno.nome + matriculaStr + ' - ' + (progresso ? progresso.done + '/' + progresso.total + ' (' + pct + '%)' : '0/0 (0%)');
+        // Badge de status
+        var statusBadge = '';
+        if (status === 'concluinte') {
+            statusBadge = '<span class="status-badge concluinte">🟢 Concluinte</span>';
+        } else if (status === 'ingressante') {
+            statusBadge = '<span class="status-badge ingressante">🟡 Ingressante</span>';
+        }
+
+        // Container para nome + badge (evita quebra)
+        var nomeContainer = document.createElement('span');
+        nomeContainer.className = 'nome';
+        nomeContainer.innerHTML = aluno.nome + matriculaStr + ' ' + statusBadge;
+
+        var progressSpan = document.createElement('span');
+        progressSpan.className = 'progresso';
+        progressSpan.textContent = progresso ? progresso.done + '/' + progresso.total + ' (' + pct + '%)' : '0/0 (0%)';
+
+        // Select de status
+        var select = document.createElement('select');
+        select.className = 'status-select';
+        select.id = 'status_' + id;
+        select.innerHTML = `
+            <option value="normal" ${status === 'normal' ? 'selected' : ''}>Normal</option>
+            <option value="concluinte" ${status === 'concluinte' ? 'selected' : ''}>🟢 Concluinte</option>
+            <option value="ingressante" ${status === 'ingressante' ? 'selected' : ''}>🟡 Ingressante</option>
+        `;
+        select.onchange = (function(id) {
+            return function() {
+                alterarStatusAluno(id, this.value);
+            };
+        })(id);
 
         var btnRemove = document.createElement('button');
-        btnRemove.textContent = 'x';
-        btnRemove.style.cssText = 'background:none;border:none;cursor:pointer;color:#c62828;font-size:16px;font-weight:bold;padding:0 4px;';
+        btnRemove.className = 'btn-remove-aluno';
+        btnRemove.textContent = '✕';
         btnRemove.title = 'Remover aluno';
         btnRemove.onclick = (function(id) {
             return function(e) {
@@ -738,10 +853,40 @@ function renderAlunoList() {
             };
         })(id);
 
-        div.appendChild(infoSpan);
+        div.appendChild(nomeContainer);
+        div.appendChild(progressSpan);
+        div.appendChild(select);
         div.appendChild(btnRemove);
         container.appendChild(div);
     }
+}
+
+function alterarStatusAluno(id, novoStatus) {
+    var aluno = gerenciador.getAluno(id);
+    if (!aluno) return;
+    
+    aluno.status = novoStatus;
+    gerenciador.salvar();
+    
+    var nomeStatus = novoStatus === 'concluinte' ? 'Concluinte' : 
+                     novoStatus === 'ingressante' ? 'Ingressante' : 'Normal';
+    showToast('Status de ' + aluno.nome + ' alterado para: ' + nomeStatus, 'info');
+    
+    renderAlunoList();
+    renderConsolidacao();
+}
+
+function limparStatusTodos() {
+    if (!confirm('Deseja limpar o status de TODOS os alunos para "Normal"?')) return;
+    
+    var alunos = gerenciador.getAlunos();
+    for (var id in alunos) {
+        alunos[id].status = 'normal';
+    }
+    gerenciador.salvar();
+    renderAlunoList();
+    renderConsolidacao();
+    showToast('Status de todos os alunos foi limpo!', 'success');
 }
 
 function updateAlunoCount() {
@@ -775,7 +920,7 @@ function removerAlunoHandler(id) {
 }
 
 // ============================================================
-// RENDER - CONSOLIDACAO
+// RENDER - CONSOLIDACAO (com destaque para alunos especiais)
 // ============================================================
 
 function renderConsolidacao() {
@@ -849,10 +994,33 @@ function renderConsolidacao() {
             var disc = obrigatorias[i];
             var isOfertada = ofertas[disc.codigo] !== false;
             var bgColor = isOfertada ? '#e8f5e9' : '#ffebee';
+            
+            // Destaque para disciplinas com alunos especiais
+            var bgEspecial = '';
+            var badgeEspecial = '';
+            if (disc.temEspeciais) {
+                bgEspecial = 'border-left:4px solid #ff6f00;';
+                bgColor = '#fff8e1';
+                var infoEspecial = [];
+                if (disc.totalConcluintes > 0) {
+                    infoEspecial.push(disc.totalConcluintes + ' concluinte(s)');
+                }
+                if (disc.totalIngressantes > 0) {
+                    infoEspecial.push(disc.totalIngressantes + ' ingressante(s)');
+                }
+                badgeEspecial = '<span class="badge-especiais">🔶 ' + infoEspecial.join(', ') + '</span>';
+            }
 
             var nomes = [];
             for (var j = 0; j < disc.alunos.length; j++) {
-                nomes.push(disc.alunos[j].nome);
+                var nomeAluno = disc.alunos[j].nome;
+                var statusAluno = disc.alunos[j].status;
+                if (statusAluno === 'concluinte') {
+                    nomeAluno = '🟢 ' + nomeAluno;
+                } else if (statusAluno === 'ingressante') {
+                    nomeAluno = '🟡 ' + nomeAluno;
+                }
+                nomes.push(nomeAluno);
             }
             var alunosStr = nomes.join(', ');
             if (nomes.length > 5) {
@@ -860,10 +1028,11 @@ function renderConsolidacao() {
             }
 
             html += 
-                '<div style="display:grid;grid-template-columns:3fr 1fr 2fr 1fr;padding:10px 14px;background:' + bgColor + ';border-bottom:1px solid #e0e0e0;gap:8px;align-items:center;font-size:13px;">' +
+                '<div style="display:grid;grid-template-columns:3fr 1fr 2fr 1fr;padding:10px 14px;background:' + bgColor + ';border-bottom:1px solid #e0e0e0;gap:8px;align-items:center;font-size:13px;' + bgEspecial + '">' +
                     '<div>' +
                         '<strong>' + disc.codigo + '</strong>' +
                         '<span style="color:#666;font-size:12px;display:block;">' + disc.nome + '</span>' +
+                        badgeEspecial +
                     '</div>' +
                     '<div style="text-align:center;font-weight:bold;font-size:18px;color:#1a237e;">' + disc.total + '</div>' +
                     '<div style="font-size:12px;color:#333;word-break:break-word;">' + (alunosStr || '-') + 
@@ -900,11 +1069,34 @@ function renderConsolidacao() {
             var disc = optativas[i];
             var isOfertada = ofertasOptativas[disc.codigo] !== false;
             var bgColor = isOfertada ? '#f3e5f5' : '#fce4ec';
+            
+            // Destaque para optativas com alunos especiais
+            var bgEspecial = '';
+            var badgeEspecial = '';
+            if (disc.temEspeciais) {
+                bgEspecial = 'border-left:4px solid #ff6f00;';
+                bgColor = '#fff8e1';
+                var infoEspecial = [];
+                if (disc.totalConcluintes > 0) {
+                    infoEspecial.push(disc.totalConcluintes + ' concluinte(s)');
+                }
+                if (disc.totalIngressantes > 0) {
+                    infoEspecial.push(disc.totalIngressantes + ' ingressante(s)');
+                }
+                badgeEspecial = '<span class="badge-especiais">🔶 ' + infoEspecial.join(', ') + '</span>';
+            }
 
             var alunosInfo = [];
             for (var j = 0; j < disc.alunos.length; j++) {
                 var a = disc.alunos[j];
-                alunosInfo.push(a.nome + ' (P' + a.prioridade + ')');
+                var nomeAluno = a.nome;
+                var statusAluno = a.status;
+                if (statusAluno === 'concluinte') {
+                    nomeAluno = '🟢 ' + nomeAluno;
+                } else if (statusAluno === 'ingressante') {
+                    nomeAluno = '🟡 ' + nomeAluno;
+                }
+                alunosInfo.push(nomeAluno + ' (P' + a.prioridade + ')');
             }
             var alunosStr = alunosInfo.join(', ');
             if (alunosInfo.length > 3) {
@@ -912,10 +1104,11 @@ function renderConsolidacao() {
             }
 
             html += 
-                '<div style="display:grid;grid-template-columns:2.5fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 1fr 1fr;padding:8px 12px;background:' + bgColor + ';border-bottom:1px solid #e0e0e0;gap:4px;align-items:center;font-size:11px;">' +
+                '<div style="display:grid;grid-template-columns:2.5fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 1fr 1fr;padding:8px 12px;background:' + bgColor + ';border-bottom:1px solid #e0e0e0;gap:4px;align-items:center;font-size:11px;' + bgEspecial + '">' +
                     '<div>' +
                         '<strong>' + disc.codigo + '</strong>' +
                         '<span style="color:#666;font-size:10px;display:block;">' + disc.nome + '</span>' +
+                        badgeEspecial +
                     '</div>' +
                     '<div style="text-align:center;font-weight:bold;color:#1a237e;">' + disc.totalP1 + '</div>' +
                     '<div style="text-align:center;font-weight:bold;color:#1a237e;">' + disc.totalP2 + '</div>' +
@@ -988,7 +1181,7 @@ function toggleAllOfertas(status) {
 }
 
 // ============================================================
-// GERAR RELATORIO PDF (SEM EMOJIS)
+// GERAR RELATORIO PDF (COM INFO DE CONCLUINTES E INGRESSANTES)
 // ============================================================
 
 function gerarRelatorioConsolidado() {
@@ -1017,10 +1210,23 @@ function gerarRelatorioConsolidado() {
             temSelecionadas = true;
             texto += '[OFERTA] ' + disc.codigo + ' - ' + disc.nome + '\n';
             texto += '   ' + disc.total + ' aluno(s) planejaram\n';
+            if (disc.totalConcluintes > 0) {
+                texto += '   🟢 ' + disc.totalConcluintes + ' concluinte(s)\n';
+            }
+            if (disc.totalIngressantes > 0) {
+                texto += '   🟡 ' + disc.totalIngressantes + ' ingressante(s)\n';
+            }
             if (disc.alunos.length > 0) {
                 var nomes = [];
                 for (var j = 0; j < disc.alunos.length; j++) {
-                    nomes.push(disc.alunos[j].nome);
+                    var nomeAluno = disc.alunos[j].nome;
+                    var statusAluno = disc.alunos[j].status;
+                    if (statusAluno === 'concluinte') {
+                        nomeAluno = '[CONCLUINTE] ' + nomeAluno;
+                    } else if (statusAluno === 'ingressante') {
+                        nomeAluno = '[INGRESSANTE] ' + nomeAluno;
+                    }
+                    nomes.push(nomeAluno);
                 }
                 texto += '   Alunos: ' + nomes.join(', ') + '\n';
             }
@@ -1040,10 +1246,23 @@ function gerarRelatorioConsolidado() {
             temNaoOfertadas = true;
             texto += '[NÃO OFERTADA] ' + disc.codigo + ' - ' + disc.nome + '\n';
             texto += '   ' + disc.total + ' aluno(s) ficarão sem\n';
+            if (disc.totalConcluintes > 0) {
+                texto += '   🟢 ' + disc.totalConcluintes + ' concluinte(s) afetados\n';
+            }
+            if (disc.totalIngressantes > 0) {
+                texto += '   🟡 ' + disc.totalIngressantes + ' ingressante(s) afetados\n';
+            }
             if (disc.alunos.length > 0) {
                 var nomes = [];
                 for (var j = 0; j < disc.alunos.length; j++) {
-                    nomes.push(disc.alunos[j].nome);
+                    var nomeAluno = disc.alunos[j].nome;
+                    var statusAluno = disc.alunos[j].status;
+                    if (statusAluno === 'concluinte') {
+                        nomeAluno = '[CONCLUINTE] ' + nomeAluno;
+                    } else if (statusAluno === 'ingressante') {
+                        nomeAluno = '[INGRESSANTE] ' + nomeAluno;
+                    }
+                    nomes.push(nomeAluno);
                 }
                 texto += '   Alunos afetados: ' + nomes.join(', ') + '\n';
             }
@@ -1064,10 +1283,24 @@ function gerarRelatorioConsolidado() {
                 temOptOfertadas = true;
                 texto += '[OFERTA] ' + disc.codigo + ' - ' + disc.nome + '\n';
                 texto += '   Total: ' + disc.total + ' aluno(s)\n';
+                if (disc.totalConcluintes > 0) {
+                    texto += '   🟢 ' + disc.totalConcluintes + ' concluinte(s)\n';
+                }
+                if (disc.totalIngressantes > 0) {
+                    texto += '   🟡 ' + disc.totalIngressantes + ' ingressante(s)\n';
+                }
                 if (disc.alunos.length > 0) {
                     var nomes = [];
                     for (var j = 0; j < disc.alunos.length; j++) {
-                        nomes.push(disc.alunos[j].nome + ' (P' + disc.alunos[j].prioridade + ')');
+                        var a = disc.alunos[j];
+                        var nomeAluno = a.nome;
+                        var statusAluno = a.status;
+                        if (statusAluno === 'concluinte') {
+                            nomeAluno = '[CONCLUINTE] ' + nomeAluno;
+                        } else if (statusAluno === 'ingressante') {
+                            nomeAluno = '[INGRESSANTE] ' + nomeAluno;
+                        }
+                        nomes.push(nomeAluno + ' (P' + a.prioridade + ')');
                     }
                     texto += '   Alunos: ' + nomes.join(', ') + '\n';
                 }
@@ -1087,10 +1320,24 @@ function gerarRelatorioConsolidado() {
                 temOptNaoOfertadas = true;
                 texto += '[NÃO OFERTADA] ' + disc.codigo + ' - ' + disc.nome + '\n';
                 texto += '   ' + disc.total + ' aluno(s) escolheram como alternativa\n';
+                if (disc.totalConcluintes > 0) {
+                    texto += '   🟢 ' + disc.totalConcluintes + ' concluinte(s) afetados\n';
+                }
+                if (disc.totalIngressantes > 0) {
+                    texto += '   🟡 ' + disc.totalIngressantes + ' ingressante(s) afetados\n';
+                }
                 if (disc.alunos.length > 0) {
                     var nomes = [];
                     for (var j = 0; j < disc.alunos.length; j++) {
-                        nomes.push(disc.alunos[j].nome + ' (P' + disc.alunos[j].prioridade + ')');
+                        var a = disc.alunos[j];
+                        var nomeAluno = a.nome;
+                        var statusAluno = a.status;
+                        if (statusAluno === 'concluinte') {
+                            nomeAluno = '[CONCLUINTE] ' + nomeAluno;
+                        } else if (statusAluno === 'ingressante') {
+                            nomeAluno = '[INGRESSANTE] ' + nomeAluno;
+                        }
+                        nomes.push(nomeAluno + ' (P' + a.prioridade + ')');
                     }
                     texto += '   Alunos: ' + nomes.join(', ') + '\n';
                 }
@@ -1139,7 +1386,7 @@ function gerarRelatorioConsolidado() {
 }
 
 // ============================================================
-// HANDLER - IMPORTACAO DE RELATORIOS PDF
+// HANDLER - IMPORTACAO DE RELATORIOS PDF (COM EXTRAÇÃO CORRIGIDA DO NOME)
 // ============================================================
 
 function importarRelatoriosHandler(event) {
@@ -1171,16 +1418,32 @@ function importarRelatoriosHandler(event) {
                         textoCompleto += pageText + '\n';
                     }
 
-                    var nomeMatch = textoCompleto.match(/Aluno:\s*([^C]+?)\s*Curso:/i);
-                    var nomeAluno = nomeMatch ? nomeMatch[1].trim() : file.name.replace('.pdf', '');
-                    nomeAluno = nomeAluno.replace(/^Aluno:\s*/i, '').trim();
-
-                    if (nomeAluno.length > 50 || nomeAluno.indexOf('Progresso') !== -1) {
+                    // ============================================================
+                    // EXTRAÇÃO CORRIGIDA DO NOME DO ALUNO
+                    // ============================================================
+                    var nomeAluno = '';
+                    
+                    // Tenta extrair o nome do aluno do conteúdo do PDF
+                    // Padrão: "Aluno: Nome do Aluno Curso:"
+                    var nomeMatch = textoCompleto.match(/Aluno:\s*([^C]+?)(?=\s*Curso:)/i);
+                    if (nomeMatch) {
+                        nomeAluno = nomeMatch[1].trim();
+                        console.log('Nome extraído do PDF:', nomeAluno);
+                    } else {
+                        // Fallback: tenta outro padrão mais genérico
+                        var nomeMatch2 = textoCompleto.match(/Aluno:\s*([^\n]+)/i);
+                        if (nomeMatch2) {
+                            nomeAluno = nomeMatch2[1].trim();
+                            console.log('Nome extraído do PDF (fallback):', nomeAluno);
+                        }
+                    }
+                    
+                    // Se ainda não encontrou, usa o nome do arquivo como fallback
+                    if (!nomeAluno || nomeAluno.length === 0 || nomeAluno.length > 50 || nomeAluno.indexOf('Progresso') !== -1) {
                         nomeAluno = file.name.replace('.pdf', '').replace('relatorio_', '').replace(/_/g, ' ');
                         nomeAluno = nomeAluno.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
+                        console.log('Nome extraído do arquivo:', nomeAluno);
                     }
-
-                    console.log('Nome extraído:', nomeAluno);
 
                     var cursoMatch = textoCompleto.match(/Curso:\s*([^P]+?)\s*Progresso:/i);
                     var curso = 'bmat';
@@ -1324,6 +1587,11 @@ function importarRelatoriosHandler(event) {
                         }
                     }
 
+                    // Status do aluno (sempre normal ao importar)
+                    if (!alunoExistente.status) {
+                        alunoExistente.status = 'normal';
+                    }
+
                     var totalOptMatch = textoCompleto.match(/Total de optativas necessárias:\s*(\d+)/i);
                     if (totalOptMatch) {
                         alunoExistente.totalOptativasNecessarias = parseInt(totalOptMatch[1]);
@@ -1386,5 +1654,7 @@ window.toggleAllOfertas = toggleAllOfertas;
 window.gerarRelatorioConsolidado = gerarRelatorioConsolidado;
 window.showToast = showToast;
 window.removerAlunoHandler = removerAlunoHandler;
+window.renderAlunoList = renderAlunoList;
+window.limparStatusTodos = limparStatusTodos;
 
-console.log('admin.js completo (com optativas, prioridades e exceções) carregado!');
+console.log('admin.js completo (com optativas, prioridades, exceções, status de alunos e extração corrigida do nome) carregado!');

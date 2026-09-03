@@ -350,7 +350,7 @@ function renderOptativasPlanejadas(gerenciador) {
 }
 
 // ============================================================
-// FUNCAO: RENDER EXCECOES
+// FUNCAO: RENDER EXCECOES (COM TEXTO MELHORADO)
 // ============================================================
 
 function renderExcecoes(gerenciador) {
@@ -362,9 +362,9 @@ function renderExcecoes(gerenciador) {
     if (excecoes.length === 0) {
         return `
             <div style="margin-top:16px;padding:12px 16px;background:#fff8e1;border-radius:8px;border:2px dashed #ff6f00;text-align:center;">
-                <span style="color:#e65100;font-size:13px;">Nenhuma exceção cadastrada</span>
+                <span style="color:#e65100;font-size:13px;">Nenhuma disciplina adicionada</span>
                 <button onclick="window.abrirModalExcecoesHandler()" style="margin-left:12px;padding:4px 12px;background:#ff6f00;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
-                    + Adicionar Exceção
+                    + Adicionar Disciplina
                 </button>
             </div>
         `;
@@ -372,14 +372,14 @@ function renderExcecoes(gerenciador) {
 
     let html = `
         <div style="margin-top:16px;padding:12px 16px;background:#fff3e0;border-radius:8px;border:2px solid #ff6f00;">
-            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
                 <div>
-                    <span style="font-weight:bold;color:#e65100;font-size:15px;">EXCEÇÕES</span>
-                    <span style="margin-left:8px;font-size:12px;color:#666;">(${excecoes.length} disciplina(s) fora do currículo)</span>
+                    <span style="font-weight:bold;color:#e65100;font-size:15px;">📌 Planejamento Flexível</span>
+                    <span style="margin-left:8px;font-size:12px;color:#666;">(${excecoes.length} disciplina(s) adicionada(s))</span>
                 </div>
                 <div style="display:flex;gap:6px;flex-wrap:wrap;">
                     <button onclick="window.abrirModalExcecoesHandler()" style="padding:4px 12px;background:#ff6f00;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
-                        + Adicionar Exceção
+                        + Adicionar Disciplina
                     </button>
                     ${excecoes.length > 0 ? `
                         <button onclick="window.limparExcecoesHandler()" style="padding:4px 12px;background:#ef5350;color:white;border:none;border-radius:4px;cursor:pointer;font-size:12px;">
@@ -388,6 +388,12 @@ function renderExcecoes(gerenciador) {
                     ` : ''}
                 </div>
             </div>
+            
+            <div style="font-size:12px;color:#bf360c;margin-bottom:10px;background:#fff8e1;padding:6px 12px;border-radius:4px;">
+                Este espaço permite que você inclua disciplinas de outros cursos no seu planejamento. 
+                Ideal para optativas ou disciplinas do outro PPC que não aparecem no fluxograma acima.
+            </div>
+
             <div style="display:flex;flex-direction:column;gap:4px;">
     `;
 
@@ -416,7 +422,8 @@ function renderExcecoes(gerenciador) {
     html += `
             </div>
             <div style="margin-top:8px;font-size:11px;color:#e65100;background:#fff8e1;padding:6px 12px;border-radius:4px;">
-                Atenção: Exceções são disciplinas fora do currículo do aluno. Aparecerão como [P] no relatório.
+                Disciplinas adicionadas aqui aparecerão no relatório como planejadas [P]. 
+                Caso sejam equivalentes a alguma disciplina do seu PPC, serão aproveitadas no futuro.
             </div>
         </div>
     `;
@@ -449,9 +456,9 @@ function renderModalExcecoes(gerenciador) {
 
     let html = `
         <div style="background:white;border-radius:16px;padding:24px;max-width:600px;width:100%;max-height:90vh;display:flex;flex-direction:column;box-shadow:0 8px 40px rgba(0,0,0,0.3);">
-            <h2 style="color:#e65100;margin:0 0 4px 0;">Adicionar Exceção</h2>
+            <h2 style="color:#e65100;margin:0 0 4px 0;">Adicionar Disciplina</h2>
             <div style="color:#666;margin-bottom:16px;font-size:13px;">
-                Disciplinas fora do currículo do aluno (${aluno.curso === 'bmat' ? 'BMAT -> BCET' : 'BCET -> BMAT'})
+                Disciplinas de outros cursos (${aluno.curso === 'bmat' ? 'BMAT → BCET' : 'BCET → BMAT'})
             </div>
             
             <input type="text" id="buscaExcecao" placeholder="Buscar disciplina..." 
@@ -464,7 +471,7 @@ function renderModalExcecoes(gerenciador) {
     if (disciplinas.length === 0) {
         html += `
             <div style="text-align:center;padding:40px 20px;color:#999;">
-                <p>Nenhuma disciplina fora do currículo encontrada.</p>
+                <p>Nenhuma disciplina de outros cursos disponível.</p>
                 <p style="font-size:12px;">Todas as disciplinas do outro curso já estão no currículo atual.</p>
             </div>
         `;
@@ -486,7 +493,7 @@ function renderModalExcecoes(gerenciador) {
 
             const bloqueada = isBloqueada || isPlanejada || isCursada || isPending;
             let motivo = '';
-            if (isBloqueada) motivo = 'Já está na lista de exceções';
+            if (isBloqueada) motivo = 'Já está na lista de disciplinas adicionadas';
             else if (isPlanejada) motivo = 'Já está planejada normalmente';
             else if (isCursada) motivo = 'Já foi cursada';
             else if (isPending) motivo = 'Já está em andamento';

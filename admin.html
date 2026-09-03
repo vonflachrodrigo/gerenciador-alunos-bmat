@@ -154,6 +154,17 @@
             word-break: break-word;
         }
 
+        /* Destaque para disciplinas com alunos especiais */
+        .consolidacao-tabela .linha.tem-especiais {
+            border-left: 4px solid #ff6f00;
+            background: #fff8e1;
+        }
+        .consolidacao-tabela .linha.tem-especiais .badge-especiais {
+            font-size: 10px;
+            color: #e65100;
+            font-weight: bold;
+        }
+
         .consolidacao-acoes {
             display: flex;
             gap: 8px;
@@ -172,23 +183,88 @@
             justify-content: space-between;
         }
 
+        /* ===== ESTILOS DA LISTA DE ALUNOS COM STATUS ===== */
         .aluno-item-admin {
-            padding: 8px 12px;
+            padding: 10px 14px;
             border-radius: 6px;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             background: #f5f5f5;
             border-left: 3px solid #1a237e;
+            transition: all 0.2s;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .aluno-item-admin .nome {
             font-weight: 500;
             font-size: 14px;
+            flex: 1;
+            min-width: 150px;
+            word-break: break-word;
         }
         .aluno-item-admin .progresso {
             font-size: 12px;
             color: #666;
+            margin: 0 8px;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+        .aluno-item-admin .status-select {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            margin: 0 4px;
+            min-width: 100px;
+        }
+        .aluno-item-admin .status-select:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+        .aluno-item-admin .btn-remove-aluno {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #c62828;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 0 6px;
+        }
+        .aluno-item-admin .btn-remove-aluno:hover {
+            color: #b71c1c;
+        }
+
+        /* Status badges */
+        .status-badge {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: bold;
+            margin-left: 6px;
+            text-transform: uppercase;
+        }
+        .status-badge.concluinte {
+            background: #4caf50;
+            color: white;
+        }
+        .status-badge.ingressante {
+            background: #ffeb3b;
+            color: #333;
+        }
+
+        /* Destaque na lista de alunos */
+        .aluno-item-admin.status-concluinte {
+            border-left-color: #4caf50;
+            background: #e8f5e9;
+        }
+        .aluno-item-admin.status-ingressante {
+            border-left-color: #f9a825;
+            background: #fff8e1;
         }
 
         .panel-sem-borda {
@@ -198,9 +274,49 @@
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         }
 
-        /* OCULTA O INPUT FILE */
         #relatorioImport {
             display: none !important;
+        }
+
+        /* Filtro de status */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            padding: 8px 12px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            align-items: center;
+        }
+        .filter-bar label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #333;
+        }
+        .filter-bar select {
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        .filter-bar select:focus {
+            outline: none;
+            border-color: #1a237e;
+        }
+        .filter-bar .btn-limpar-status {
+            padding: 3px 12px;
+            border: none;
+            border-radius: 4px;
+            background: #ef5350;
+            color: white;
+            cursor: pointer;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .filter-bar .btn-limpar-status:hover {
+            background: #c62828;
         }
 
         @media (max-width: 992px) {
@@ -215,6 +331,23 @@
             }
             .admin-header h1 small {
                 font-size: 10px;
+            }
+            .aluno-item-admin {
+                gap: 6px;
+                padding: 8px 12px;
+            }
+            .aluno-item-admin .nome {
+                font-size: 13px;
+                min-width: 120px;
+            }
+            .aluno-item-admin .progresso {
+                font-size: 10px;
+                min-width: 60px;
+            }
+            .aluno-item-admin .status-select {
+                font-size: 10px;
+                padding: 2px 6px;
+                min-width: 80px;
             }
         }
         @media (max-width: 480px) {
@@ -242,6 +375,23 @@
             .import-area-relatorio .titulo {
                 font-size: 14px;
             }
+            .aluno-item-admin .nome {
+                font-size: 12px;
+                min-width: 80px;
+            }
+            .aluno-item-admin .status-select {
+                font-size: 9px;
+                padding: 1px 4px;
+                min-width: 60px;
+            }
+            .filter-bar {
+                font-size: 11px;
+                padding: 4px 8px;
+            }
+            .filter-bar select {
+                font-size: 10px;
+                padding: 2px 4px;
+            }
         }
     </style>
 </head>
@@ -268,14 +418,26 @@
             <!-- GRID PRINCIPAL -->
             <div class="admin-grid">
 
-                <!-- PAINEL DE ALUNOS (APENAS VISUALIZAÇÃO) -->
+                <!-- PAINEL DE ALUNOS -->
                 <div class="panel-sem-borda">
                     <div class="panel-title">
                         👨‍🎓 Alunos Importados
                         <span class="badge" id="alunoCount">0</span>
                     </div>
 
-                    <div id="alunoList" style="max-height:300px;overflow-y:auto;">
+                    <!-- Filtro de status -->
+                    <div class="filter-bar">
+                        <label for="statusFilter">Filtrar:</label>
+                        <select id="statusFilter" onchange="renderAlunoList()">
+                            <option value="todos">Todos</option>
+                            <option value="concluinte">🟢 Concluinte</option>
+                            <option value="ingressante">🟡 Ingressante</option>
+                            <option value="normal">⚪ Normal</option>
+                        </select>
+                        <button class="btn-limpar-status" onclick="limparStatusTodos()">🗑️ Limpar status</button>
+                    </div>
+
+                    <div id="alunoList" style="max-height:400px;overflow-y:auto;">
                         <div style="padding:16px;text-align:center;color:#999;">Nenhum aluno importado</div>
                     </div>
 
