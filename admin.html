@@ -12,46 +12,6 @@
     <link rel="stylesheet" href="css/styles.css">
 
     <style>
-        .login-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #1a237e, #0d47a1);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            transition: opacity 0.5s ease;
-        }
-        .login-overlay.hidden {
-            opacity: 0;
-            pointer-events: none;
-        }
-        .login-box {
-            background: white;
-            border-radius: 16px;
-            padding: 40px;
-            max-width: 400px;
-            width: 100%;
-            box-shadow: 0 8px 40px rgba(0, 0, 0, 0.3);
-            text-align: center;
-        }
-        .login-box .logo { font-size: 48px; margin-bottom: 8px; }
-        .login-box h2 { color: #1a237e; margin: 0 0 4px 0; }
-        .login-box .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
-        .login-box .input-group { margin-bottom: 16px; text-align: left; }
-        .login-box .input-group label { display: block; font-size: 13px; font-weight: 600; color: #333; margin-bottom: 4px; }
-        .login-box .input-group input { width: 100%; padding: 12px 14px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; transition: border-color 0.2s; }
-        .login-box .input-group input:focus { outline: none; border-color: #1a237e; }
-        .login-box .btn-login { width: 100%; padding: 12px; background: #1a237e; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: 600; cursor: pointer; transition: background 0.2s; }
-        .login-box .btn-login:hover { background: #0d1445; }
-        .login-box .error-msg { color: #c62828; font-size: 13px; margin-top: 8px; min-height: 20px; }
-        .login-box .footer-text { margin-top: 16px; font-size: 12px; color: #999; }
-        .login-box .footer-text a { color: #1a237e; text-decoration: none; }
-        .login-box .footer-text a:hover { text-decoration: underline; }
-
         .admin-header {
             background: linear-gradient(135deg, #1a237e, #0d47a1);
             color: white;
@@ -64,13 +24,41 @@
             flex-wrap: wrap;
             gap: 10px;
         }
-        .admin-header h1 { font-size: 18px; display: flex; align-items: center; gap: 8px; }
-        .admin-header h1 small { font-size: 11px; font-weight: normal; opacity: 0.8; }
-        .admin-header .admin-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-        .admin-header .admin-actions button { padding: 6px 12px; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 11px; transition: all 0.2s; }
-        .admin-header .admin-actions button:hover { transform: scale(1.05); }
-        .btn-logout { background: #ef5350; color: white; }
-        .btn-logout:hover { background: #c62828; }
+        .admin-header h1 {
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .admin-header h1 small {
+            font-size: 11px;
+            font-weight: normal;
+            opacity: 0.8;
+        }
+        .admin-header .admin-actions {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+        }
+        .admin-header .admin-actions button {
+            padding: 6px 12px;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 11px;
+            transition: all 0.2s;
+        }
+        .admin-header .admin-actions button:hover {
+            transform: scale(1.05);
+        }
+        .btn-voltar {
+            background: #7c4dff;
+            color: white;
+        }
+        .btn-voltar:hover {
+            background: #4a148c;
+        }
 
         .security-badge {
             display: inline-block;
@@ -222,9 +210,12 @@
         }
 
         @media (max-width: 768px) {
-            .login-box { padding: 24px 20px; margin: 0 12px; }
-            .admin-header h1 { font-size: 15px; }
-            .admin-header h1 small { font-size: 10px; }
+            .admin-header h1 {
+                font-size: 15px;
+            }
+            .admin-header h1 small {
+                font-size: 10px;
+            }
         }
         @media (max-width: 480px) {
             .consolidacao-tabela .cabecalho,
@@ -234,39 +225,30 @@
                 gap: 2px;
                 padding: 6px 8px;
             }
-            .consolidacao-tabela .linha .num-alunos { font-size: 12px; }
-            .btn-oferta { font-size: 9px; padding: 3px 6px; min-width: 50px; }
-            .import-area-relatorio { padding: 14px; }
-            .import-area-relatorio .icone { font-size: 30px; }
-            .import-area-relatorio .titulo { font-size: 14px; }
+            .consolidacao-tabela .linha .num-alunos {
+                font-size: 12px;
+            }
+            .btn-oferta {
+                font-size: 9px;
+                padding: 3px 6px;
+                min-width: 50px;
+            }
+            .import-area-relatorio {
+                padding: 14px;
+            }
+            .import-area-relatorio .icone {
+                font-size: 30px;
+            }
+            .import-area-relatorio .titulo {
+                font-size: 14px;
+            }
         }
     </style>
 </head>
 <body>
 
-    <!-- TELA DE LOGIN -->
-    <div class="login-overlay" id="loginOverlay">
-        <div class="login-box">
-            <div class="logo">🔐</div>
-            <h2>Área Administrativa</h2>
-            <p class="subtitle">Planejamento de Ofertas - BMAT/BCET</p>
-
-            <div class="input-group">
-                <label for="loginSenha">Senha de acesso</label>
-                <input type="password" id="loginSenha" placeholder="Digite a senha..." onkeypress="if(event.key==='Enter') fazerLogin()">
-            </div>
-
-            <button class="btn-login" onclick="fazerLogin()">🔓 Acessar</button>
-            <div class="error-msg" id="loginErro"></div>
-
-            <div class="footer-text">
-                <a href="index.html">← Voltar para área do aluno</a>
-            </div>
-        </div>
-    </div>
-
     <!-- ADMIN APP -->
-    <div id="adminApp" style="display:none;">
+    <div id="adminApp">
         <div class="container">
 
             <!-- HEADER -->
@@ -277,7 +259,9 @@
                     <span class="security-badge">🔒 Restrito</span>
                 </h1>
                 <div class="admin-actions">
-                    <button class="btn-logout" onclick="fazerLogout()">🚪 Sair</button>
+                    <a href="index.html" style="text-decoration:none;">
+                        <button class="btn-voltar">← Voltar para área do aluno</button>
+                    </a>
                 </div>
             </div>
 
@@ -339,6 +323,14 @@
     <script src="js/utils.js"></script>
     <script src="js/GerenciadorAlunos.js"></script>
     <script src="js/admin.js"></script>
+
+    <script>
+        // Inicializa o admin automaticamente
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Admin iniciado automaticamente');
+            inicializarAdmin();
+        });
+    </script>
 
 </body>
 </html>

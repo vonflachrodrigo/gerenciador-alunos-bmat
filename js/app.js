@@ -1,5 +1,5 @@
 // ============================================================
-// APP - ORQUESTRAÇÃO DA APLICAÇÃO
+// APP - ORQUESTRACAO DA APLICACAO (VERSAO COMPLETA)
 // ============================================================
 
 const gerenciador = new GerenciadorAlunos();
@@ -11,35 +11,47 @@ let planejamentoTemp = {};
 let toastTimeout;
 
 // ============================================================
-// INICIALIZAÇÃO
+// INICIALIZACAO
 // ============================================================
 
 document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM carregado - inicializando app...');
+    
     gerenciador.carregar();
 
-    document.getElementById('cursoBMAT').className = gerenciador.cursoAtivo === 'bmat' ? 'active' : '';
-    document.getElementById('cursoBCET').className = gerenciador.cursoAtivo === 'bcet' ? 'active' : '';
+    // Configura botoes de curso
+    var btnBMAT = document.getElementById('cursoBMAT');
+    var btnBCET = document.getElementById('cursoBCET');
+    if (btnBMAT) btnBMAT.className = gerenciador.cursoAtivo === 'bmat' ? 'active' : '';
+    if (btnBCET) btnBCET.className = gerenciador.cursoAtivo === 'bcet' ? 'active' : '';
 
-    const isMobile = window.innerWidth < 768;
-    const grid = document.getElementById('mainGrid');
-    const btn = document.getElementById('btnToggleVersion');
+    // Configura versao (mobile/classica)
+    var isMobile = window.innerWidth < 768;
+    var grid = document.getElementById('mainGrid');
+    var btn = document.getElementById('btnToggleVersion');
     if (isMobile) {
         grid.classList.remove('clasica', 'modo-clasica');
         grid.classList.add('modo-mobile');
         document.body.classList.add('modo-mobile');
         document.body.classList.remove('modo-clasica');
-        btn.textContent = '💻 Clássica';
-        btn.className = 'btn-toggle-version mobile';
+        if (btn) {
+            btn.textContent = 'Clássica';
+            btn.className = 'btn-toggle-version mobile';
+        }
     } else {
         grid.classList.remove('modo-mobile');
         grid.classList.add('clasica', 'modo-clasica');
         document.body.classList.remove('modo-mobile');
         document.body.classList.add('modo-clasica');
-        btn.textContent = '📱 Mobile';
-        btn.className = 'btn-toggle-version';
+        if (btn) {
+            btn.textContent = 'Mobile';
+            btn.className = 'btn-toggle-version';
+        }
     }
 
-    gerenciador.adicionarListener((evento, dados) => {
+    // Listener do gerenciador
+    gerenciador.adicionarListener(function(evento, dados) {
+        console.log('Evento recebido:', evento);
         switch (evento) {
             case 'adicionar':
             case 'adicionarMultiplos':
@@ -57,6 +69,9 @@ document.addEventListener('DOMContentLoaded', function() {
             case 'importarHistorico':
             case 'salvarPlanejamento':
             case 'removerMatricula':
+            case 'adicionarExcecao':
+            case 'removerExcecao':
+            case 'limparExcecoes':
                 atualizarUI();
                 gerenciador.salvar();
                 break;
@@ -75,8 +90,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
+    // Atualiza UI inicial
     atualizarUI();
 
+    // Fecha modais com ESC
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             fecharModalOptativa();
@@ -84,12 +101,15 @@ document.addEventListener('DOMContentLoaded', function() {
             fecharPreMatricula();
             fecharConfirmModal();
             fecharModalStatusOptativa();
+            fecharModalExcecoes();
         }
     });
+
+    console.log('App inicializado!');
 });
 
 // ============================================================
-// ATUALIZAÇÃO DA UI
+// ATUALIZACAO DA UI
 // ============================================================
 
 function atualizarUI() {
@@ -97,26 +117,30 @@ function atualizarUI() {
     renderFluxograma(gerenciador);
     updateAlunoCount();
 
-    document.getElementById('cursoBMAT').className = gerenciador.cursoAtivo === 'bmat' ? 'active' : '';
-    document.getElementById('cursoBCET').className = gerenciador.cursoAtivo === 'bcet' ? 'active' : '';
+    var btnBMAT = document.getElementById('cursoBMAT');
+    var btnBCET = document.getElementById('cursoBCET');
+    if (btnBMAT) btnBMAT.className = gerenciador.cursoAtivo === 'bmat' ? 'active' : '';
+    if (btnBCET) btnBCET.className = gerenciador.cursoAtivo === 'bcet' ? 'active' : '';
 }
 
 function updateAlunoCount() {
-    document.getElementById('alunoCount').textContent = gerenciador.getTotalAlunos();
+    var el = document.getElementById('alunoCount');
+    if (el) el.textContent = gerenciador.getTotalAlunos();
 }
 
 // ============================================================
 // TOAST
 // ============================================================
 
-function showToast(msg, type = 'info') {
-    const el = document.getElementById('toast');
+function showToast(msg, type) {
+    type = type || 'info';
+    var el = document.getElementById('toast');
+    if (!el) return;
     el.textContent = msg;
-    el.className = `toast ${type} show`;
+    el.className = 'toast ' + type + ' show';
     clearTimeout(toastTimeout);
-    el.onclick = function() { el.classList.remove('show');
-        clearTimeout(toastTimeout); };
-    toastTimeout = setTimeout(() => el.classList.remove('show'), 4000);
+    el.onclick = function() { el.classList.remove('show'); clearTimeout(toastTimeout); };
+    toastTimeout = setTimeout(function() { el.classList.remove('show'); }, 4000);
 }
 
 // ============================================================
@@ -124,10 +148,11 @@ function showToast(msg, type = 'info') {
 // ============================================================
 
 window.adicionarAlunoHandler = function() {
-    const nomeInput = document.getElementById('newAlunoNome');
-    const matriculaInput = document.getElementById('newAlunoMatricula');
-    const nome = nomeInput.value.trim();
-    const matricula = matriculaInput.value.trim();
+    console.log('adicionarAlunoHandler chamado');
+    var nomeInput = document.getElementById('newAlunoNome');
+    var matriculaInput = document.getElementById('newAlunoMatricula');
+    var nome = nomeInput ? nomeInput.value.trim() : '';
+    var matricula = matriculaInput ? matriculaInput.value.trim() : '';
 
     if (!nome) {
         showToast('Digite o nome do aluno!', 'error');
@@ -136,62 +161,71 @@ window.adicionarAlunoHandler = function() {
 
     try {
         gerenciador.adicionarAluno(nome, matricula);
-        nomeInput.value = '';
-        matriculaInput.value = '';
-        showToast(`✅ Aluno "${nome}" adicionado!`, 'success');
+        if (nomeInput) nomeInput.value = '';
+        if (matriculaInput) matriculaInput.value = '';
+        showToast('Aluno "' + nome + '" adicionado!', 'success');
+        atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.adicionarMultiplosHandler = function() {
-    const texto = prompt('Digite os nomes dos alunos, um por linha. Para matrícula, use: Nome | Matrícula');
+    console.log('adicionarMultiplosHandler chamado');
+    var texto = prompt('Digite os nomes dos alunos, um por linha. Para matrícula, use: Nome | Matrícula');
     if (!texto) return;
 
-    const linhas = texto.split('\n').map(s => s.trim()).filter(s => s);
+    var linhas = texto.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s; });
     if (linhas.length === 0) {
         showToast('Nenhum nome válido.', 'error');
         return;
     }
 
-    const resultado = gerenciador.adicionarMultiplosAlunos(linhas);
-    let msg = `✅ ${resultado.adicionados.length} alunos adicionados!`;
+    var resultado = gerenciador.adicionarMultiplosAlunos(linhas);
+    var msg = resultado.adicionados.length + ' alunos adicionados!';
     if (resultado.ignorados.length > 0) {
-        msg += ` ⚠️ ${resultado.ignorados.length} duplicatas ignoradas.`;
+        msg += ' ' + resultado.ignorados.length + ' duplicatas ignoradas.';
     }
     if (resultado.erros.length > 0) {
-        msg += ` ❌ ${resultado.erros.length} erros.`;
+        msg += ' ' + resultado.erros.length + ' erros.';
     }
     showToast(msg, 'success');
+    atualizarUI();
 };
 
 window.removerAlunoHandler = function(id) {
-    const aluno = gerenciador.getAluno(id);
+    console.log('removerAlunoHandler chamado para:', id);
+    var aluno = gerenciador.getAluno(id);
     if (!aluno) return;
-    if (!confirm(`Remover aluno "${aluno.nome}"?`)) return;
+    if (!confirm('Remover aluno "' + aluno.nome + '"?')) return;
 
     try {
         gerenciador.removerAluno(id);
-        showToast('🗑️ Aluno removido.', 'info');
+        showToast('Aluno removido.', 'info');
+        atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.selecionarAlunoHandler = function(id) {
+    console.log('selecionarAlunoHandler chamado para:', id);
     try {
         gerenciador.selecionarAluno(id);
+        atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.selecionarCursoHandler = function(curso) {
+    console.log('selecionarCursoHandler chamado para:', curso);
     try {
         gerenciador.selecionarCurso(curso);
-        showToast(`📚 Curso ${curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)'} selecionado`, 'info');
+        showToast('Curso ' + (curso === 'bmat' ? 'BMAT (PPC 2013)' : 'BCET - Matemática (PPC 2025)') + ' selecionado', 'info');
+        atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
@@ -200,14 +234,15 @@ window.selecionarCursoHandler = function(curso) {
 // ============================================================
 
 window.toggleDisciplinaHandler = function(codigo) {
-    const alunoId = gerenciador.alunoAtivoId;
+    console.log('toggleDisciplinaHandler chamado para:', codigo);
+    var alunoId = gerenciador.alunoAtivoId;
     if (!alunoId) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         return;
     }
 
     try {
-        const resultado = gerenciador.toggleDisciplina(alunoId, codigo);
+        var resultado = gerenciador.toggleDisciplina(alunoId, codigo);
 
         if (resultado.acao === 'abrirModal') {
             abrirModalOptativa(codigo);
@@ -228,27 +263,28 @@ window.toggleDisciplinaHandler = function(codigo) {
             return;
         }
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 // ============================================================
-// OPTATIVAS - MODAL DE SELEÇÃO (APENAS 1 ETAPA)
+// OPTATIVAS - MODAL DE SELECAO
 // ============================================================
 
 function abrirModalOptativa(slotCodigo) {
-    const aluno = gerenciador.getAlunoAtivo();
+    console.log('abrirModalOptativa chamado para:', slotCodigo);
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         return;
     }
 
-    modalContexto = { slotCodigo };
+    modalContexto = { slotCodigo: slotCodigo };
 
-    const infoSlot = gerenciador.getInfoSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
-    const optativas = gerenciador.getOptativasParaSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
+    var infoSlot = gerenciador.getInfoSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
+    var optativas = gerenciador.getOptativasParaSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
 
-    const labels = {
+    var labels = {
         'OPT_BCET_1': 'Optativa I (5º Semestre BCET)',
         'OPT_BCET_2': 'Optativa II (6º Semestre BCET)',
         'OPT1': 'Optativa I (6º Semestre BMAT)',
@@ -257,58 +293,52 @@ function abrirModalOptativa(slotCodigo) {
         'OPT4': 'Optativa IV (8º Semestre BMAT)',
         'OPT5': 'Optativa V (8º Semestre BMAT)'
     };
-    const optLabel = labels[slotCodigo] || 'Optativa';
+    var optLabel = labels[slotCodigo] || 'Optativa';
 
-    document.getElementById('optModalTitle').textContent = `📌 ${optLabel}`;
-    document.getElementById('optModalSub').textContent = `Aluno: ${aluno.nome}`;
+    var titleEl = document.getElementById('optModalTitle');
+    var subEl = document.getElementById('optModalSub');
+    if (titleEl) titleEl.textContent = optLabel;
+    if (subEl) subEl.textContent = 'Aluno: ' + aluno.nome;
 
-    const list = document.getElementById('optList');
+    var list = document.getElementById('optList');
+    if (!list) return;
     list.innerHTML = '';
 
-    // Renderiza o cabeçalho
-    const headerDiv = document.createElement('div');
+    var headerDiv = document.createElement('div');
     headerDiv.style.cssText = 'grid-column:1/-1;margin-bottom:8px;font-weight:bold;color:#1a237e;';
-    headerDiv.textContent = '🎯 Escolha a disciplina';
+    headerDiv.textContent = 'Escolha a disciplina';
     list.appendChild(headerDiv);
 
-    const infoDiv = document.createElement('div');
+    var infoDiv = document.createElement('div');
     infoDiv.style.cssText = 'grid-column:1/-1;font-size:12px;color:#666;margin-bottom:8px;';
     infoDiv.textContent = infoSlot && infoSlot.temDisciplina ? 
-        `Atual: ${infoSlot.disciplinaAtual} - ${getNomeDisciplina(infoSlot.disciplinaAtual)}` : 
+        'Atual: ' + infoSlot.disciplinaAtual + ' - ' + getNomeDisciplina(infoSlot.disciplinaAtual) : 
         'Nenhuma disciplina selecionada';
     list.appendChild(infoDiv);
 
-    let temDisponiveis = false;
+    var temDisponiveis = false;
 
-    for (const opt of optativas) {
-        const isSelected = opt.isAtual;
-        const isAlocada = opt.isAlocada;
-        const isPlanejada = opt.isPlanejada;
-        const isValida = opt.isValida;
-        const disponivel = opt.disponivel;
+    for (var i = 0; i < optativas.length; i++) {
+        var opt = optativas[i];
+        var isSelected = opt.isAtual;
+        var isAlocada = opt.isAlocada;
+        var isPlanejada = opt.isPlanejada;
+        var isValida = opt.isValida;
+        var disponivel = opt.disponivel;
 
-        const div = document.createElement('div');
-        div.className = `opt-item ${isSelected ? 'selected' : ''}`;
+        var div = document.createElement('div');
+        div.className = 'opt-item' + (isSelected ? ' selected' : '');
 
         if (!disponivel && !isSelected) {
             div.style.opacity = '0.4';
             div.style.cursor = 'not-allowed';
             div.style.pointerEvents = 'none';
-            if (isAlocada) {
-                div.title = 'Já alocada em outro semestre';
-                div.innerHTML = `
-                    <span class="opt-code">${opt.codigo}</span>
-                    ${opt.nome} ${opt.origem === 'bmat' ? '📐' : '📘'}
-                    <span class="opt-pre">🔒 Já alocada</span>
-                `;
-            } else if (isPlanejada) {
-                div.title = 'Já está na lista de planejadas';
-                div.innerHTML = `
-                    <span class="opt-code">${opt.codigo}</span>
-                    ${opt.nome} ${opt.origem === 'bmat' ? '📐' : '📘'}
-                    <span class="opt-pre">📌 Planejada</span>
-                `;
-            }
+            var motivo = isAlocada ? 'Já alocada em outro semestre' : (isPlanejada ? 'Já está na lista de planejadas' : '');
+            div.innerHTML = `
+                <span class="opt-code">${opt.codigo}</span>
+                ${opt.nome} ${opt.origem === 'bmat' ? 'BMAT' : 'BCET'}
+                <span class="opt-pre">${motivo}</span>
+            `;
             list.appendChild(div);
             continue;
         }
@@ -318,76 +348,76 @@ function abrirModalOptativa(slotCodigo) {
         if (!isValida && !isSelected) {
             div.style.borderColor = '#ff6f00';
             div.style.background = '#fff3e0';
-            div.title = '⚠️ Optativa válida apenas no outro curso';
+            div.title = 'Optativa válida apenas no outro curso';
         }
 
-        const preDisplay = opt.pre === 'Nenhum' ? 'Sem pré-requisito' : `Pré: ${opt.pre}`;
-        const origemLabel = opt.origem === 'bmat' ? '📐' : '📘';
+        var preDisplay = opt.pre === 'Nenhum' ? 'Sem pré-requisito' : 'Pré: ' + opt.pre;
+        var origemLabel = opt.origem === 'bmat' ? 'BMAT' : 'BCET';
 
         div.innerHTML = `
             <span class="opt-code">${opt.codigo}</span>
             ${opt.nome} ${origemLabel}
             <span class="opt-pre">${preDisplay}</span>
-            ${isSelected ? ' ✅ Selecionada' : ''}
-            ${!isValida && !isSelected ? ' ⚠️' : ''}
+            ${isSelected ? ' Selecionada' : ''}
+            ${!isValida && !isSelected ? ' !' : ''}
         `;
 
-        div.onclick = function() {
-            if (isAlocada) {
-                const slotAtual = gerenciador.getSlotDaOptativa(
-                    gerenciador.alunoAtivoId, 
-                    opt.codigo
-                );
-                if (!confirm(`⚠️ ${opt.codigo} já está alocada em ${slotAtual}.\n\nDeseja mover para ${slotCodigo}?`)) {
+        div.onclick = (function(opt, slotCodigo) {
+            return function() {
+                if (opt.isAlocada) {
+                    var slotAtual = gerenciador.getSlotDaOptativa(
+                        gerenciador.alunoAtivoId, 
+                        opt.codigo
+                    );
+                    if (!confirm(opt.codigo + ' já está alocada em ' + slotAtual + '.\n\nDeseja mover para ' + slotCodigo + '?')) {
+                        return;
+                    }
+                    try {
+                        gerenciador.moverOptativa(
+                            gerenciador.alunoAtivoId,
+                            slotAtual,
+                            slotCodigo
+                        );
+                        showToast(opt.codigo + ' movida para ' + slotCodigo, 'info');
+                        fecharModalOptativa();
+                        atualizarUI();
+                    } catch (error) {
+                        showToast(error.message, 'error');
+                    }
                     return;
                 }
+
                 try {
-                    gerenciador.moverOptativa(
+                    var resultado = gerenciador.selecionarOptativaCompleta(
                         gerenciador.alunoAtivoId,
-                        slotAtual,
-                        slotCodigo
+                        slotCodigo,
+                        opt.codigo,
+                        'pending'
                     );
-                    showToast(`🔄 ${opt.codigo} movida para ${slotCodigo}`, 'info');
+
                     fecharModalOptativa();
+                    showToast(opt.codigo + ' marcada como cursando!', 'success');
                     atualizarUI();
                 } catch (error) {
-                    showToast(`❌ ${error.message}`, 'error');
+                    showToast(error.message, 'error');
                 }
-                return;
-            }
-
-            // Seleciona a disciplina como "pending" (amarela)
-            try {
-                const resultado = gerenciador.selecionarOptativaCompleta(
-                    gerenciador.alunoAtivoId,
-                    slotCodigo,
-                    opt.codigo,
-                    'pending'
-                );
-
-                fecharModalOptativa();
-                showToast(`🟡 ${opt.codigo} marcada como cursando!`, 'success');
-                atualizarUI();
-            } catch (error) {
-                showToast(`❌ ${error.message}`, 'error');
-            }
-        };
+            };
+        })(opt, slotCodigo);
 
         list.appendChild(div);
     }
 
     if (!temDisponiveis) {
-        const msgDiv = document.createElement('div');
+        var msgDiv = document.createElement('div');
         msgDiv.style.cssText = 'grid-column:1/-1;text-align:center;padding:20px;color:#999;';
         msgDiv.innerHTML = `
-            <p>⚠️ Nenhuma optativa disponível para seleção.</p>
+            <p>Nenhuma optativa disponível para seleção.</p>
             <p style="font-size:12px;">Todas as optativas já estão alocadas ou planejadas.</p>
         `;
         list.appendChild(msgDiv);
     }
 
-    // Botão Cancelar
-    const actionsDiv = document.createElement('div');
+    var actionsDiv = document.createElement('div');
     actionsDiv.style.cssText = 'grid-column:1/-1;display:flex;gap:8px;margin-top:8px;justify-content:flex-end;';
     actionsDiv.innerHTML = `
         <button onclick="fecharModalOptativa()" class="btn-cancel" style="padding:8px 16px;border:none;border-radius:8px;font-weight:600;cursor:pointer;background:#e0e0e0;color:#333;">
@@ -396,25 +426,17 @@ function abrirModalOptativa(slotCodigo) {
     `;
     list.appendChild(actionsDiv);
 
-    document.getElementById('optModal').classList.add('show');
+    var modal = document.getElementById('optModal');
+    if (modal) modal.classList.add('show');
 }
 
 function fecharModalOptativa() {
-    const modal = document.getElementById('optModal');
-    if (modal) {
-        modal.classList.remove('show');
-    }
+    var modal = document.getElementById('optModal');
+    if (modal) modal.classList.remove('show');
     modalContexto = null;
 }
 
-window.fecharModalOptativa = function() {
-    const modal = document.getElementById('optModal');
-    if (modal) {
-        modal.classList.remove('show');
-    }
-    modalContexto = null;
-};
-
+window.fecharModalOptativa = fecharModalOptativa;
 window.abrirModalOptativa = abrirModalOptativa;
 
 document.getElementById('optModal').addEventListener('click', function(e) {
@@ -422,63 +444,64 @@ document.getElementById('optModal').addEventListener('click', function(e) {
 });
 
 // ============================================================
-// OPTATIVAS - MODAL DE STATUS (4 OPÇÕES)
+// OPTATIVAS - MODAL DE STATUS
 // ============================================================
 
-function abrirModalStatusOptativa(codigo, slotOpcional = null) {
-    const aluno = gerenciador.getAlunoAtivo();
+function abrirModalStatusOptativa(codigo, slotOpcional) {
+    slotOpcional = slotOpcional || null;
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         return;
     }
 
-    const nome = getNomeDisciplina(codigo) || codigo;
+    var nome = getNomeDisciplina(codigo) || codigo;
 
-    const isPlanejada = (aluno.optativasPlanejadas || []).includes(codigo);
-    let statusAtualLabel = '⏳ Não cursada';
+    var isPlanejada = (aluno.optativasPlanejadas || []).indexOf(codigo) !== -1;
+    var statusAtualLabel = 'Não cursada';
     
     if (isPlanejada) {
-        statusAtualLabel = '📌 Planejada';
-    } else if (aluno.progresso[codigo]?.status === 'done') {
-        statusAtualLabel = '✅ Cursada';
-    } else if (aluno.progresso[codigo]?.status === 'pending') {
-        statusAtualLabel = '🟡 Cursando';
+        statusAtualLabel = 'Planejada';
+    } else if (aluno.progresso[codigo] && aluno.progresso[codigo].status === 'done') {
+        statusAtualLabel = 'Cursada';
+    } else if (aluno.progresso[codigo] && aluno.progresso[codigo].status === 'pending') {
+        statusAtualLabel = 'Cursando';
     }
 
-    const modalExistente = document.getElementById('modalStatusOptativa');
+    var modalExistente = document.getElementById('modalStatusOptativa');
     if (modalExistente) modalExistente.remove();
 
-    const modal = document.createElement('div');
+    var modal = document.createElement('div');
     modal.className = 'modal-overlay show';
     modal.id = 'modalStatusOptativa';
     modal.innerHTML = `
         <div class="modal" style="max-width:500px;">
-            <h2>📌 ${codigo} - ${nome}</h2>
+            <h2>${codigo} - ${nome}</h2>
             <div class="subtitle">Status atual: ${statusAtualLabel}</div>
             <div style="margin:12px 0;font-size:13px;color:#666;">
                 Escolha o novo status:
             </div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-                <div class="opt-item" style="text-align:center;padding:12px;cursor:pointer;border:2px solid #ddd;border-radius:8px;${aluno.progresso[codigo]?.status === 'pending' ? 'background:#ffeb3b;border-color:#f9a825;' : ''}" onclick="confirmarStatusOptativa('${codigo}','pending')">
-                    <div style="font-size:16px;">🟡 Cursando</div>
+                <div class="opt-item" style="text-align:center;padding:12px;cursor:pointer;border:2px solid #ddd;border-radius:8px;${aluno.progresso[codigo] && aluno.progresso[codigo].status === 'pending' ? 'background:#ffeb3b;border-color:#f9a825;' : ''}" onclick="confirmarStatusOptativa('${codigo}','pending')">
+                    <div style="font-size:16px;">Cursando</div>
                     <div style="font-size:11px;color:#666;">Disciplina em andamento</div>
                 </div>
-                <div class="opt-item" style="text-align:center;padding:12px;cursor:pointer;border:2px solid #ddd;border-radius:8px;${aluno.progresso[codigo]?.status === 'done' ? 'background:#4caf50;color:white;border-color:#2e7d32;' : ''}" onclick="confirmarStatusOptativa('${codigo}','done')">
-                    <div style="font-size:16px;">✅ Cursada</div>
+                <div class="opt-item" style="text-align:center;padding:12px;cursor:pointer;border:2px solid #ddd;border-radius:8px;${aluno.progresso[codigo] && aluno.progresso[codigo].status === 'done' ? 'background:#4caf50;color:white;border-color:#2e7d32;' : ''}" onclick="confirmarStatusOptativa('${codigo}','done')">
+                    <div style="font-size:16px;">Cursada</div>
                     <div style="font-size:11px;color:#666;">Disciplina já concluída</div>
                 </div>
                 <div class="opt-item" style="text-align:center;padding:12px;cursor:pointer;border:2px solid #7b1fa2;border-radius:8px;${isPlanejada ? 'background:#7b1fa2;color:white;' : 'background:#f3e5f5;'}" onclick="confirmarStatusOptativa('${codigo}','planned')">
-                    <div style="font-size:16px;">📌 Planejada</div>
+                    <div style="font-size:16px;">Planejada</div>
                     <div style="font-size:11px;color:#666;">Disciplina para o próximo semestre</div>
-                    ${isPlanejada ? '<div style="font-size:10px;">✅ Atual</div>' : ''}
+                    ${isPlanejada ? '<div style="font-size:10px;">Atual</div>' : ''}
                 </div>
                 <div class="opt-item" style="text-align:center;padding:12px;cursor:pointer;border:2px solid #ddd;border-radius:8px;" onclick="confirmarStatusOptativa('${codigo}','not-started')">
-                    <div style="font-size:16px;">⏳ Não cursada</div>
+                    <div style="font-size:16px;">Não cursada</div>
                     <div style="font-size:11px;color:#666;">Disciplina não iniciada</div>
                 </div>
             </div>
             <div style="margin-top:12px;font-size:11px;color:#666;text-align:center;">
-                💡 Se mudar para "Planejada", a disciplina vai para a lista abaixo do fluxograma.
+                Se mudar para "Planejada", a disciplina vai para a lista abaixo do fluxograma.
             </div>
             <div class="modal-actions" style="margin-top:12px;">
                 <button class="btn-cancel" onclick="fecharModalStatusOptativa()" style="padding:8px 16px;border:none;border-radius:8px;font-weight:600;cursor:pointer;background:#e0e0e0;color:#333;">
@@ -495,45 +518,44 @@ function abrirModalStatusOptativa(codigo, slotOpcional = null) {
 }
 
 function confirmarStatusOptativa(codigo, novoStatus) {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         fecharModalStatusOptativa();
         return;
     }
 
-    // Se for 'planned', verifica limite
     if (novoStatus === 'planned') {
-        const planejadas = aluno.optativasPlanejadas || [];
-        if (planejadas.length >= 5 && !planejadas.includes(codigo)) {
-            showToast('⚠️ Máximo de 5 optativas planejadas atingido!', 'error');
+        var planejadas = aluno.optativasPlanejadas || [];
+        if (planejadas.length >= 5 && planejadas.indexOf(codigo) === -1) {
+            showToast('Máximo de 5 optativas planejadas atingido!', 'error');
             fecharModalStatusOptativa();
             return;
         }
     }
 
-    const isPlanejada = (aluno.optativasPlanejadas || []).includes(codigo);
-    const statusAtual = isPlanejada ? 'planned' : (aluno.progresso[codigo]?.status || 'not-started');
+    var isPlanejada = (aluno.optativasPlanejadas || []).indexOf(codigo) !== -1;
+    var statusAtual = isPlanejada ? 'planned' : (aluno.progresso[codigo] ? aluno.progresso[codigo].status || 'not-started' : 'not-started');
     
     if (statusAtual === novoStatus) {
         fecharModalStatusOptativa();
-        showToast(`📌 ${codigo} já está com este status`, 'info');
+        showToast(codigo + ' já está com este status', 'info');
         return;
     }
 
-    const curso = aluno.curso || 'bmat';
-    const slots = getSlotsOptativa(curso);
+    var curso = aluno.curso || 'bmat';
+    var slots = getSlotsOptativa(curso);
 
     try {
-        // CASO 1: Estava planejada e quer mudar para outro status
         if (isPlanejada && novoStatus !== 'planned') {
-            const index = aluno.optativasPlanejadas.indexOf(codigo);
+            var index = aluno.optativasPlanejadas.indexOf(codigo);
             if (index !== -1) {
                 aluno.optativasPlanejadas.splice(index, 1);
             }
             
-            let slotVazio = null;
-            for (const slot of slots) {
+            var slotVazio = null;
+            for (var i = 0; i < slots.length; i++) {
+                var slot = slots[i];
                 if (!aluno.optativas[slot]) {
                     slotVazio = slot;
                     break;
@@ -541,7 +563,7 @@ function confirmarStatusOptativa(codigo, novoStatus) {
             }
             
             if (!slotVazio) {
-                showToast('❌ Todos os slots de optativa estão ocupados!', 'error');
+                showToast('Todos os slots de optativa estão ocupados!', 'error');
                 fecharModalStatusOptativa();
                 return;
             }
@@ -563,19 +585,19 @@ function confirmarStatusOptativa(codigo, novoStatus) {
                 data: new Date().toISOString()
             };
             
-            const statusLabel = novoStatus === 'done' ? '✅ cursada' : 
-                               novoStatus === 'pending' ? '🟡 cursando' : 
-                               '⏳ não cursada';
-            showToast(`📌 ${codigo} movida para ${slotVazio} como ${statusLabel}`, 'success');
+            var statusLabel = novoStatus === 'done' ? 'cursada' : 
+                               novoStatus === 'pending' ? 'cursando' : 
+                               'não cursada';
+            showToast(codigo + ' movida para ' + slotVazio + ' como ' + statusLabel, 'success');
             fecharModalStatusOptativa();
             atualizarUI();
             return;
         }
         
-        // CASO 2: Quer mudar para 'planned'
         if (novoStatus === 'planned') {
-            let slotEncontrado = null;
-            for (const slot of slots) {
+            var slotEncontrado = null;
+            for (var i = 0; i < slots.length; i++) {
+                var slot = slots[i];
                 if (aluno.optativas[slot] === codigo) {
                     slotEncontrado = slot;
                     break;
@@ -595,20 +617,20 @@ function confirmarStatusOptativa(codigo, novoStatus) {
             }
             
             if (!aluno.optativasPlanejadas) aluno.optativasPlanejadas = [];
-            if (!aluno.optativasPlanejadas.includes(codigo)) {
+            if (aluno.optativasPlanejadas.indexOf(codigo) === -1) {
                 aluno.optativasPlanejadas.push(codigo);
             }
             
-            showToast(`📌 ${codigo} adicionada às optativas planejadas!`, 'success');
+            showToast(codigo + ' adicionada às optativas planejadas!', 'success');
             fecharModalStatusOptativa();
             atualizarUI();
             return;
         }
         
-        // CASO 3: Mudar para 'not-started'
         if (novoStatus === 'not-started') {
-            let slotEncontrado = null;
-            for (const slot of slots) {
+            var slotEncontrado = null;
+            for (var i = 0; i < slots.length; i++) {
+                var slot = slots[i];
                 if (aluno.optativas[slot] === codigo) {
                     slotEncontrado = slot;
                     break;
@@ -627,15 +649,15 @@ function confirmarStatusOptativa(codigo, novoStatus) {
                 delete aluno.historico_completo[codigo];
             }
             
-            showToast(`⏳ ${codigo} marcada como não cursada`, 'success');
+            showToast(codigo + ' marcada como não cursada', 'success');
             fecharModalStatusOptativa();
             atualizarUI();
             return;
         }
         
-        // CASO 4: Está em um slot e quer mudar para 'pending' ou 'done'
-        let slotEncontrado = null;
-        for (const slot of slots) {
+        var slotEncontrado = null;
+        for (var i = 0; i < slots.length; i++) {
+            var slot = slots[i];
             if (aluno.optativas[slot] === codigo) {
                 slotEncontrado = slot;
                 break;
@@ -654,18 +676,18 @@ function confirmarStatusOptativa(codigo, novoStatus) {
                 data: new Date().toISOString()
             };
             
-            const statusLabel = novoStatus === 'done' ? '✅ cursada' : 
-                               novoStatus === 'pending' ? '🟡 cursando' : 
-                               '⏳ não cursada';
-            showToast(`📌 ${codigo} marcada como ${statusLabel}`, 'success');
+            var statusLabel = novoStatus === 'done' ? 'cursada' : 
+                               novoStatus === 'pending' ? 'cursando' : 
+                               'não cursada';
+            showToast(codigo + ' marcada como ' + statusLabel, 'success');
             fecharModalStatusOptativa();
             atualizarUI();
             return;
         }
         
-        // CASO 5: Não está em slot nenhum - adiciona a um slot vazio
-        let slotVazio2 = null;
-        for (const slot of slots) {
+        var slotVazio2 = null;
+        for (var i = 0; i < slots.length; i++) {
+            var slot = slots[i];
             if (!aluno.optativas[slot]) {
                 slotVazio2 = slot;
                 break;
@@ -690,26 +712,26 @@ function confirmarStatusOptativa(codigo, novoStatus) {
                 data: new Date().toISOString()
             };
             
-            const statusLabel = novoStatus === 'done' ? '✅ cursada' : 
-                               novoStatus === 'pending' ? '🟡 cursando' : 
-                               '⏳ não cursada';
-            showToast(`📌 ${codigo} alocada em ${slotVazio2} como ${statusLabel}`, 'success');
+            var statusLabel = novoStatus === 'done' ? 'cursada' : 
+                               novoStatus === 'pending' ? 'cursando' : 
+                               'não cursada';
+            showToast(codigo + ' alocada em ' + slotVazio2 + ' como ' + statusLabel, 'success');
             fecharModalStatusOptativa();
             atualizarUI();
             return;
         }
         
-        showToast('❌ Erro: não foi possível alocar a disciplina', 'error');
+        showToast('Erro: não foi possível alocar a disciplina', 'error');
         fecharModalStatusOptativa();
         
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
         fecharModalStatusOptativa();
     }
 }
 
 function fecharModalStatusOptativa() {
-    const modal = document.getElementById('modalStatusOptativa');
+    var modal = document.getElementById('modalStatusOptativa');
     if (modal) modal.remove();
 }
 
@@ -722,116 +744,214 @@ window.fecharModalStatusOptativa = fecharModalStatusOptativa;
 // ============================================================
 
 window.removerOptativaPlanejadaHandler = function(codigo) {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    const nome = getNomeDisciplina(codigo) || codigo;
-    if (!confirm(`Remover ${codigo} - ${nome} da lista de planejadas?`)) return;
+    var nome = getNomeDisciplina(codigo) || codigo;
+    if (!confirm('Remover ' + codigo + ' - ' + nome + ' da lista de planejadas?')) return;
 
     try {
         gerenciador.removerOptativaPlanejada(aluno.id || gerenciador.alunoAtivoId, codigo);
-        showToast(`🗑️ ${codigo} removida das optativas planejadas`, 'info');
+        showToast(codigo + ' removida das optativas planejadas', 'info');
         atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.limparOptativasPlanejadasHandler = function() {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    const planejadas = aluno.optativasPlanejadas || [];
+    var planejadas = aluno.optativasPlanejadas || [];
     if (planejadas.length === 0) {
         showToast('Nenhuma optativa planejada para remover', 'info');
         return;
     }
 
-    if (!confirm(`Remover TODAS as ${planejadas.length} optativas planejadas?`)) return;
+    if (!confirm('Remover TODAS as ' + planejadas.length + ' optativas planejadas?')) return;
 
     try {
         gerenciador.limparOptativasPlanejadas(aluno.id || gerenciador.alunoAtivoId);
-        showToast(`🗑️ Todas as optativas planejadas foram removidas`, 'info');
+        showToast('Todas as optativas planejadas foram removidas', 'info');
         atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.removerOptativaDoSlotHandler = function(slotCodigo) {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    const infoSlot = gerenciador.getInfoSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
+    var infoSlot = gerenciador.getInfoSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
     if (!infoSlot || !infoSlot.temDisciplina) {
-        showToast('⚠️ Nenhuma optativa neste slot', 'info');
+        showToast('Nenhuma optativa neste slot', 'info');
         return;
     }
 
-    if (!confirm(`Remover ${infoSlot.disciplinaAtual} de ${slotCodigo}?`)) return;
+    if (!confirm('Remover ' + infoSlot.disciplinaAtual + ' de ' + slotCodigo + '?')) return;
 
     try {
         gerenciador.removerOptativaDoSlot(aluno.id || gerenciador.alunoAtivoId, slotCodigo);
-        showToast(`🗑️ Optativa removida de ${slotCodigo}`, 'info');
+        showToast('Optativa removida de ' + slotCodigo, 'info');
         atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
+};
+
+// ============================================================
+// HANDLERS - EXCECOES
+// ============================================================
+
+window.abrirModalExcecoesHandler = function() {
+    var aluno = gerenciador.getAlunoAtivo();
+    if (!aluno) {
+        showToast('Nenhum aluno selecionado.', 'error');
+        return;
+    }
+    renderModalExcecoes(gerenciador);
+};
+
+window.fecharModalExcecoesHandler = function() {
+    var modal = document.getElementById('modalExcecoes');
+    if (modal) modal.remove();
+};
+
+function fecharModalExcecoes() {
+    var modal = document.getElementById('modalExcecoes');
+    if (modal) modal.remove();
+}
+
+window.adicionarExcecaoHandler = function(codigo) {
+    var aluno = gerenciador.getAlunoAtivo();
+    if (!aluno) {
+        showToast('Nenhum aluno selecionado.', 'error');
+        return;
+    }
+
+    try {
+        var resultado = gerenciador.adicionarExcecao(aluno.id || gerenciador.alunoAtivoId, codigo);
+        showToast('Exceção adicionada: ' + codigo + ' - ' + resultado.nome, 'success');
+        window.fecharModalExcecoesHandler();
+        atualizarUI();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+window.removerExcecaoHandler = function(codigo) {
+    var aluno = gerenciador.getAlunoAtivo();
+    if (!aluno) return;
+
+    var nome = getNomeDisciplina(codigo) || codigo;
+    if (!confirm('Remover exceção ' + codigo + ' - ' + nome + '?')) return;
+
+    try {
+        gerenciador.removerExcecao(aluno.id || gerenciador.alunoAtivoId, codigo);
+        showToast('Exceção removida: ' + codigo, 'info');
+        atualizarUI();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+window.limparExcecoesHandler = function() {
+    var aluno = gerenciador.getAlunoAtivo();
+    if (!aluno) return;
+
+    var excecoes = aluno.excecoes || [];
+    if (excecoes.length === 0) {
+        showToast('Nenhuma exceção para remover', 'info');
+        return;
+    }
+
+    if (!confirm('Remover TODAS as ' + excecoes.length + ' exceções?')) return;
+
+    try {
+        gerenciador.limparExcecoes(aluno.id || gerenciador.alunoAtivoId);
+        showToast('Todas as exceções foram removidas', 'info');
+        atualizarUI();
+    } catch (error) {
+        showToast(error.message, 'error');
+    }
+};
+
+window.filtrarDisciplinasExcecao = function(texto) {
+    texto = texto.toLowerCase().trim();
+    var items = document.querySelectorAll('#listaExcecoes > div');
+    items.forEach(function(item) {
+        var textContent = item.textContent.toLowerCase();
+        if (textContent.indexOf(texto) !== -1) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
 };
 
 // ============================================================
 // HANDLERS - QUEBRA
 // ============================================================
 
-window.abrirModalQuebraHandler = function(codigo) {
-    const aluno = gerenciador.getAlunoAtivo();
+function abrirModalQuebra(codigo) {
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    quebraContexto = { codigo };
-    const curso = aluno.curso || 'bmat';
-    const prereqs = getPreRequisitos(codigo, curso);
-    const preNomes = prereqs.map(c => `${c} - ${getNomeDisciplina(c)}`).join(', ');
+    quebraContexto = { codigo: codigo };
+    var curso = aluno.curso || 'bmat';
+    var prereqs = getPreRequisitos(codigo, curso);
+    var preNomes = prereqs.map(function(c) { return c + ' - ' + getNomeDisciplina(c); }).join(', ');
 
-    document.getElementById('quebraSubtitle').textContent = `Aluno: ${aluno.nome}`;
-    document.getElementById('quebraInfo').innerHTML = `
-        <strong>Disciplina:</strong> ${codigo} - ${getNomeDisciplina(codigo)}<br>
-        <strong>Pré-requisitos:</strong> ${preNomes || 'Nenhum'}<br>
-        <strong>Status:</strong> ${aluno.quebras && aluno.quebras[codigo] ? '✅ Já possui quebra' : '❌ Sem quebra'}
-    `;
+    var subEl = document.getElementById('quebraSubtitle');
+    var infoEl = document.getElementById('quebraInfo');
+    if (subEl) subEl.textContent = 'Aluno: ' + aluno.nome;
+    if (infoEl) {
+        infoEl.innerHTML = '<strong>Disciplina:</strong> ' + codigo + ' - ' + getNomeDisciplina(codigo) + '<br>' +
+            '<strong>Pré-requisitos:</strong> ' + (preNomes || 'Nenhum') + '<br>' +
+            '<strong>Status:</strong> ' + (aluno.quebras && aluno.quebras[codigo] ? 'Já possui quebra' : 'Sem quebra');
+    }
 
-    document.getElementById('quebraModal').classList.add('show');
-};
+    var modal = document.getElementById('quebraModal');
+    if (modal) modal.classList.add('show');
+}
+
+window.abrirModalQuebraHandler = abrirModalQuebra;
 
 window.confirmarQuebraHandler = function() {
     if (!quebraContexto) return;
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
     try {
         gerenciador.concederQuebra(aluno.id || gerenciador.alunoAtivoId, quebraContexto.codigo);
         fecharModalQuebra();
-        showToast(`🔓 Quebra concedida para ${quebraContexto.codigo}!`, 'success');
+        showToast('Quebra concedida para ' + quebraContexto.codigo + '!', 'success');
+        atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.removerQuebraHandler = function() {
     if (!quebraContexto) return;
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
     try {
         gerenciador.removerQuebra(aluno.id || gerenciador.alunoAtivoId, quebraContexto.codigo);
         fecharModalQuebra();
-        showToast(`🗑️ Quebra removida para ${quebraContexto.codigo}`, 'info');
+        showToast('Quebra removida para ' + quebraContexto.codigo, 'info');
+        atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 function fecharModalQuebra() {
-    document.getElementById('quebraModal').classList.remove('show');
+    var modal = document.getElementById('quebraModal');
+    if (modal) modal.classList.remove('show');
     quebraContexto = null;
 }
 
@@ -840,50 +960,52 @@ document.getElementById('quebraModal').addEventListener('click', function(e) {
 });
 
 // ============================================================
-// HANDLERS - PRÉ-MATRÍCULA
+// HANDLERS - PRE-MATRICULA
 // ============================================================
 
 window.abrirPreMatriculaHandler = function() {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         return;
     }
 
-    const planejaveis = gerenciador.obterDisciplinasPlanejaveis(
+    var planejaveis = gerenciador.obterDisciplinasPlanejaveis(
         aluno.id || gerenciador.alunoAtivoId
     );
 
     planejamentoTemp = {};
     
-    for (const codigo in aluno.progresso) {
-        if (aluno.progresso[codigo]?.status === 'planned') {
+    for (var codigo in aluno.progresso) {
+        if (aluno.progresso[codigo] && aluno.progresso[codigo].status === 'planned') {
             planejamentoTemp[codigo] = true;
         }
     }
-    for (const codigo of (aluno.optativasPlanejadas || [])) {
+    for (var i = 0; i < (aluno.optativasPlanejadas || []).length; i++) {
+        var codigo = aluno.optativasPlanejadas[i];
         planejamentoTemp[codigo] = true;
     }
 
-    let html = `
+    var html = `
         <div class="disciplines-list">
             <p style="font-size:14px;color:#666;margin-bottom:12px;">
                 Selecione as disciplinas que você planeja cursar no próximo semestre:
             </p>
     `;
 
-    html += `<div class="section-title">📚 DISCIPLINAS OBRIGATÓRIAS</div>`;
+    html += '<div class="section-title">DISCIPLINAS OBRIGATÓRIAS</div>';
 
     if (planejaveis.obrigatorias.length === 0) {
-        html += `<div class="empty-message">✅ Todas as disciplinas obrigatórias já foram cursadas!</div>`;
+        html += '<div class="empty-message">Todas as disciplinas obrigatórias já foram cursadas!</div>';
     } else {
-        let currentSemestre = '';
-        for (const disc of planejaveis.obrigatorias) {
+        var currentSemestre = '';
+        for (var i = 0; i < planejaveis.obrigatorias.length; i++) {
+            var disc = planejaveis.obrigatorias[i];
             if (disc.semestre !== currentSemestre) {
                 currentSemestre = disc.semestre;
-                html += `<div class="semester-label">${currentSemestre}</div>`;
+                html += '<div class="semester-label">' + currentSemestre + '</div>';
             }
-            const checked = disc.jaPlanejada ? 'checked' : '';
+            var checked = disc.jaPlanejada ? 'checked' : '';
             html += `
                 <label class="discipline-item ${disc.jaPlanejada ? 'planned' : ''}">
                     <input type="checkbox" ${checked} 
@@ -891,19 +1013,20 @@ window.abrirPreMatriculaHandler = function() {
                            style="margin-right:8px;">
                     <strong>${disc.codigo}</strong> - ${disc.nome}
                     <span class="hours">${disc.horas}</span>
-                    ${disc.jaPlanejada ? '<span class="planned-label">📌 Planejada</span>' : ''}
+                    ${disc.jaPlanejada ? '<span class="planned-label">Planejada</span>' : ''}
                 </label>
             `;
         }
     }
 
-    html += `<div class="section-title">📌 OPTATIVAS DISPONÍVEIS</div>`;
+    html += '<div class="section-title">OPTATIVAS DISPONÍVEIS</div>';
 
     if (planejaveis.optativas.length === 0) {
-        html += `<div class="empty-message">🎉 Todas as optativas disponíveis já estão alocadas ou planejadas!</div>`;
+        html += '<div class="empty-message">Todas as optativas disponíveis já estão alocadas ou planejadas!</div>';
     } else {
-        for (const opt of planejaveis.optativas) {
-            const checked = opt.jaPlanejada ? 'checked' : '';
+        for (var i = 0; i < planejaveis.optativas.length; i++) {
+            var opt = planejaveis.optativas[i];
+            var checked = opt.jaPlanejada ? 'checked' : '';
             html += `
                 <label class="discipline-item optativa-item ${opt.jaPlanejada ? 'planned' : ''}">
                     <input type="checkbox" ${checked} 
@@ -912,32 +1035,32 @@ window.abrirPreMatriculaHandler = function() {
                     <strong>${opt.codigo}</strong> - ${opt.nome}
                     <span class="opt-label">optativa</span>
                     <span class="hours">68h</span>
-                    ${opt.jaPlanejada ? '<span class="planned-label">📌 Planejada</span>' : ''}
+                    ${opt.jaPlanejada ? '<span class="planned-label">Planejada</span>' : ''}
                 </label>
             `;
         }
     }
 
-    const totalSelecionadas = Object.keys(planejamentoTemp).length;
+    var totalSelecionadas = Object.keys(planejamentoTemp).length;
     html += `
         </div>
         <div class="modal-actions">
             <button class="btn-save" onclick="window.salvarPlanejamentoHandler()">
-                💾 Salvar planejamento (${totalSelecionadas} selecionadas)
+                Salvar planejamento (${totalSelecionadas} selecionadas)
             </button>
             <button class="btn-cancel" onclick="window.fecharPreMatriculaHandler()">Cancelar</button>
         </div>
         <div class="footer-note">
-            💡 Disciplinas em <span style="color:#7b1fa2;font-weight:bold;">roxo claro</span> serão marcadas como "cursará no próximo semestre"
+            Disciplinas em <span style="color:#7b1fa2;font-weight:bold;">roxo claro</span> serão marcadas como "cursará no próximo semestre"
         </div>
     `;
 
-    const modal = document.createElement('div');
+    var modal = document.createElement('div');
     modal.className = 'pre-matricula-modal';
     modal.id = 'preMatriculaModal';
     modal.innerHTML = `
         <div class="modal-content">
-            <h2>📋 Pré-matrícula</h2>
+            <h2>Pré-matrícula</h2>
             <p class="subtitle">Planeje as disciplinas para o próximo semestre</p>
             ${html}
         </div>
@@ -946,37 +1069,37 @@ window.abrirPreMatriculaHandler = function() {
 };
 
 window.togglePlanejamentoHandler = function(codigo) {
-    const checkbox = event.target;
+    var checkbox = event.target;
     if (checkbox.checked) {
         planejamentoTemp[codigo] = true;
     } else {
         delete planejamentoTemp[codigo];
     }
 
-    const total = Object.keys(planejamentoTemp).length;
-    const btn = document.querySelector('#preMatriculaModal .btn-save');
+    var total = Object.keys(planejamentoTemp).length;
+    var btn = document.querySelector('#preMatriculaModal .btn-save');
     if (btn) {
-        btn.textContent = `💾 Salvar planejamento (${total} selecionadas)`;
+        btn.textContent = 'Salvar planejamento (' + total + ' selecionadas)';
     }
 };
 
 window.salvarPlanejamentoHandler = function() {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         return;
     }
 
-    const codigos = Object.keys(planejamentoTemp);
-    const optativasSelecionadas = codigos.filter(c => isOptativaGlobal(c));
+    var codigos = Object.keys(planejamentoTemp);
+    var optativasSelecionadas = codigos.filter(function(c) { return isOptativaGlobal(c); });
 
     if (optativasSelecionadas.length > 0) {
-        const quantidadeModal = document.createElement('div');
+        var quantidadeModal = document.createElement('div');
         quantidadeModal.className = 'confirm-modal';
         quantidadeModal.id = 'quantidadeModal';
         quantidadeModal.innerHTML = `
             <div class="modal-content" style="max-width:450px;">
-                <h3>📋 Quantas optativas?</h3>
+                <h3>Quantas optativas?</h3>
                 <p style="color:#666;margin:8px 0;">
                     Você selecionou <strong>${optativasSelecionadas.length}</strong> optativa(s).
                     <br>
@@ -997,7 +1120,7 @@ window.salvarPlanejamentoHandler = function() {
                     </button>
                 </div>
                 <div style="margin-top:8px;font-size:11px;color:#999;text-align:center;">
-                    💡 As optativas com maior prioridade serão escolhidas
+                    As optativas com maior prioridade serão escolhidas
                 </div>
             </div>
         `;
@@ -1006,7 +1129,7 @@ window.salvarPlanejamentoHandler = function() {
     }
 
     try {
-        const resultado = gerenciador.salvarPlanejamento(
+        var resultado = gerenciador.salvarPlanejamento(
             aluno.id || gerenciador.alunoAtivoId,
             codigos
         );
@@ -1014,67 +1137,67 @@ window.salvarPlanejamentoHandler = function() {
         window.fecharPreMatriculaHandler();
         planejamentoTemp = {};
 
-        const total = resultado.obrigatorias.length + resultado.optativas.length;
-        let msg = `✅ ${total} disciplina(s) planejada(s)!`;
+        var total = resultado.obrigatorias.length + resultado.optativas.length;
+        var msg = total + ' disciplina(s) planejada(s)!';
         if (resultado.optativas.length > 0) {
-            msg += ` 📌 ${resultado.optativas.length} optativa(s)`;
+            msg += ' ' + resultado.optativas.length + ' optativa(s)';
         }
         showToast(msg, 'success');
         atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.confirmarQuantidadeOptativas = function() {
-    const input = document.getElementById('quantidadeOptativas');
-    const quantidade = parseInt(input.value);
+    var input = document.getElementById('quantidadeOptativas');
+    var quantidade = parseInt(input.value);
 
     if (isNaN(quantidade) || quantidade < 0 || quantidade > 5) {
-        showToast('❌ Digite um número entre 0 e 5', 'error');
+        showToast('Digite um número entre 0 e 5', 'error');
         return;
     }
 
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    const codigos = Object.keys(planejamentoTemp);
-    const optativasSelecionadas = codigos.filter(c => isOptativaGlobal(c));
+    var codigos = Object.keys(planejamentoTemp);
+    var optativasSelecionadas = codigos.filter(function(c) { return isOptativaGlobal(c); });
 
     if (quantidade === 0) {
         window.fecharQuantidadeModal();
-        const codigosFinais = codigos.filter(c => !isOptativaGlobal(c));
+        var codigosFinais = codigos.filter(function(c) { return !isOptativaGlobal(c); });
 
         try {
-            const resultado = gerenciador.salvarPlanejamento(
+            var resultado = gerenciador.salvarPlanejamento(
                 aluno.id || gerenciador.alunoAtivoId,
                 codigosFinais,
                 []
             );
             window.fecharPreMatriculaHandler();
             planejamentoTemp = {};
-            showToast(`✅ ${resultado.obrigatorias.length} disciplina(s) planejada(s)!`, 'success');
+            showToast(resultado.obrigatorias.length + ' disciplina(s) planejada(s)!', 'success');
             atualizarUI();
         } catch (error) {
-            showToast(`❌ ${error.message}`, 'error');
+            showToast(error.message, 'error');
         }
         return;
     }
 
     if (quantidade > optativasSelecionadas.length) {
-        showToast(`❌ Você só selecionou ${optativasSelecionadas.length} optativa(s)`, 'error');
+        showToast('Você só selecionou ' + optativasSelecionadas.length + ' optativa(s)', 'error');
         return;
     }
 
     window.fecharQuantidadeModal();
 
-    const prioridadeModal = document.createElement('div');
+    var prioridadeModal = document.createElement('div');
     prioridadeModal.className = 'confirm-modal';
     prioridadeModal.id = 'prioridadeModal';
     
-    let prioridadeHtml = `
+    var prioridadeHtml = `
         <div class="modal-content" style="max-width:500px;">
-            <h3>📌 Ordem de prioridade</h3>
+            <h3>Ordem de prioridade</h3>
             <p style="color:#666;margin:8px 0;">
                 Ordene as optativas por preferência (1 = maior prioridade):
                 <br>
@@ -1083,14 +1206,14 @@ window.confirmarQuantidadeOptativas = function() {
             <div id="listaPrioridade" style="display:flex;flex-direction:column;gap:4px;margin:12px 0;max-height:300px;overflow-y:auto;">
     `;
 
-    optativasSelecionadas.forEach((codigo, index) => {
-        const nome = getNomeDisciplina(codigo) || codigo;
+    optativasSelecionadas.forEach(function(codigo, index) {
+        var nome = getNomeDisciplina(codigo) || codigo;
         prioridadeHtml += `
             <div class="priority-item" draggable="true" data-codigo="${codigo}" 
                  style="display:flex;align-items:center;gap:8px;padding:8px 12px;background:#f5f5f5;border-radius:6px;cursor:grab;border:2px solid #e0e0e0;">
                 <span style="font-weight:bold;color:#1a237e;min-width:30px;">${index + 1}</span>
                 <span style="flex:1;"><strong>${codigo}</strong> - ${nome}</span>
-                <span style="font-size:12px;color:#666;">↕ arraste</span>
+                <span style="font-size:12px;color:#666;">arraste</span>
             </div>
         `;
     });
@@ -1099,14 +1222,14 @@ window.confirmarQuantidadeOptativas = function() {
             </div>
             <div style="display:flex;gap:10px;margin-top:8px;">
                 <button onclick="window.confirmarPrioridadeOptativas(${quantidade})" style="flex:1;padding:12px;background:#1a237e;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">
-                    ✅ Confirmar
+                    Confirmar
                 </button>
                 <button onclick="window.fecharPrioridadeModal()" style="padding:12px 24px;background:#e0e0e0;color:#333;border:none;border-radius:8px;cursor:pointer;">
                     Cancelar
                 </button>
             </div>
             <div style="margin-top:8px;font-size:11px;color:#999;text-align:center;">
-                💡 Arraste os itens para reordenar
+                Arraste os itens para reordenar
             </div>
         </div>
     `;
@@ -1117,10 +1240,10 @@ window.confirmarQuantidadeOptativas = function() {
 };
 
 function setupDragAndDrop() {
-    const items = document.querySelectorAll('.priority-item');
-    let draggedItem = null;
+    var items = document.querySelectorAll('.priority-item');
+    var draggedItem = null;
 
-    items.forEach(item => {
+    items.forEach(function(item) {
         item.addEventListener('dragstart', function(e) {
             draggedItem = this;
             this.style.opacity = '0.5';
@@ -1137,10 +1260,10 @@ function setupDragAndDrop() {
         item.addEventListener('drop', function(e) {
             e.preventDefault();
             if (draggedItem && this !== draggedItem) {
-                const parent = this.parentNode;
-                const children = Array.from(parent.children);
-                const fromIndex = children.indexOf(draggedItem);
-                const toIndex = children.indexOf(this);
+                var parent = this.parentNode;
+                var children = Array.from(parent.children);
+                var fromIndex = children.indexOf(draggedItem);
+                var toIndex = children.indexOf(this);
                 
                 if (fromIndex < toIndex) {
                     parent.insertBefore(draggedItem, this.nextSibling);
@@ -1155,9 +1278,9 @@ function setupDragAndDrop() {
 }
 
 function updatePriorityNumbers() {
-    const items = document.querySelectorAll('.priority-item');
-    items.forEach((item, index) => {
-        const numberSpan = item.querySelector('span:first-child');
+    var items = document.querySelectorAll('.priority-item');
+    items.forEach(function(item, index) {
+        var numberSpan = item.querySelector('span:first-child');
         if (numberSpan) {
             numberSpan.textContent = index + 1;
         }
@@ -1165,30 +1288,30 @@ function updatePriorityNumbers() {
 }
 
 window.confirmarPrioridadeOptativas = function(quantidade) {
-    const items = document.querySelectorAll('.priority-item');
-    const prioridade = [];
-    items.forEach(item => {
+    var items = document.querySelectorAll('.priority-item');
+    var prioridade = [];
+    items.forEach(function(item) {
         prioridade.push(item.dataset.codigo);
     });
 
-    const selecionadas = prioridade.slice(0, quantidade);
+    var selecionadas = prioridade.slice(0, quantidade);
 
     window.fecharPrioridadeModal();
 
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    const codigos = Object.keys(planejamentoTemp);
+    var codigos = Object.keys(planejamentoTemp);
     
-    const codigosFinais = codigos.filter(c => {
+    var codigosFinais = codigos.filter(function(c) {
         if (isOptativaGlobal(c)) {
-            return selecionadas.includes(c);
+            return selecionadas.indexOf(c) !== -1;
         }
         return true;
     });
 
     try {
-        const resultado = gerenciador.salvarPlanejamento(
+        var resultado = gerenciador.salvarPlanejamento(
             aluno.id || gerenciador.alunoAtivoId,
             codigosFinais,
             selecionadas
@@ -1197,77 +1320,85 @@ window.confirmarPrioridadeOptativas = function(quantidade) {
         window.fecharPreMatriculaHandler();
         planejamentoTemp = {};
 
-        const total = resultado.obrigatorias.length + resultado.optativas.length;
-        let msg = `✅ ${total} disciplina(s) planejada(s)!`;
+        var total = resultado.obrigatorias.length + resultado.optativas.length;
+        var msg = total + ' disciplina(s) planejada(s)!';
         if (resultado.optativas.length > 0) {
-            msg += ` 📌 ${resultado.optativas.length} optativa(s) priorizada(s)`;
+            msg += ' ' + resultado.optativas.length + ' optativa(s) priorizada(s)';
         }
         showToast(msg, 'success');
         atualizarUI();
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 window.fecharQuantidadeModal = function() {
-    const modal = document.getElementById('quantidadeModal');
+    var modal = document.getElementById('quantidadeModal');
     if (modal) modal.remove();
 };
 
 window.fecharPrioridadeModal = function() {
-    const modal = document.getElementById('prioridadeModal');
+    var modal = document.getElementById('prioridadeModal');
     if (modal) modal.remove();
 };
 
 window.fecharPreMatriculaHandler = function() {
-    const modal = document.getElementById('preMatriculaModal');
+    var modal = document.getElementById('preMatriculaModal');
     if (modal) modal.remove();
     planejamentoTemp = {};
 };
 
+function fecharPreMatricula() {
+    var modal = document.getElementById('preMatriculaModal');
+    if (modal) modal.remove();
+    planejamentoTemp = {};
+}
+
 // ============================================================
-// HANDLERS - IMPORTAÇÃO
+// HANDLERS - IMPORTACAO
 // ============================================================
 
 window.importarHistoricoHandler = async function(event) {
-    const file = event.target.files[0];
+    var file = event.target.files[0];
     if (!file) return;
 
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Selecione ou crie um aluno primeiro!', 'error');
+        showToast('Selecione ou crie um aluno primeiro!', 'error');
         event.target.value = '';
         return;
     }
 
-    const preview = document.getElementById('importPreview');
-    preview.innerHTML = `<div class="info">⏳ Processando PDF... <span class="loading"></span></div>`;
-    preview.classList.add('show');
+    var preview = document.getElementById('importPreview');
+    if (preview) {
+        preview.innerHTML = '<div class="info">Processando PDF... <span class="loading"></span></div>';
+        preview.classList.add('show');
+    }
 
     try {
-        const arrayBuffer = await file.arrayBuffer();
-        const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-        let textoCompleto = '';
+        var arrayBuffer = await file.arrayBuffer();
+        var pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+        var textoCompleto = '';
 
-        for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const textContent = await page.getTextContent();
-            const pageText = textContent.items.map(item => item.str).join(' ');
+        for (var i = 1; i <= pdf.numPages; i++) {
+            var page = await pdf.getPage(i);
+            var textContent = await page.getTextContent();
+            var pageText = textContent.items.map(function(item) { return item.str; }).join(' ');
             textoCompleto += pageText + '\n';
         }
 
-        const regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
+        var regex = /(\d{4}\.\d)\s+([A-ZÇÃÕÁÉÍÓÚÂÊÎÔÛÀ\s\'\-]+?)\s+(APR|REP|DISPCN|DISP|MATR|REPF|REPMF|TRANC|TRTAL)\s+([A-Z0-9.]+)\s+(\d+)\s+([\d.]+|--)\s+([\d.]+)/gi;
 
-        const todasOcorrencias = [];
-        let match;
+        var todasOcorrencias = [];
+        var match;
         while ((match = regex.exec(textoCompleto)) !== null) {
-            const periodo = match[1];
-            const nome = match[2].trim();
-            const situacao = match[3];
-            const codigo = match[4].trim();
-            const ch = parseInt(match[5]);
+            var periodo = match[1];
+            var nome = match[2].trim();
+            var situacao = match[3];
+            var codigo = match[4].trim();
+            var ch = parseInt(match[5]);
 
-            if (codigo.includes('ENADE') || nome.includes('ENADE')) continue;
+            if (codigo.indexOf('ENADE') !== -1 || nome.indexOf('ENADE') !== -1) continue;
 
             todasOcorrencias.push({
                 periodo: periodo,
@@ -1279,68 +1410,163 @@ window.importarHistoricoHandler = async function(event) {
         }
 
         if (todasOcorrencias.length === 0) {
-            preview.innerHTML = `<div class="error">❌ Nenhuma disciplina encontrada no PDF.</div>`;
-            showToast('❌ Nenhuma disciplina encontrada.', 'error');
+            if (preview) preview.innerHTML = '<div class="error">Nenhuma disciplina encontrada no PDF.</div>';
+            showToast('Nenhuma disciplina encontrada.', 'error');
             event.target.value = '';
             return;
         }
 
-        const resultado = gerenciador.importarHistorico(
+        var resultado = gerenciador.importarHistorico(
             aluno.id || gerenciador.alunoAtivoId,
             todasOcorrencias
         );
 
-        const pendentes = gerenciador.verificarCorrecoes(aluno.id || gerenciador.alunoAtivoId);
+        var countAPR = Object.values(resultado.disciplinas).filter(function(d) { return d.status === 'done'; }).length;
+        
+        var messageId = 'aviso_' + Date.now();
+        
+        var html = `
+            <div class="success">Importação concluída para <strong>${aluno.nome}</strong>!</div>
+            <div class="info">${countAPR} disciplina(s) processada(s)</div>
+            <div class="info">${resultado.optativas ? resultado.optativas.length : 0} optativa(s) identificada(s)</div>
+            ${Object.keys(resultado.equivalencias || {}).length > 0 ? '<div class="info">' + Object.keys(resultado.equivalencias).length + ' equivalência(s) aplicada(s)</div>' : ''}
+        `;
 
-        renderImportPreview(resultado, aluno, pendentes);
+        html += `
+            <div id="${messageId}" style="background:#fff8e1;border:2px solid #ff6f00;border-radius:8px;padding:20px;margin-top:10px;position:relative;">
+                <button onclick="fecharAvisoImportacao('${messageId}')" 
+                        style="position:absolute;top:10px;right:10px;background:none;border:none;font-size:20px;cursor:pointer;color:#999;padding:4px 8px;border-radius:4px;"
+                        onmouseover="this.style.background='#ffebee'" 
+                        onmouseout="this.style.background='none'"
+                        title="Fechar aviso">
+                    x
+                </button>
+                
+                <h3 style="color:#e65100;margin:0 0 8px 0;">VERIFICAÇÃO MANUAL NECESSÁRIA</h3>
+                <p style="margin:4px 0;color:#bf360c;">
+                    A importação automática pode não ter capturado todas as disciplinas corretamente.
+                </p>
+                <p style="margin:4px 0;color:#bf360c;font-weight:bold;">
+                    Por favor, verifique o fluxograma do aluno e corrija manualmente:
+                </p>
+                <ul style="margin:8px 0 12px 20px;color:#bf360c;font-size:13px;">
+                    <li>Disciplinas que podem ter sido importadas com código errado</li>
+                    <li>Optativas que precisam ser alocadas manualmente</li>
+                    <li>Equivalências que não foram detectadas</li>
+                    <li>Disciplinas com status incorreto</li>
+                </ul>
 
-        if (pendentes.total > 0) {
-            preview.innerHTML += renderErrosCorrecao(pendentes);
-            showToast(`❌ ${pendentes.total} erro(s) encontrado(s)`, 'error');
-        } else {
-            showToast(`✅ ${Object.values(resultado.disciplinas).filter(d => d.status === 'done').length} disciplinas processadas!`, 'success');
-        }
+                <div style="background:#fff3e0;padding:10px;border-radius:6px;margin:8px 0;border-left:4px solid #ff6f00;">
+                    <p style="margin:0;font-size:13px;color:#e65100;">
+                        Dica: Clique em cada disciplina no fluxograma para ajustar o status 
+                        (cursada, cursando, planejada ou não cursada).
+                    </p>
+                </div>
+
+                <hr style="margin:16px 0;border-color:#ffe0b2;">
+
+                <p style="font-weight:bold;color:#1a237e;margin:0 0 12px 0;">O que você deseja fazer agora?</p>
+
+                <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                    <button onclick="window.gerarPDFHandler()" style="flex:1;min-width:200px;padding:14px 20px;background:#1a237e;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                        Gerar PDF
+                        <br><span style="font-weight:normal;font-size:12px;opacity:0.8;">Exportar o fluxograma completo</span>
+                    </button>
+
+                    <button onclick="window.abrirPreMatriculaHandler()" style="flex:1;min-width:200px;padding:14px 20px;background:#ce93d8;color:#1a237e;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                        Fazer pré-matrícula
+                        <br><span style="font-weight:normal;font-size:12px;opacity:0.8;">Planejar disciplinas para o próximo semestre</span>
+                    </button>
+                </div>
+
+                <hr style="margin:16px 0;border-color:#ffe0b2;">
+
+                <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+                    <p style="margin:0;font-size:12px;color:#666;">
+                        Lembre-se: Verifique sempre se todas as disciplinas do histórico foram importadas corretamente.
+                    </p>
+                    <button onclick="fecharAvisoImportacao('${messageId}')" 
+                            style="padding:6px 16px;background:#ff6f00;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:12px;">
+                        Já verifiquei, fechar aviso
+                    </button>
+                </div>
+            </div>
+        `;
+
+        html += `
+            <div style="margin-top:16px;padding:16px;background:#f5f5f5;border-radius:8px;border:1px solid #e0e0e0;">
+                <p style="font-weight:bold;color:#1a237e;margin:0 0 12px 0;">Ações rápidas:</p>
+                <div style="display:flex;flex-wrap:wrap;gap:12px;">
+                    <button onclick="window.gerarPDFHandler()" style="flex:1;min-width:200px;padding:14px 20px;background:#1a237e;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                        Gerar PDF
+                        <br><span style="font-weight:normal;font-size:12px;opacity:0.8;">Exportar o fluxograma completo</span>
+                    </button>
+
+                    <button onclick="window.abrirPreMatriculaHandler()" style="flex:1;min-width:200px;padding:14px 20px;background:#ce93d8;color:#1a237e;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:14px;">
+                        Fazer pré-matrícula
+                        <br><span style="font-weight:normal;font-size:12px;opacity:0.8;">Planejar disciplinas para o próximo semestre</span>
+                    </button>
+                </div>
+            </div>
+        `;
+
+        if (preview) preview.innerHTML = html;
+        showToast(countAPR + ' disciplinas processadas. Verifique o fluxograma!', 'warning');
 
     } catch (error) {
-        console.error('❌ Erro ao importar:', error);
-        preview.innerHTML = `<div class="error">❌ Erro ao processar o PDF: ${error.message}</div>`;
-        showToast('❌ Erro ao importar o PDF', 'error');
+        console.error('Erro ao importar:', error);
+        if (preview) preview.innerHTML = '<div class="error">Erro ao processar o PDF: ' + error.message + '</div>';
+        showToast('Erro ao importar o PDF', 'error');
     }
 
     event.target.value = '';
 };
 
+function fecharAvisoImportacao(messageId) {
+    var elemento = document.getElementById(messageId);
+    if (elemento) {
+        elemento.style.transition = 'opacity 0.3s ease';
+        elemento.style.opacity = '0';
+        setTimeout(function() {
+            elemento.style.display = 'none';
+        }, 300);
+    }
+}
+
+window.fecharAvisoImportacao = fecharAvisoImportacao;
+
 // ============================================================
-// HANDLERS - VERIFICAÇÃO DE CORREÇÕES
+// HANDLERS - VERIFICACAO DE CORRECOES
 // ============================================================
 
 window.verificarCorrecoesHandler = function() {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Nenhum aluno selecionado.', 'error');
+        showToast('Nenhum aluno selecionado.', 'error');
         return;
     }
 
-    const pendentes = gerenciador.verificarCorrecoes(
+    var pendentes = gerenciador.verificarCorrecoes(
         aluno.id || gerenciador.alunoAtivoId
     );
 
-    const preview = document.getElementById('importPreview');
+    var preview = document.getElementById('importPreview');
+    if (!preview) return;
 
     if (pendentes.total === 0) {
-        preview.innerHTML = `<div class="success">✅ Disciplinas processadas com sucesso!</div>`;
+        preview.innerHTML = '<div class="success">Disciplinas processadas com sucesso!</div>';
         preview.innerHTML += renderOpcoesPosValidacao();
-        showToast('✅ Tudo correto!', 'success');
+        showToast('Tudo correto!', 'success');
         return;
     }
 
-    const successDiv = preview.querySelector('.success');
+    var successDiv = preview.querySelector('.success');
     if (successDiv) {
         preview.innerHTML = successDiv.outerHTML + renderErrosCorrecao(pendentes);
     } else {
         preview.innerHTML = renderErrosCorrecao(pendentes);
     }
-    showToast(`❌ ${pendentes.total} erro(s) encontrado(s)`, 'error');
+    showToast(pendentes.total + ' erro(s) encontrado(s)', 'error');
 };
 
 // ============================================================
@@ -1348,29 +1574,30 @@ window.verificarCorrecoesHandler = function() {
 // ============================================================
 
 window.exportAllDataHandler = function() {
-    const data = gerenciador.exportar();
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    var data = gerenciador.exportar();
+    var blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
     a.href = url;
-    a.download = `alunos_${new Date().toISOString().slice(0, 10)}.json`;
+    a.download = 'alunos_' + new Date().toISOString().slice(0, 10) + '.json';
     a.click();
     URL.revokeObjectURL(url);
-    showToast('📤 Dados exportados!', 'success');
+    showToast('Dados exportados!', 'success');
 };
 
 window.importAllDataHandler = function(event) {
-    const file = event.target.files[0];
+    var file = event.target.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    var reader = new FileReader();
     reader.onload = function(e) {
         try {
-            const data = JSON.parse(e.target.result);
-            const count = gerenciador.importar(data);
-            showToast(`📥 Importados ${count} alunos!`, 'success');
+            var data = JSON.parse(e.target.result);
+            var count = gerenciador.importar(data);
+            showToast('Importados ' + count + ' alunos!', 'success');
+            atualizarUI();
         } catch (err) {
-            showToast(`❌ Erro ao importar: ${err.message}`, 'error');
+            showToast('Erro ao importar: ' + err.message, 'error');
         }
     };
     reader.readAsText(file);
@@ -1378,9 +1605,10 @@ window.importAllDataHandler = function(event) {
 };
 
 window.clearAllDataHandler = function() {
-    if (!confirm('⚠️ Tem certeza que deseja apagar TODOS os dados?')) return;
+    if (!confirm('Tem certeza que deseja apagar TODOS os dados?')) return;
     gerenciador.limpar();
-    showToast('🗑️ Todos os dados foram removidos.', 'info');
+    showToast('Todos os dados foram removidos.', 'info');
+    atualizarUI();
 };
 
 // ============================================================
@@ -1388,158 +1616,144 @@ window.clearAllDataHandler = function() {
 // ============================================================
 
 window.gerarPDFHandler = function() {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) {
-        showToast('❌ Selecione um aluno primeiro!', 'error');
+        showToast('Selecione um aluno primeiro!', 'error');
         return;
     }
 
-    const curso = aluno.curso || 'bmat';
-    const curriculo = getCurriculo(curso);
-    const progresso = gerenciador.getProgressoAtivo();
-    const cursoLabel = curso === 'bcet' ? 'BCET - Itinerario Matematica (PPC 2025)' : 'BMAT (PPC 2013)';
-    const stats = gerenciador.getEstatisticasOptativas(gerenciador.alunoAtivoId);
+    var curso = aluno.curso || 'bmat';
+    var curriculo = getCurriculo(curso);
+    var progresso = gerenciador.getProgressoAtivo();
+    var cursoLabel = curso === 'bcet' ? 'BCET - Itinerário Matemática (PPC 2025)' : 'BMAT (PPC 2013)';
+    var stats = gerenciador.getEstatisticasOptativas(gerenciador.alunoAtivoId);
+    var excecoes = aluno.excecoes || [];
 
-    const linhas = [];
-    const separador = '='.repeat(60);
+    var linhas = [];
+    var separador = '='.repeat(60);
 
-    linhas.push('RELATORIO ACADEMICO');
+    linhas.push('RELATÓRIO ACADÊMICO');
     linhas.push(separador);
-    linhas.push(`Aluno: ${aluno.nome}`);
-    if (aluno.matricula) linhas.push(`Matricula: ${aluno.matricula}`);
-    linhas.push(`Curso: ${cursoLabel}`);
-    linhas.push(`Progresso: ${progresso ? `${progresso.done}/${progresso.total} (${progresso.pct}%)` : '0/0 (0%)'}`);
-    if (progresso && progresso.planned > 0) linhas.push(`Planejadas: ${progresso.planned} disciplinas`);
-    linhas.push(`Data: ${new Date().toLocaleDateString('pt-BR')}`);
+    linhas.push('Aluno: ' + aluno.nome);
+    if (aluno.matricula) linhas.push('Matrícula: ' + aluno.matricula);
+    linhas.push('Curso: ' + cursoLabel);
+    linhas.push('Progresso: ' + (progresso ? progresso.done + '/' + progresso.total + ' (' + progresso.pct + '%)' : '0/0 (0%)'));
+    if (progresso && progresso.planned > 0) linhas.push('Planejadas: ' + progresso.planned + ' disciplinas');
+    linhas.push('Data: ' + new Date().toLocaleDateString('pt-BR'));
     linhas.push('');
 
     linhas.push('DISCIPLINAS POR SEMESTRE');
     linhas.push(separador);
 
-    // ============================================================
-    // MODIFICADO: SEMPRE exibe todos os semestres
-    // ============================================================
-    for (const semestre of curriculo) {
-        linhas.push(`\n${semestre.nome}:`);
+    for (var s = 0; s < curriculo.length; s++) {
+        var semestre = curriculo[s];
+        linhas.push('\n' + semestre.nome + ':');
         
-        // Verifica se há alguma disciplina com status diferente de 'not-started'
-        // Se não houver, ainda assim exibe as disciplinas com status atual
-        let temDisciplinas = false;
-        for (const disc of semestre.disciplinas) {
-            const codigo = disc.codigo;
-            if (disc.isOptativa) {
-                if (aluno.optativas[codigo]) {
-                    temDisciplinas = true;
-                    break;
-                }
-            } else {
-                const status = aluno.progresso[codigo]?.status || 'not-started';
-                if (status !== 'not-started') {
-                    temDisciplinas = true;
-                    break;
-                }
+        var temAlgumaDisciplina = false;
+        for (var d = 0; d < semestre.disciplinas.length; d++) {
+            var disc = semestre.disciplinas[d];
+            if (!disc.isOptativa) {
+                temAlgumaDisciplina = true;
+                break;
             }
         }
-        
-        // Se não tem nenhuma disciplina com status diferente, ainda exibe o semestre
-        // com as disciplinas no estado atual (not-started)
-        if (!temDisciplinas) {
-            // Verifica se pelo menos uma disciplina existe no semestre
-            let temAlgumaDisciplina = false;
-            for (const disc of semestre.disciplinas) {
-                if (!disc.isOptativa) {
-                    temAlgumaDisciplina = true;
-                    break;
-                }
-            }
-            if (!temAlgumaDisciplina) continue;
-        }
+        if (!temAlgumaDisciplina) continue;
 
-        for (const disc of semestre.disciplinas) {
-            let codigo = disc.codigo;
-            let nome = getNomeDisciplina(codigo);
-            let status = 'not-started';
-            let emoji = '  ';
-            let badge = '';
+        for (var d = 0; d < semestre.disciplinas.length; d++) {
+            var disc = semestre.disciplinas[d];
+            var codigo = disc.codigo;
+            var nome = getNomeDisciplina(codigo);
+            var status = 'not-started';
+            var emoji = '  ';
+            var badge = '';
 
             if (disc.isOptativa) {
-                const optCod = aluno.optativas[codigo];
+                var optCod = aluno.optativas[codigo];
                 if (optCod) {
                     codigo = optCod;
                     nome = getNomeDisciplina(optCod) || optCod;
-                    const optStatus = aluno.progresso[optCod]?.status || 'not-started';
+                    var optStatus = aluno.progresso[optCod]?.status || 'not-started';
                     status = optStatus;
-                    if (status === 'done') { emoji = '[X]';
-                        badge = ' (optativa)'; } else if (status === 'pending') { emoji = '[~]';
-                        badge = ' (optativa)'; } else if (status === 'planned') { emoji = '[P]';
-                        badge = ' (optativa)'; }
+                    if (status === 'done') { emoji = '[X]'; badge = ' (optativa)'; } 
+                    else if (status === 'pending') { emoji = '[~]'; badge = ' (optativa)'; } 
+                    else if (status === 'planned') { emoji = '[P]'; badge = ' (optativa)'; }
                 } else {
                     emoji = '[ ]';
-                    nome = 'Optativa (nao selecionada)';
+                    nome = 'Optativa (não selecionada)';
                 }
             } else {
                 status = aluno.progresso[codigo]?.status || 'not-started';
-                if (status === 'done') { emoji = '[X]'; } else if (status === 'pending') { emoji = '[~]'; } else if (
-                    status === 'planned') { emoji = '[P]'; } else { emoji = '[ ]'; }
+                if (status === 'done') { emoji = '[X]'; } 
+                else if (status === 'pending') { emoji = '[~]'; } 
+                else if (status === 'planned') { emoji = '[P]'; } 
+                else { emoji = '[ ]'; }
             }
 
-            const horas = disc.horas || '68h';
-            linhas.push(`  ${emoji} ${codigo} - ${nome} (${horas})${badge}`);
+            var horas = disc.horas || '68h';
+            linhas.push('  ' + emoji + ' ' + codigo + ' - ' + nome + ' (' + horas + ')' + badge);
         }
     }
 
-    // ============================================================
-    // SEÇÃO 1: OBRIGATÓRIAS PLANEJADAS (SEMPRE EXIBIDA)
-    // ============================================================
-    const obrigatoriasPlanejadas = [];
-    for (const [codigo, info] of Object.entries(aluno.progresso)) {
-        if (info.status === 'planned' && !isOptativaGlobal(codigo)) {
+    // OBRIGATÓRIAS PLANEJADAS (incluindo exceções obrigatórias)
+    var obrigatoriasPlanejadas = [];
+    for (var codigo in aluno.progresso) {
+        if (aluno.progresso[codigo] && aluno.progresso[codigo].status === 'planned' && !isOptativaGlobal(codigo)) {
             obrigatoriasPlanejadas.push(codigo);
         }
     }
 
+    for (var i = 0; i < excecoes.length; i++) {
+        var exc = excecoes[i];
+        if (exc.tipo === 'obrigatoria' && obrigatoriasPlanejadas.indexOf(exc.codigo) === -1) {
+            obrigatoriasPlanejadas.push(exc.codigo);
+        }
+    }
+
     linhas.push('');
-    linhas.push('OBRIGATORIAS PLANEJADAS (Proximo Semestre):');
+    linhas.push('OBRIGATÓRIAS PLANEJADAS (Próximo Semestre):');
     linhas.push(separador);
 
     if (obrigatoriasPlanejadas.length > 0) {
-        for (const codigo of obrigatoriasPlanejadas) {
-            const nome = getNomeDisciplina(codigo) || codigo;
-            const horas = obterHorasDisciplina(codigo, curso) || '68h';
-            linhas.push(`  [P] ${codigo} - ${nome} (${horas})`);
+        for (var i = 0; i < obrigatoriasPlanejadas.length; i++) {
+            var codigo = obrigatoriasPlanejadas[i];
+            var nome = getNomeDisciplina(codigo) || codigo;
+            var horas = obterHorasDisciplina(codigo, curso) || '68h';
+            linhas.push('  [P] ' + codigo + ' - ' + nome + ' (' + horas + ')');
         }
     } else {
         linhas.push('  Nenhuma obrigatória planejada.');
     }
     linhas.push('');
 
-    // ============================================================
-    // SEÇÃO 2: RESUMO DE OPTATIVAS (APENAS LISTAS, SEM ESTATÍSTICAS)
-    // ============================================================
+    // RESUMO DE OPTATIVAS (incluindo exceções optativas)
     linhas.push('RESUMO DE OPTATIVAS');
     linhas.push(separador);
 
     if (stats) {
-        // ============================================================
-        // OPTATIVAS PLANEJADAS
-        // ============================================================
-        if (stats.planejadasLista && stats.planejadasLista.length > 0) {
-            linhas.push('Optativas Planejadas (Proximo Semestre):');
-            stats.planejadasLista.forEach((codigo, index) => {
-                const nome = getNomeDisciplina(codigo) || codigo;
-                linhas.push(`  [P] ${codigo} - ${nome} (Prioridade ${index + 1})`);
+        var planejadasLista = stats.planejadasLista || [];
+        var excecoesOptativas = excecoes.filter(function(e) { return e.tipo === 'optativa'; });
+        
+        for (var i = 0; i < excecoesOptativas.length; i++) {
+            var exc = excecoesOptativas[i];
+            if (planejadasLista.indexOf(exc.codigo) === -1) {
+                planejadasLista.push(exc.codigo);
+            }
+        }
+
+        if (planejadasLista.length > 0) {
+            linhas.push('Optativas Planejadas (Próximo Semestre):');
+            planejadasLista.forEach(function(codigo, index) {
+                var nome = getNomeDisciplina(codigo) || codigo;
+                linhas.push('  [P] ' + codigo + ' - ' + nome + ' (Prioridade ' + (index + 1) + ')');
             });
             linhas.push('');
         }
 
-        // ============================================================
-        // OPTATIVAS JÁ CURSADAS
-        // ============================================================
         if (stats.cursadasLista && stats.cursadasLista.length > 0) {
-            linhas.push('Optativas ja cursadas:');
-            stats.cursadasLista.forEach(codigo => {
-                const nome = getNomeDisciplina(codigo) || codigo;
-                linhas.push(`  [X] ${codigo} - ${nome}`);
+            linhas.push('Optativas já cursadas:');
+            stats.cursadasLista.forEach(function(codigo) {
+                var nome = getNomeDisciplina(codigo) || codigo;
+                linhas.push('  [X] ' + codigo + ' - ' + nome);
             });
             linhas.push('');
         }
@@ -1549,123 +1763,129 @@ window.gerarPDFHandler = function() {
     linhas.push(separador);
     linhas.push('LEGENDA');
     linhas.push(separador);
-    linhas.push('  [X]  = Disciplina ja cursada');
-    linhas.push('  [P]  = Disciplina planejada para o proximo semestre');
+    linhas.push('  [X]  = Disciplina já cursada');
+    linhas.push('  [P]  = Disciplina planejada para o próximo semestre');
     linhas.push('  [~]  = Disciplina em andamento (cursando)');
-    linhas.push('  [ ]  = Disciplina pendente (nao cursada)');
+    linhas.push('  [ ]  = Disciplina pendente (não cursada)');
     linhas.push('  optativa = Disciplina optativa');
-    linhas.push('  equiv. via = Equivalencia aplicada (cursou atraves de outra disciplina)');
+    linhas.push('  equiv. via = Equivalência aplicada (cursou através de outra disciplina)');
 
     linhas.push('');
     linhas.push(separador);
-    linhas.push(`Relatorio gerado em ${new Date().toLocaleString('pt-BR')}`);
+    linhas.push('Relatório gerado em ' + new Date().toLocaleString('pt-BR'));
     linhas.push('Gerenciador de Alunos - BMAT/BCET');
 
-    const texto = linhas.join('\n');
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF({
+    var texto = linhas.join('\n');
+    var { jsPDF } = window.jspdf;
+    var pdf = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
     });
 
-    const margin = 20;
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-    const maxWidth = pageWidth - 2 * margin;
-    const lineHeight = 5.5;
-    let y = margin;
+    var margin = 20;
+    var pageWidth = pdf.internal.pageSize.getWidth();
+    var pageHeight = pdf.internal.pageSize.getHeight();
+    var maxWidth = pageWidth - 2 * margin;
+    var lineHeight = 5.5;
+    var y = margin;
 
     pdf.setFontSize(10);
     pdf.setFont('helvetica', 'normal');
 
-    const lines = texto.split('\n');
-    for (const line of lines) {
-        const wrapped = pdf.splitTextToSize(line, maxWidth);
-        for (const w of wrapped) {
+    var lines = texto.split('\n');
+    for (var i = 0; i < lines.length; i++) {
+        var wrapped = pdf.splitTextToSize(lines[i], maxWidth);
+        for (var j = 0; j < wrapped.length; j++) {
             if (y + lineHeight > pageHeight - margin) {
                 pdf.addPage();
                 y = margin;
             }
-            pdf.text(w, margin, y);
+            pdf.text(wrapped[j], margin, y);
             y += lineHeight;
         }
     }
 
-    const nomeArquivo = `relatorio_${aluno.nome.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.pdf`;
+    var nomeArquivo = 'relatorio_' + aluno.nome.replace(/\s+/g, '_') + '_' + new Date().toISOString().slice(0, 10) + '.pdf';
     pdf.save(nomeArquivo);
 
     showToast('PDF gerado com sucesso!', 'success');
 };
 
 // ============================================================
-// HANDLER - VERSÃO
+// HANDLER - VERSAO
 // ============================================================
 
-window.alternarVersaoHandler = function() {
-    const grid = document.getElementById('mainGrid');
-    const btn = document.getElementById('btnToggleVersion');
+window.alternarVersao = function() {
+    console.log('alternarVersao chamado!');
+    var grid = document.getElementById('mainGrid');
+    var btn = document.getElementById('btnToggleVersion');
     if (grid.classList.contains('modo-mobile')) {
         grid.classList.remove('modo-mobile');
         grid.classList.add('clasica', 'modo-clasica');
         document.body.classList.remove('modo-mobile');
         document.body.classList.add('modo-clasica');
-        btn.textContent = '📱 Mobile';
-        btn.className = 'btn-toggle-version';
+        if (btn) {
+            btn.textContent = 'Mobile';
+            btn.className = 'btn-toggle-version';
+        }
     } else {
         grid.classList.remove('clasica', 'modo-clasica');
         grid.classList.add('modo-mobile');
         document.body.classList.remove('modo-clasica');
         document.body.classList.add('modo-mobile');
-        btn.textContent = '💻 Clássica';
-        btn.className = 'btn-toggle-version mobile';
+        if (btn) {
+            btn.textContent = 'Clássica';
+            btn.className = 'btn-toggle-version mobile';
+        }
     }
     renderFluxograma(gerenciador);
-    showToast(`📱 Versão ${grid.classList.contains('modo-mobile') ? 'Mobile' : 'Clássica'} ativada!`, 'info');
+    showToast('Versão ' + (grid.classList.contains('modo-mobile') ? 'Mobile' : 'Clássica') + ' ativada!', 'info');
 };
 
 // ============================================================
-// HANDLERS - MATRÍCULA (SIMPLIFICADO)
+// HANDLERS - MATRICULA
 // ============================================================
 
 window.removerMatriculaHandler = function(codigo) {
-    const aluno = gerenciador.getAlunoAtivo();
+    var aluno = gerenciador.getAlunoAtivo();
     if (!aluno) return;
 
-    if (!confirm(`Remover ${codigo} das disciplinas em andamento?`)) return;
+    if (!confirm('Remover ' + codigo + ' das disciplinas em andamento?')) return;
 
     try {
-        // Remove apenas se for 'pending' com origem 'matricula_atual'
-        if (aluno.progresso[codigo]?.status === 'pending' && 
-            aluno.progresso[codigo]?.origem === 'matricula_atual') {
+        if (aluno.progresso[codigo] && aluno.progresso[codigo].status === 'pending' && 
+            aluno.progresso[codigo].origem === 'matricula_atual') {
             delete aluno.progresso[codigo];
-            if (aluno.historico_completo[codigo]?.origem === 'matricula_atual') {
+            if (aluno.historico_completo[codigo] && aluno.historico_completo[codigo].origem === 'matricula_atual') {
                 delete aluno.historico_completo[codigo];
             }
-            gerenciador._notifyListeners('removerMatricula', { alunoId: aluno.id, codigo });
+            gerenciador._notifyListeners('removerMatricula', { alunoId: aluno.id, codigo: codigo });
             atualizarUI();
-            showToast(`🗑️ ${codigo} removida das disciplinas em andamento.`, 'info');
+            showToast(codigo + ' removida das disciplinas em andamento.', 'info');
         } else {
-            showToast(`⚠️ ${codigo} não pode ser removida manualmente.`, 'error');
+            showToast(codigo + ' não pode ser removida manualmente.', 'error');
         }
     } catch (error) {
-        showToast(`❌ ${error.message}`, 'error');
+        showToast(error.message, 'error');
     }
 };
 
 // ============================================================
-// FUNÇÕES AUXILIARES
+// FUNCOES AUXILIARES
 // ============================================================
 
 function fecharConfirmModal() {
-    const modal = document.querySelector('.confirm-modal');
+    var modal = document.querySelector('.confirm-modal');
     if (modal) modal.remove();
 }
 
 function obterHorasDisciplina(codigo, curso) {
-    const curriculo = getCurriculo(curso);
-    for (const semestre of curriculo) {
-        for (const disc of semestre.disciplinas) {
+    var curriculo = getCurriculo(curso);
+    for (var s = 0; s < curriculo.length; s++) {
+        var semestre = curriculo[s];
+        for (var d = 0; d < semestre.disciplinas.length; d++) {
+            var disc = semestre.disciplinas[d];
             if (disc.codigo === codigo) {
                 return disc.horas || '68h';
             }
@@ -1675,7 +1895,7 @@ function obterHorasDisciplina(codigo, curso) {
 }
 
 // ============================================================
-// EXPOSIÇÃO GLOBAL
+// EXPOSICAO GLOBAL (ALIASES)
 // ============================================================
 
 window.addAlunoCompleto = window.adicionarAlunoHandler;
@@ -1683,11 +1903,10 @@ window.addMultipleAlunos = window.adicionarMultiplosHandler;
 window.deleteAluno = window.removerAlunoHandler;
 window.selectAluno = window.selecionarAlunoHandler;
 window.selecionarCurso = window.selecionarCursoHandler;
-
 window.toggleDiscipline = window.toggleDisciplinaHandler;
 
 window.abrirModalOptativa = abrirModalOptativa;
-window.fecharModalOptativa = window.fecharModalOptativa;
+window.fecharModalOptativa = fecharModalOptativa;
 window.removerOptativaDoSlot = window.removerOptativaDoSlotHandler;
 
 window.removerOptativaPlanejada = window.removerOptativaPlanejadaHandler;
@@ -1695,6 +1914,14 @@ window.limparOptativasPlanejadas = window.limparOptativasPlanejadasHandler;
 window.abrirModalStatusOptativa = abrirModalStatusOptativa;
 window.confirmarStatusOptativa = confirmarStatusOptativa;
 window.fecharModalStatusOptativa = fecharModalStatusOptativa;
+
+// Exceções
+window.abrirModalExcecoes = window.abrirModalExcecoesHandler;
+window.fecharModalExcecoes = window.fecharModalExcecoesHandler;
+window.adicionarExcecao = window.adicionarExcecaoHandler;
+window.removerExcecao = window.removerExcecaoHandler;
+window.limparExcecoes = window.limparExcecoesHandler;
+window.filtrarDisciplinasExcecao = window.filtrarDisciplinasExcecao;
 
 window.abrirModalQuebra = window.abrirModalQuebraHandler;
 window.confirmarQuebra = window.confirmarQuebraHandler;
@@ -1720,9 +1947,11 @@ window.clearAllData = window.clearAllDataHandler;
 
 window.gerarPDFVisual = window.gerarPDFHandler;
 
-window.alternarVersao = window.alternarVersaoHandler;
+window.alternarVersao = window.alternarVersao;
 
 window.removerMatriculaHandler = window.removerMatriculaHandler;
 window.fecharConfirmModal = fecharConfirmModal;
 
 window.showToast = showToast;
+
+console.log('App carregado com sucesso - Versão COMPLETA!');

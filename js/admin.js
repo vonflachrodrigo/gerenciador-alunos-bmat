@@ -1,10 +1,9 @@
 // ============================================================
-// ADMIN - VERSÃO COMPLETA COM OPTATIVAS E PRIORIDADES
+// ADMIN - VERSAO COMPLETA COM OPTATIVAS, PRIORIDADES E EXCECOES
 // ============================================================
 
-console.log('🚀 admin.js carregado!');
+console.log('Admin carregado!');
 
-const ADMIN_SENHA = 'admin123';
 let gerenciador = null;
 let toastTimeout = null;
 let ofertas = {};
@@ -38,6 +37,7 @@ class GerenciadorSimples {
             progresso: {},
             optativas: {},
             optativasPlanejadas: [],
+            excecoes: [],
             optativasInfo: [],
             obrigatoriasPlanejadas: [],
             quebras: {},
@@ -117,6 +117,13 @@ class GerenciadorSimples {
                 this.alunos = data.alunos || {};
                 this.nextId = data.nextId || 1;
                 this.cursoAtivo = data.cursoAtivo || 'bmat';
+                
+                for (var id in this.alunos) {
+                    if (!this.alunos[id].excecoes) this.alunos[id].excecoes = [];
+                    if (!this.alunos[id].optativasInfo) this.alunos[id].optativasInfo = [];
+                    if (!this.alunos[id].obrigatoriasPlanejadas) this.alunos[id].obrigatoriasPlanejadas = [];
+                }
+                
                 var keys = Object.keys(this.alunos);
                 this.alunoAtivoId = keys.length > 0 ? keys[0] : null;
             }
@@ -135,7 +142,7 @@ class GerenciadorSimples {
 }
 
 // ============================================================
-// FUNÇÕES AUXILIARES
+// FUNCOES AUXILIARES
 // ============================================================
 
 function getNomeDisciplina(codigo) {
@@ -260,18 +267,19 @@ function isOptativaGlobal(codigo) {
 }
 
 // ============================================================
-// EXTRAÇÃO DE OBRIGATÓRIAS PLANEJADAS
+// EXTRACAO DE OBRIGATORIAS PLANEJADAS (inclui excecoes)
 // ============================================================
 
-function extrairObrigatoriasPlanejadas(textoCompleto) {
+function extrairObrigatoriasPlanejadas(textoCompleto, excecoes) {
+    excecoes = excecoes || [];
     var obrigatorias = [];
     var codigosVistos = {};
 
-    console.log('🔍 Extraindo obrigatórias planejadas...');
+    console.log('Extraindo obrigatórias planejadas...');
 
     var seccaoMatch = textoCompleto.match(/OBRIGATORIAS PLANEJADAS[^:]*:([\s\S]*?)(?=RESUMO DE OPTATIVAS|OBRIGATORIAS PLANEJADAS|$)/i);
     if (seccaoMatch) {
-        console.log('📌 Seção "OBRIGATORIAS PLANEJADAS" encontrada!');
+        console.log('Seção "OBRIGATÓRIAS PLANEJADAS" encontrada!');
         var secaoTexto = seccaoMatch[1];
         
         var regex = /\[P\]\s*([A-Z0-9]+)\s*-\s*([^(]+?)\s*\(\d+h\)/gi;
@@ -287,11 +295,11 @@ function extrairObrigatoriasPlanejadas(textoCompleto) {
                     nome: nome, 
                     fonte: 'secao_obrigatorias' 
                 });
-                console.log('📌 Obrigatória (seção):', codigo, '-', nome);
+                console.log('Obrigatória (seção):', codigo, '-', nome);
             }
         }
     } else {
-        console.log('⚠️ Seção "OBRIGATORIAS PLANEJADAS" NÃO encontrada!');
+        console.log('Seção "OBRIGATÓRIAS PLANEJADAS" NÃO encontrada!');
     }
 
     var regexFluxo = /\[P\]\s*([A-Z0-9]+)\s*-\s*([^(]+)\((\d+h)\)/gi;
@@ -310,27 +318,42 @@ function extrairObrigatoriasPlanejadas(textoCompleto) {
                 nome: matchFluxo[2].trim(), 
                 fonte: 'fluxograma' 
             });
-            console.log('📌 Obrigatória (fluxograma):', codigo);
+            console.log('Obrigatória (fluxograma):', codigo);
         }
     }
 
-    console.log('📊 Total de obrigatórias extraídas:', obrigatorias.length);
+    // Adiciona exceções que são obrigatórias
+    for (var i = 0; i < excecoes.length; i++) {
+        var exc = excecoes[i];
+        if (exc.tipo === 'obrigatoria' && !codigosVistos[exc.codigo]) {
+            codigosVistos[exc.codigo] = true;
+            obrigatorias.push({
+                codigo: exc.codigo,
+                nome: exc.nome,
+                fonte: 'excecao'
+            });
+            console.log('Obrigatória (exceção):', exc.codigo);
+        }
+    }
+
+    console.log('Total de obrigatórias extraídas:', obrigatorias.length);
     return obrigatorias;
 }
 
 // ============================================================
-// EXTRAÇÃO DE OPTATIVAS PLANEJADAS
+// EXTRACAO DE OPTATIVAS PLANEJADAS (inclui excecoes)
 // ============================================================
 
-function extrairOptativasPlanejadas(textoCompleto) {
+function extrairOptativasPlanejadas(textoCompleto, excecoes) {
+    excecoes = excecoes || [];
     var optativas = [];
     var codigosVistos = {};
 
-    console.log('🔍 Extraindo optativas planejadas...');
+    console.log('Extraindo optativas planejadas...');
 
-    var seccaoMatch = textoCompleto.match(/Optativas Planejadas[^:]*:([\s\S]*?)(?=Optativas ja cursadas|ATENCAO|LEGENDA|RESUMO DE OPTATIVAS|$)/i);
+    var seccaoMatch = textoCompleto.match(/Optativas Planejadas[^:]*:([\s\S]*?)(?=Optativas já cursadas|ATENCAO|LEGENDA|RESUMO DE OPTATIVAS|$)/i);
     if (seccaoMatch) {
-        console.log('📌 Seção "Optativas Planejadas" encontrada!');
+        console.log('Seção "Optativas Planejadas" encontrada!');
         var secaoTexto = seccaoMatch[1];
         
         var regex = /\[P\]\s*([A-Z0-9]+)\s*-\s*([^(]+?)\s*\(Prioridade\s*(\d+)\)/gi;
@@ -343,7 +366,7 @@ function extrairOptativasPlanejadas(textoCompleto) {
             var nome = match[2].trim();
             var prioridade = parseInt(match[3]);
             
-            console.log('📌 Optativa encontrada:', codigo, '-', nome, 'Prioridade:', prioridade);
+            console.log('Optativa encontrada:', codigo, '-', nome, 'Prioridade:', prioridade);
             
             if (!codigosVistos[codigo]) {
                 codigosVistos[codigo] = true;
@@ -357,7 +380,7 @@ function extrairOptativasPlanejadas(textoCompleto) {
         }
         
         if (!encontrou) {
-            console.log('⚠️ Tentando regex alternativo para optativas...');
+            console.log('Tentando regex alternativo para optativas...');
             var regexAlt = /\[P\]\s*([A-Z0-9]+)\s*-\s*([^(]+)/gi;
             var matchAlt;
             while ((matchAlt = regexAlt.exec(secaoTexto)) !== null) {
@@ -370,7 +393,7 @@ function extrairOptativasPlanejadas(textoCompleto) {
                     prioridade = parseInt(prioridadeMatch[1]);
                 }
                 
-                console.log('📌 Optativa encontrada (alt):', codigo, '-', nome, 'Prioridade:', prioridade);
+                console.log('Optativa encontrada (alt):', codigo, '-', nome, 'Prioridade:', prioridade);
                 
                 if (!codigosVistos[codigo]) {
                     codigosVistos[codigo] = true;
@@ -384,11 +407,11 @@ function extrairOptativasPlanejadas(textoCompleto) {
             }
         }
     } else {
-        console.log('⚠️ Seção "Optativas Planejadas" NÃO encontrada!');
+        console.log('Seção "Optativas Planejadas" NÃO encontrada!');
     }
 
     if (optativas.length === 0) {
-        console.log('🔍 Procurando optativas no fluxograma...');
+        console.log('Procurando optativas no fluxograma...');
         var regexFluxo = /\[P\]\s*([A-Z0-9]+)\s*-\s*([^(]+)\([^)]*optativa[^)]*\)/gi;
         var matchFluxo;
         while ((matchFluxo = regexFluxo.exec(textoCompleto)) !== null) {
@@ -401,17 +424,33 @@ function extrairOptativasPlanejadas(textoCompleto) {
                     prioridade: 0,
                     fonte: 'fluxograma'
                 });
-                console.log('📌 Optativa no fluxograma:', codigo);
+                console.log('Optativa no fluxograma:', codigo);
             }
         }
     }
 
-    console.log('📊 Total de optativas extraídas:', optativas.length);
+    // Adiciona exceções que são optativas
+    for (var i = 0; i < excecoes.length; i++) {
+        var exc = excecoes[i];
+        if (exc.tipo === 'optativa' && !codigosVistos[exc.codigo]) {
+            codigosVistos[exc.codigo] = true;
+            var prioridade = optativas.length + 1;
+            optativas.push({
+                codigo: exc.codigo,
+                nome: exc.nome,
+                prioridade: prioridade,
+                fonte: 'excecao'
+            });
+            console.log('Optativa (exceção):', exc.codigo);
+        }
+    }
+
+    console.log('Total de optativas extraídas:', optativas.length);
     return optativas;
 }
 
 // ============================================================
-// CONSOLIDAÇÃO - OBRIGATÓRIAS
+// CONSOLIDACAO - OBRIGATORIAS (inclui excecoes)
 // ============================================================
 
 function getDisciplinasConsolidadas() {
@@ -421,6 +460,7 @@ function getDisciplinasConsolidadas() {
     for (var id in alunos) {
         var aluno = alunos[id];
         var obrigatorias = aluno.obrigatoriasPlanejadas || [];
+        var excecoes = aluno.excecoes || [];
 
         for (var i = 0; i < obrigatorias.length; i++) {
             var codigo = obrigatorias[i];
@@ -444,6 +484,33 @@ function getDisciplinasConsolidadas() {
                 mapa[codigo].total++;
             }
         }
+
+        // Adiciona exceções obrigatórias
+        for (var i = 0; i < excecoes.length; i++) {
+            var exc = excecoes[i];
+            if (exc.tipo === 'obrigatoria') {
+                var codigo = exc.codigo;
+                
+                if (!mapa[codigo]) {
+                    mapa[codigo] = {
+                        codigo: codigo,
+                        nome: exc.nome || getNomeDisciplina(codigo),
+                        alunos: [],
+                        total: 0
+                    };
+                }
+
+                var jaExiste = false;
+                for (var a = 0; a < mapa[codigo].alunos.length; a++) {
+                    if (mapa[codigo].alunos[a].id === id) { jaExiste = true; break; }
+                }
+
+                if (!jaExiste) {
+                    mapa[codigo].alunos.push({ id: id, nome: aluno.nome + ' (exceção)' });
+                    mapa[codigo].total++;
+                }
+            }
+        }
     }
 
     var resultado = [];
@@ -455,7 +522,7 @@ function getDisciplinasConsolidadas() {
 }
 
 // ============================================================
-// CONSOLIDAÇÃO - OPTATIVAS
+// CONSOLIDACAO - OPTATIVAS (inclui excecoes)
 // ============================================================
 
 function getOptativasConsolidadas() {
@@ -465,6 +532,7 @@ function getOptativasConsolidadas() {
     for (var id in alunos) {
         var aluno = alunos[id];
         var optativas = aluno.optativasInfo || [];
+        var excecoes = aluno.excecoes || [];
 
         for (var i = 0; i < optativas.length; i++) {
             var opt = optativas[i];
@@ -521,6 +589,48 @@ function getOptativasConsolidadas() {
                 }
             }
         }
+
+        // Adiciona exceções optativas
+        for (var i = 0; i < excecoes.length; i++) {
+            var exc = excecoes[i];
+            if (exc.tipo === 'optativa') {
+                var codigo = exc.codigo;
+                var prioridade = 0;
+                
+                if (!mapa[codigo]) {
+                    mapa[codigo] = {
+                        codigo: codigo,
+                        nome: exc.nome || getNomeDisciplina(codigo),
+                        alunos: [],
+                        alunosP1: [],
+                        alunosP2: [],
+                        alunosP3: [],
+                        alunosP4: [],
+                        alunosP5: [],
+                        total: 0,
+                        totalP1: 0,
+                        totalP2: 0,
+                        totalP3: 0,
+                        totalP4: 0,
+                        totalP5: 0
+                    };
+                }
+
+                var jaExiste = false;
+                for (var a = 0; a < mapa[codigo].alunos.length; a++) {
+                    if (mapa[codigo].alunos[a].id === id) { jaExiste = true; break; }
+                }
+
+                if (!jaExiste) {
+                    mapa[codigo].alunos.push({ 
+                        id: id, 
+                        nome: aluno.nome + ' (exceção)',
+                        prioridade: prioridade
+                    });
+                    mapa[codigo].total++;
+                }
+            }
+        }
     }
 
     var resultado = [];
@@ -529,41 +639,6 @@ function getOptativasConsolidadas() {
     }
     resultado.sort(function(a, b) { return b.total - a.total; });
     return resultado;
-}
-
-// ============================================================
-// LOGIN / LOGOUT
-// ============================================================
-
-function fazerLogin() {
-    console.log('🔐 fazerLogin chamado');
-    
-    var senhaInput = document.getElementById('loginSenha');
-    var erroEl = document.getElementById('loginErro');
-    var senha = senhaInput.value.trim();
-
-    if (senha === ADMIN_SENHA) {
-        console.log('✅ Login correto!');
-        document.getElementById('loginOverlay').classList.add('hidden');
-        document.getElementById('adminApp').style.display = 'block';
-        erroEl.textContent = '';
-        senhaInput.value = '';
-        inicializarAdmin();
-    } else {
-        console.log('❌ Senha incorreta');
-        erroEl.textContent = '❌ Senha incorreta. Tente novamente.';
-        senhaInput.value = '';
-        senhaInput.focus();
-        setTimeout(function() { erroEl.textContent = ''; }, 3000);
-    }
-}
-
-function fazerLogout() {
-    if (!confirm('Tem certeza que deseja sair?')) return;
-    document.getElementById('loginOverlay').classList.remove('hidden');
-    document.getElementById('adminApp').style.display = 'none';
-    document.getElementById('loginSenha').value = '';
-    document.getElementById('loginErro').textContent = '';
 }
 
 // ============================================================
@@ -581,15 +656,15 @@ function showToast(msg, type) {
 }
 
 // ============================================================
-// INICIALIZAÇÃO
+// INICIALIZACAO
 // ============================================================
 
 function inicializarAdmin() {
-    console.log('🚀 Inicializando Admin...');
+    console.log('Inicializando Admin...');
     
     try {
         gerenciador = new GerenciadorSimples();
-        console.log('📚 Alunos:', Object.keys(gerenciador.getAlunos()).length);
+        console.log('Alunos:', Object.keys(gerenciador.getAlunos()).length);
 
         renderAlunoList();
         updateAlunoCount();
@@ -597,7 +672,7 @@ function inicializarAdmin() {
         updateConsolidacaoBadge();
 
         gerenciador.adicionarListener(function(evento, dados) {
-            console.log('📢 Evento:', evento);
+            console.log('Evento:', evento);
             renderAlunoList();
             updateAlunoCount();
             renderConsolidacao();
@@ -610,12 +685,12 @@ function inicializarAdmin() {
             gerenciador.selecionarAluno(keys[0]);
         }
         
-        console.log('✅ Admin inicializado com sucesso!');
-        showToast('✅ Admin carregado com ' + keys.length + ' aluno(s)!', 'success');
+        console.log('Admin inicializado com sucesso!');
+        showToast('Admin carregado com ' + keys.length + ' aluno(s)!', 'success');
 
     } catch (error) {
-        console.error('❌ Erro:', error);
-        showToast('❌ Erro: ' + error.message, 'error');
+        console.error('Erro:', error);
+        showToast('Erro: ' + error.message, 'error');
     }
 }
 
@@ -653,7 +728,7 @@ function renderAlunoList() {
         infoSpan.textContent = aluno.nome + matriculaStr + ' - ' + (progresso ? progresso.done + '/' + progresso.total + ' (' + pct + '%)' : '0/0 (0%)');
 
         var btnRemove = document.createElement('button');
-        btnRemove.textContent = '✕';
+        btnRemove.textContent = 'x';
         btnRemove.style.cssText = 'background:none;border:none;cursor:pointer;color:#c62828;font-size:16px;font-weight:bold;padding:0 4px;';
         btnRemove.title = 'Remover aluno';
         btnRemove.onclick = (function(id) {
@@ -693,14 +768,14 @@ function removerAlunoHandler(id) {
 
     try {
         gerenciador.removerAluno(id);
-        showToast('🗑️ Aluno removido.', 'info');
+        showToast('Aluno removido.', 'info');
     } catch (error) {
-        showToast('❌ ' + error.message, 'error');
+        showToast(error.message, 'error');
     }
 }
 
 // ============================================================
-// RENDER - CONSOLIDAÇÃO
+// RENDER - CONSOLIDACAO
 // ============================================================
 
 function renderConsolidacao() {
@@ -727,7 +802,7 @@ function renderConsolidacao() {
     if (totalAlunos === 0) {
         container.innerHTML = 
             '<div class="no-aluno" style="padding:40px 20px;">' +
-                '<h3>👨‍🎓 Nenhum aluno cadastrado</h3>' +
+                '<h3>Nenhum aluno cadastrado</h3>' +
                 '<p>Importe relatórios para ver a consolidação.</p>' +
             '</div>';
         return;
@@ -736,7 +811,7 @@ function renderConsolidacao() {
     if (obrigatorias.length === 0 && optativas.length === 0) {
         container.innerHTML = 
             '<div class="no-aluno" style="padding:40px 20px;">' +
-                '<h3>📌 Nenhuma disciplina planejada</h3>' +
+                '<h3>Nenhuma disciplina planejada</h3>' +
                 '<p>Nenhum aluno marcou disciplinas como planejadas [P].</p>' +
             '</div>';
         return;
@@ -752,16 +827,16 @@ function renderConsolidacao() {
                 '</span>' +
             '</div>' +
             '<div style="display:flex;gap:8px;flex-wrap:wrap;">' +
-                '<button onclick="gerarRelatorioConsolidado()" style="padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#1a237e;color:white;">📄 Gerar Relatório</button>' +
-                '<button onclick="toggleAllOfertas(true)" style="padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#4caf50;color:white;">✅ Oferecer todas</button>' +
-                '<button onclick="toggleAllOfertas(false)" style="padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#ef5350;color:white;">❌ Não oferecer todas</button>' +
+                '<button onclick="gerarRelatorioConsolidado()" style="padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#1a237e;color:white;">Gerar Relatório</button>' +
+                '<button onclick="toggleAllOfertas(true)" style="padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#4caf50;color:white;">Oferecer todas</button>' +
+                '<button onclick="toggleAllOfertas(false)" style="padding:8px 16px;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;background:#ef5350;color:white;">Não oferecer todas</button>' +
             '</div>' +
         '</div>';
 
     if (obrigatorias.length > 0) {
         html += 
             '<div style="margin-bottom:16px;">' +
-                '<div style="font-weight:bold;color:#1a237e;font-size:15px;margin-bottom:8px;">📚 OBRIGATÓRIAS PLANEJADAS</div>' +
+                '<div style="font-weight:bold;color:#1a237e;font-size:15px;margin-bottom:8px;">OBRIGATÓRIAS PLANEJADAS</div>' +
                 '<div style="background:#f8f9fa;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;">' +
                     '<div style="display:grid;grid-template-columns:3fr 1fr 2fr 1fr;background:#1a237e;color:white;padding:10px 14px;font-weight:bold;font-size:13px;gap:8px;">' +
                         '<div>Disciplina</div>' +
@@ -796,7 +871,7 @@ function renderConsolidacao() {
                     '</div>' +
                     '<div style="text-align:center;">' +
                         '<button onclick="toggleOferta(\'' + disc.codigo + '\')" style="padding:6px 12px;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:12px;min-width:80px;background:' + (isOfertada ? '#4caf50' : '#ef5350') + ';color:white;">' +
-                            (isOfertada ? '✅ Oferecer' : '❌ Não oferecer') +
+                            (isOfertada ? 'Oferecer' : 'Não oferecer') +
                         '</button>' +
                     '</div>' +
                 '</div>';
@@ -808,7 +883,7 @@ function renderConsolidacao() {
     if (optativas.length > 0) {
         html += 
             '<div style="margin-bottom:16px;">' +
-                '<div style="font-weight:bold;color:#4a148c;font-size:15px;margin-bottom:8px;">📌 OPTATIVAS PLANEJADAS</div>' +
+                '<div style="font-weight:bold;color:#4a148c;font-size:15px;margin-bottom:8px;">OPTATIVAS PLANEJADAS</div>' +
                 '<div style="background:#f8f9fa;border-radius:8px;overflow:hidden;border:1px solid #e0e0e0;">' +
                     '<div style="display:grid;grid-template-columns:2.5fr 0.7fr 0.7fr 0.7fr 0.7fr 0.7fr 1fr 1fr;background:#4a148c;color:white;padding:10px 14px;font-weight:bold;font-size:11px;gap:4px;">' +
                         '<div>Optativa</div>' +
@@ -850,7 +925,7 @@ function renderConsolidacao() {
                     '<div style="text-align:center;font-weight:bold;font-size:14px;color:#4a148c;">' + disc.total + '</div>' +
                     '<div style="text-align:center;">' +
                         '<button onclick="toggleOfertaOptativa(\'' + disc.codigo + '\')" style="padding:4px 10px;border:none;border-radius:4px;cursor:pointer;font-weight:600;font-size:11px;min-width:60px;background:' + (isOfertada ? '#4caf50' : '#ef5350') + ';color:white;">' +
-                            (isOfertada ? '✅ Sim' : '❌ Não') +
+                            (isOfertada ? 'Sim' : 'Não') +
                         '</button>' +
                     '</div>' +
                 '</div>';
@@ -860,7 +935,7 @@ function renderConsolidacao() {
 
         html += 
             '<div style="margin-top:4px;padding:6px 12px;background:#f5f5f5;border-radius:6px;font-size:11px;color:#666;">' +
-                '📌 <strong>P1 a P5</strong> = Prioridade escolhida pelo aluno (P1 = maior prioridade)' +
+                'P1 a P5 = Prioridade escolhida pelo aluno (P1 = maior prioridade)' +
             '</div>';
     }
 
@@ -877,10 +952,10 @@ function renderConsolidacao() {
 
     html += 
         '<div style="margin-top:12px;padding:10px 14px;background:#e3f2fd;border-radius:8px;display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;font-size:13px;">' +
-            '<div><span style="font-weight:bold;">✅ Oferecidas:</span> <span style="font-weight:bold;color:#2e7d32;">' + totalSelecionadas + '</span></div>' +
-            '<div><span style="font-weight:bold;">❌ Não oferecidas:</span> <span style="font-weight:bold;color:#c62828;">' + totalNaoSelecionadas + '</span></div>' +
-            '<div><span style="font-weight:bold;">📚 Total planejadas:</span> <span style="font-weight:bold;color:#1a237e;">' + (obrigatorias.length + optativas.length) + '</span></div>' +
-            '<div><span style="font-weight:bold;">👨‍🎓 Total de alunos:</span> <span style="font-weight:bold;color:#1a237e;">' + totalAlunos + '</span></div>' +
+            '<div><span style="font-weight:bold;">Oferecidas:</span> <span style="font-weight:bold;color:#2e7d32;">' + totalSelecionadas + '</span></div>' +
+            '<div><span style="font-weight:bold;">Não oferecidas:</span> <span style="font-weight:bold;color:#c62828;">' + totalNaoSelecionadas + '</span></div>' +
+            '<div><span style="font-weight:bold;">Total planejadas:</span> <span style="font-weight:bold;color:#1a237e;">' + (obrigatorias.length + optativas.length) + '</span></div>' +
+            '<div><span style="font-weight:bold;">Total de alunos:</span> <span style="font-weight:bold;color:#1a237e;">' + totalAlunos + '</span></div>' +
         '</div>';
 
     container.innerHTML = html;
@@ -908,12 +983,12 @@ function toggleAllOfertas(status) {
         ofertasOptativas[cod] = status;
     }
     renderConsolidacao();
-    var msg = status ? '✅ Todas as disciplinas marcadas como oferecidas!' : '❌ Todas as disciplinas marcadas como não oferecidas!';
+    var msg = status ? 'Todas as disciplinas marcadas como oferecidas!' : 'Todas as disciplinas marcadas como não oferecidas!';
     showToast(msg, status ? 'success' : 'info');
 }
 
 // ============================================================
-// GERAR RELATÓRIO PDF (SEM EMOJIS)
+// GERAR RELATORIO PDF (SEM EMOJIS)
 // ============================================================
 
 function gerarRelatorioConsolidado() {
@@ -921,20 +996,18 @@ function gerarRelatorioConsolidado() {
     var optativas = getOptativasConsolidadas();
 
     if (obrigatorias.length === 0 && optativas.length === 0) {
-        showToast('⚠️ Nenhuma disciplina planejada para gerar relatório.', 'warning');
+        showToast('Nenhuma disciplina planejada para gerar relatório.', 'warning');
         return;
     }
 
     var texto = '='.repeat(80) + '\n';
-    texto += 'RELATORIO DE OFERTA DE DISCIPLINAS\n';
+    texto += 'RELATÓRIO DE OFERTA DE DISCIPLINAS\n';
     texto += '='.repeat(80) + '\n';
     texto += 'Data: ' + new Date().toLocaleString('pt-BR') + '\n';
     texto += 'Total de alunos: ' + gerenciador.getTotalAlunos() + '\n\n';
 
-    // ============================================================
     // OBRIGATÓRIAS SELECIONADAS PARA OFERTA
-    // ============================================================
-    texto += 'OBRIGATORIAS SELECIONADAS PARA OFERTA\n';
+    texto += 'OBRIGATÓRIAS SELECIONADAS PARA OFERTA\n';
     texto += '-'.repeat(80) + '\n\n';
 
     var temSelecionadas = false;
@@ -954,12 +1027,10 @@ function gerarRelatorioConsolidado() {
             texto += '\n';
         }
     }
-    if (!temSelecionadas) texto += 'Nenhuma obrigatoria selecionada.\n\n';
+    if (!temSelecionadas) texto += 'Nenhuma obrigatória selecionada.\n\n';
 
-    // ============================================================
     // OBRIGATÓRIAS NÃO OFERTADAS
-    // ============================================================
-    texto += 'OBRIGATORIAS NAO OFERTADAS\n';
+    texto += 'OBRIGATÓRIAS NÃO OFERTADAS\n';
     texto += '-'.repeat(80) + '\n\n';
 
     var temNaoOfertadas = false;
@@ -967,8 +1038,8 @@ function gerarRelatorioConsolidado() {
         var disc = obrigatorias[i];
         if (!ofertas[disc.codigo]) {
             temNaoOfertadas = true;
-            texto += '[NAO OFERTADA] ' + disc.codigo + ' - ' + disc.nome + '\n';
-            texto += '   ' + disc.total + ' aluno(s) ficarao sem\n';
+            texto += '[NÃO OFERTADA] ' + disc.codigo + ' - ' + disc.nome + '\n';
+            texto += '   ' + disc.total + ' aluno(s) ficarão sem\n';
             if (disc.alunos.length > 0) {
                 var nomes = [];
                 for (var j = 0; j < disc.alunos.length; j++) {
@@ -979,11 +1050,9 @@ function gerarRelatorioConsolidado() {
             texto += '\n';
         }
     }
-    if (!temNaoOfertadas) texto += 'Todas as obrigatorias planejadas foram selecionadas.\n\n';
+    if (!temNaoOfertadas) texto += 'Todas as obrigatórias planejadas foram selecionadas.\n\n';
 
-    // ============================================================
     // OPTATIVAS OFERTADAS
-    // ============================================================
     if (optativas.length > 0) {
         texto += 'OPTATIVAS OFERTADAS\n';
         texto += '-'.repeat(80) + '\n\n';
@@ -1007,10 +1076,8 @@ function gerarRelatorioConsolidado() {
         }
         if (!temOptOfertadas) texto += 'Nenhuma optativa selecionada.\n\n';
 
-        // ============================================================
         // OPTATIVAS NÃO OFERTADAS
-        // ============================================================
-        texto += 'OPTATIVAS NAO OFERTADAS\n';
+        texto += 'OPTATIVAS NÃO OFERTADAS\n';
         texto += '-'.repeat(80) + '\n\n';
 
         var temOptNaoOfertadas = false;
@@ -1018,7 +1085,7 @@ function gerarRelatorioConsolidado() {
             var disc = optativas[i];
             if (!ofertasOptativas[disc.codigo]) {
                 temOptNaoOfertadas = true;
-                texto += '[NAO OFERTADA] ' + disc.codigo + ' - ' + disc.nome + '\n';
+                texto += '[NÃO OFERTADA] ' + disc.codigo + ' - ' + disc.nome + '\n';
                 texto += '   ' + disc.total + ' aluno(s) escolheram como alternativa\n';
                 if (disc.alunos.length > 0) {
                     var nomes = [];
@@ -1034,11 +1101,8 @@ function gerarRelatorioConsolidado() {
     }
 
     texto += '='.repeat(80) + '\n';
-    texto += 'Relatorio gerado em ' + new Date().toLocaleString('pt-BR') + '\n';
+    texto += 'Relatório gerado em ' + new Date().toLocaleString('pt-BR') + '\n';
 
-    // ============================================================
-    // GERAR PDF
-    // ============================================================
     try {
         var { jsPDF } = window.jspdf;
         var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1067,15 +1131,15 @@ function gerarRelatorioConsolidado() {
 
         var nomeArquivo = 'relatorio_ofertas_' + new Date().toISOString().slice(0, 10) + '.pdf';
         pdf.save(nomeArquivo);
-        showToast('📄 Relatorio de ofertas gerado com sucesso!', 'success');
+        showToast('Relatório de ofertas gerado com sucesso!', 'success');
     } catch (e) {
         console.log(texto);
-        showToast('📄 Relatorio gerado no console (F12)', 'info');
+        showToast('Relatório gerado no console (F12)', 'info');
     }
 }
 
 // ============================================================
-// HANDLER - IMPORTAÇÃO DE RELATÓRIOS PDF
+// HANDLER - IMPORTACAO DE RELATORIOS PDF
 // ============================================================
 
 function importarRelatoriosHandler(event) {
@@ -1084,7 +1148,7 @@ function importarRelatoriosHandler(event) {
 
     var preview = document.getElementById('relatorioPreview');
     preview.style.display = 'block';
-    preview.innerHTML = '<div class="info">⏳ Processando ' + files.length + ' relatório(s)...</div>';
+    preview.innerHTML = '<div class="info">Processando ' + files.length + ' relatório(s)...</div>';
 
     var totalProcessados = 0;
     var erros = [];
@@ -1111,25 +1175,41 @@ function importarRelatoriosHandler(event) {
                     var nomeAluno = nomeMatch ? nomeMatch[1].trim() : file.name.replace('.pdf', '');
                     nomeAluno = nomeAluno.replace(/^Aluno:\s*/i, '').trim();
 
-                    if (nomeAluno.length > 50 || nomeAluno.includes('Progresso')) {
+                    if (nomeAluno.length > 50 || nomeAluno.indexOf('Progresso') !== -1) {
                         nomeAluno = file.name.replace('.pdf', '').replace('relatorio_', '').replace(/_/g, ' ');
                         nomeAluno = nomeAluno.replace(/\b\w/g, function(l) { return l.toUpperCase(); });
                     }
 
-                    console.log('📌 Nome extraído:', nomeAluno);
+                    console.log('Nome extraído:', nomeAluno);
 
                     var cursoMatch = textoCompleto.match(/Curso:\s*([^P]+?)\s*Progresso:/i);
                     var curso = 'bmat';
                     if (cursoMatch) {
                         var cursoTexto = cursoMatch[1].trim().toLowerCase();
-                        if (cursoTexto.includes('bcet')) curso = 'bcet';
+                        if (cursoTexto.indexOf('bcet') !== -1) curso = 'bcet';
                     }
 
-                    var obrigatorias = extrairObrigatoriasPlanejadas(textoCompleto);
-                    console.log('📚 Obrigatórias planejadas:', obrigatorias.length);
+                    // Extrai exceções do relatório
+                    var excecoesExtraidas = [];
+                    var regexExcecao = /\[P\]\s*([A-Z0-9]+)\s*-\s*([^(]+)\([^)]*\)\s*\*EXCECAO\*/gi;
+                    var matchExcecao;
+                    while ((matchExcecao = regexExcecao.exec(textoCompleto)) !== null) {
+                        var codigo = matchExcecao[1].trim();
+                        var nome = matchExcecao[2].trim();
+                        var isOpt = isOptativaGlobal(codigo);
+                        excecoesExtraidas.push({
+                            codigo: codigo,
+                            nome: nome,
+                            tipo: isOpt ? 'optativa' : 'obrigatoria'
+                        });
+                        console.log('Exceção encontrada no relatório:', codigo);
+                    }
 
-                    var optativas = extrairOptativasPlanejadas(textoCompleto);
-                    console.log('📌 Optativas planejadas:', optativas.length);
+                    var obrigatorias = extrairObrigatoriasPlanejadas(textoCompleto, excecoesExtraidas);
+                    console.log('Obrigatórias planejadas:', obrigatorias.length);
+
+                    var optativas = extrairOptativasPlanejadas(textoCompleto, excecoesExtraidas);
+                    console.log('Optativas planejadas:', optativas.length);
 
                     var alunos = gerenciador.getAlunos();
                     var alunoId = null;
@@ -1150,6 +1230,7 @@ function importarRelatoriosHandler(event) {
 
                     alunoExistente.curso = curso;
 
+                    // Processa disciplinas do fluxograma
                     var regex = /\[([XP\s])\]\s*([A-Z0-9]+)\s*-\s*([^(]+)\((\d+h)\)/gi;
                     var match;
                     while ((match = regex.exec(textoCompleto)) !== null) {
@@ -1198,6 +1279,7 @@ function importarRelatoriosHandler(event) {
                         }
                     }
 
+                    // Salva obrigatórias planejadas
                     var obrigatoriasCodigos = [];
                     for (var i = 0; i < obrigatorias.length; i++) {
                         obrigatoriasCodigos.push(obrigatorias[i].codigo);
@@ -1215,6 +1297,7 @@ function importarRelatoriosHandler(event) {
                     }
                     alunoExistente.obrigatoriasPlanejadas = obrigatoriasCodigos;
 
+                    // Salva optativas planejadas
                     var optativasInfo = [];
                     for (var i = 0; i < optativas.length; i++) {
                         optativasInfo.push({
@@ -1225,11 +1308,27 @@ function importarRelatoriosHandler(event) {
                     }
                     alunoExistente.optativasInfo = optativasInfo;
 
-                    var totalOptMatch = textoCompleto.match(/Total de optativas necessarias:\s*(\d+)/i);
+                    // Salva exceções
+                    if (!alunoExistente.excecoes) alunoExistente.excecoes = [];
+                    for (var i = 0; i < excecoesExtraidas.length; i++) {
+                        var exc = excecoesExtraidas[i];
+                        var jaExiste = alunoExistente.excecoes.some(function(e) { return e.codigo === exc.codigo; });
+                        if (!jaExiste) {
+                            alunoExistente.excecoes.push({
+                                codigo: exc.codigo,
+                                nome: exc.nome,
+                                tipo: exc.tipo,
+                                data: new Date().toISOString()
+                            });
+                            console.log('Exceção salva:', exc.codigo);
+                        }
+                    }
+
+                    var totalOptMatch = textoCompleto.match(/Total de optativas necessárias:\s*(\d+)/i);
                     if (totalOptMatch) {
                         alunoExistente.totalOptativasNecessarias = parseInt(totalOptMatch[1]);
                     }
-                    var cursadasOptMatch = textoCompleto.match(/Optativas ja cursadas:\s*(\d+)/i);
+                    var cursadasOptMatch = textoCompleto.match(/Optativas já cursadas:\s*(\d+)/i);
                     if (cursadasOptMatch) {
                         alunoExistente.optativasCursadas = parseInt(cursadasOptMatch[1]);
                     }
@@ -1239,8 +1338,9 @@ function importarRelatoriosHandler(event) {
 
                     var previewHtml = document.getElementById('relatorioPreview').innerHTML;
                     var newEntry = '<div style="padding:4px 8px;background:#e8f5e9;border-radius:4px;margin:2px 0;font-size:12px;">' +
-                        '📌 <strong>' + nomeAluno + '</strong> ' +
-                        '(' + obrigatorias.length + ' obrigatórias, ' + optativas.length + ' optativas)' +
+                        ' <strong>' + nomeAluno + '</strong> ' +
+                        '(' + obrigatorias.length + ' obrigatórias, ' + optativas.length + ' optativas' +
+                        (excecoesExtraidas.length > 0 ? ', ' + excecoesExtraidas.length + ' exceções' : '') + ')' +
                         '</div>';
                     document.getElementById('relatorioPreview').innerHTML = previewHtml + newEntry;
 
@@ -1254,7 +1354,7 @@ function importarRelatoriosHandler(event) {
                     erros.push({ arquivo: file.name, erro: error.message });
                     var previewHtml = document.getElementById('relatorioPreview').innerHTML;
                     var errorEntry = '<div style="padding:4px 8px;background:#ffebee;border-radius:4px;margin:2px 0;font-size:12px;color:#c62828;">' +
-                        '❌ <strong>' + file.name + '</strong>: ' + error.message +
+                        'Erro: <strong>' + file.name + '</strong>: ' + error.message +
                         '</div>';
                     document.getElementById('relatorioPreview').innerHTML = previewHtml + errorEntry;
                 }
@@ -1265,9 +1365,9 @@ function importarRelatoriosHandler(event) {
     }
 
     setTimeout(function() {
-        var msg = '✅ ' + totalProcessados + ' relatório(s) importado(s)!';
+        var msg = totalProcessados + ' relatório(s) importado(s)!';
         if (erros.length > 0) {
-            msg += ' ⚠️ ' + erros.length + ' erro(s)';
+            msg += ' ' + erros.length + ' erro(s)';
         }
         showToast(msg, erros.length > 0 ? 'warning' : 'success');
     }, 1000);
@@ -1276,11 +1376,9 @@ function importarRelatoriosHandler(event) {
 }
 
 // ============================================================
-// EXPOSIÇÃO GLOBAL
+// EXPOSICAO GLOBAL
 // ============================================================
 
-window.fazerLogin = fazerLogin;
-window.fazerLogout = fazerLogout;
 window.importarRelatoriosHandler = importarRelatoriosHandler;
 window.toggleOferta = toggleOferta;
 window.toggleOfertaOptativa = toggleOfertaOptativa;
@@ -1289,4 +1387,4 @@ window.gerarRelatorioConsolidado = gerarRelatorioConsolidado;
 window.showToast = showToast;
 window.removerAlunoHandler = removerAlunoHandler;
 
-console.log('✅ admin.js completo (com optativas e prioridades) carregado!');
+console.log('admin.js completo (com optativas, prioridades e exceções) carregado!');

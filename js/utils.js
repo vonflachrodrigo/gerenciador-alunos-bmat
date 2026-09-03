@@ -1,8 +1,8 @@
 // ============================================================
-// FUNÇÕES PURAS (UTILITÁRIAS)
+// FUNCOES PURAS (UTILITARIAS)
 // ============================================================
 
-// 2.1 Normalização de código
+// 2.1 Normalizacao de codigo
 function normalizarCodigo(codigo) {
     if (!codigo) return '';
     let base = codigo.replace(/\.[PT].*$/, '').replace(/\.PRATICA$/, '').replace(/\.TEORICA$/, '');
@@ -33,7 +33,7 @@ function isOptativaGlobal(codigo) {
     return todas.some(o => o.codigo === base);
 }
 
-// 2.4 Obtém equivalência
+// 2.4 Obtém equivalencia
 function getEquivalencia(codigo, direcao) {
     const base = normalizarCodigo(codigo);
     const simples = CONFIG.equivalencias.simples;
@@ -58,19 +58,19 @@ function getEquivalencia(codigo, direcao) {
     return null;
 }
 
-// 2.5 Obtém nome da disciplina
+// 2.5 Obtem nome da disciplina
 function getNomeDisciplina(codigo) {
     return CONFIG.nomesDisciplinas[codigo] || codigo;
 }
 
-// 2.6 Obtém pré-requisitos
+// 2.6 Obtem pre-requisitos
 function getPreRequisitos(codigo, curso) {
     if (curso === 'bmat') return CONFIG.prerequisitosBMAT[codigo] || [];
     if (curso === 'bcet') return CONFIG.prerequisitosBCET[codigo] || [];
     return [];
 }
 
-// 2.7 Processa disciplinas do histórico
+// 2.7 Processa disciplinas do historico
 function processarHistorico(disciplinasPDF, cursoAtual) {
     const resultado = {
         disciplinas: {},
@@ -92,7 +92,6 @@ function processarHistorico(disciplinasPDF, cursoAtual) {
         if (temAprovacao) {
             resultado.disciplinas[codigo] = { status: 'done', origem: 'historico' };
 
-            // Verifica equivalência (antigo → novo)
             const equiv = getEquivalencia(codigo, 'antigo_para_novo');
             if (equiv) {
                 if (equiv.tipo === 'simples') {
@@ -106,7 +105,6 @@ function processarHistorico(disciplinasPDF, cursoAtual) {
                 }
             }
 
-            // Verifica se é optativa
             if (isOptativa(codigo, cursoAtual) || isOptativaGlobal(codigo)) {
                 if (!resultado.optativas.includes(codigo)) {
                     resultado.optativas.push(codigo);
@@ -127,7 +125,6 @@ function alocarOptativas(optativasCursadas, slotsExistentes, slotsDisponiveis) {
     const jaAlocadas = new Set(Object.values(slotsExistentes));
     const disponiveis = optativasCursadas.filter(c => !jaAlocadas.has(c));
 
-    // Prioridade: GCET200, GCET218, GCET673, GCET675 primeiro
     const prioridade = { 'GCET200': 1, 'GCET218': 2, 'GCET673': 3, 'GCET675': 4 };
     disponiveis.sort((a, b) => (prioridade[a] || 99) - (prioridade[b] || 99));
 
@@ -137,88 +134,174 @@ function alocarOptativas(optativasCursadas, slotsExistentes, slotsDisponiveis) {
 
     return resultado;
 }
+
 // 2.9 Calcula progresso
-        function calcularProgresso(curriculo, disciplinas, optativas) {
-            let total = 0,
-                done = 0,
-                pending = 0,
-                planned = 0;
+function calcularProgresso(curriculo, disciplinas, optativas) {
+    let total = 0,
+        done = 0,
+        pending = 0,
+        planned = 0;
 
-            for (const semestre of curriculo) {
-                for (const disc of semestre.disciplinas) {
-                    if (disc.isOptativa) {
-                        total++;
-                        const codigo = optativas[disc.codigo];
-                        if (codigo && disciplinas[codigo]?.status === 'done') done++;
-                        else if (codigo && disciplinas[codigo]?.status === 'pending') pending++;
-                        else if (codigo && disciplinas[codigo]?.status === 'planned') planned++;
-                    } else {
-                        total++;
-                        const status = disciplinas[disc.codigo]?.status || 'not-started';
-                        if (status === 'done') done++;
-                        else if (status === 'pending') pending++;
-                        else if (status === 'planned') planned++;
-                    }
-                }
+    for (const semestre of curriculo) {
+        for (const disc of semestre.disciplinas) {
+            if (disc.isOptativa) {
+                total++;
+                const codigo = optativas[disc.codigo];
+                if (codigo && disciplinas[codigo]?.status === 'done') done++;
+                else if (codigo && disciplinas[codigo]?.status === 'pending') pending++;
+                else if (codigo && disciplinas[codigo]?.status === 'planned') planned++;
+            } else {
+                total++;
+                const status = disciplinas[disc.codigo]?.status || 'not-started';
+                if (status === 'done') done++;
+                else if (status === 'pending') pending++;
+                else if (status === 'planned') planned++;
             }
-
-            return { total, done, pending, planned, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
         }
+    }
 
-        // 2.10 Verifica se pré-requisitos estão cumpridos
-        function verificarPreRequisitos(codigo, curso, disciplinas, quebras) {
-            const prereqs = getPreRequisitos(codigo, curso);
-            if (prereqs.length === 0) return { status: 'none', lista: [] };
-            if (quebras && quebras[codigo]) return { status: 'quebra', lista: prereqs, quebra: true };
+    return { total, done, pending, planned, pct: total > 0 ? Math.round((done / total) * 100) : 0 };
+}
 
-            const resultados = [];
-            let todosOk = true,
-                temPendente = false;
-            for (const pre of prereqs) {
-                const status = disciplinas[pre]?.status || 'not-started';
-                resultados.push({ codigo: pre, status });
-                if (status === 'not-started') todosOk = false;
-                if (status === 'pending') temPendente = true;
+// 2.10 Verifica se pre-requisitos estao cumpridos
+function verificarPreRequisitos(codigo, curso, disciplinas, quebras) {
+    const prereqs = getPreRequisitos(codigo, curso);
+    if (prereqs.length === 0) return { status: 'none', lista: [] };
+    if (quebras && quebras[codigo]) return { status: 'quebra', lista: prereqs, quebra: true };
+
+    const resultados = [];
+    let todosOk = true,
+        temPendente = false;
+    for (const pre of prereqs) {
+        const status = disciplinas[pre]?.status || 'not-started';
+        resultados.push({ codigo: pre, status });
+        if (status === 'not-started') todosOk = false;
+        if (status === 'pending') temPendente = true;
+    }
+    if (todosOk) return { status: 'ok', lista: resultados };
+    if (temPendente) return { status: 'pending', lista: resultados };
+    return { status: 'blocked', lista: resultados };
+}
+
+// 2.11 Obtem todas as optativas (BMAT + BCET)
+function getTodasOptativas() {
+    const todas = [];
+    const codigosVistos = new Set();
+
+    for (const opt of CONFIG.optativasBMAT.opt1) {
+        if (!codigosVistos.has(opt.codigo)) {
+            todas.push({ ...opt, origem: 'bmat' });
+            codigosVistos.add(opt.codigo);
+        }
+    }
+    for (const opt of CONFIG.optativasBMAT.outras) {
+        if (!codigosVistos.has(opt.codigo)) {
+            todas.push({ ...opt, origem: 'bmat' });
+            codigosVistos.add(opt.codigo);
+        }
+    }
+    for (const opt of CONFIG.optativasBCET) {
+        if (!codigosVistos.has(opt.codigo)) {
+            todas.push({ ...opt, origem: 'bcet' });
+            codigosVistos.add(opt.codigo);
+        }
+    }
+
+    return todas;
+}
+
+// 2.12 Obtem curriculo do curso atual
+function getCurriculo(curso) {
+    return curso === 'bmat' ? CONFIG.curriculoBMAT : CONFIG.curriculoBCET;
+}
+
+// 2.13 Obtem slots de optativa do curso atual
+function getSlotsOptativa(curso) {
+    if (curso === 'bmat') return ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
+    return ['OPT_BCET_1', 'OPT_BCET_2'];
+}
+
+// ============================================================
+// 2.14 FUNCOES PARA EXCECOES
+// ============================================================
+
+/**
+ * Verifica se uma disciplina esta no curriculo de um curso
+ */
+function isDisciplinaNoCurriculo(codigo, curso) {
+    const curriculo = getCurriculo(curso);
+    for (const semestre of curriculo) {
+        for (const disc of semestre.disciplinas) {
+            if (disc.codigo === codigo) {
+                return true;
             }
-            if (todosOk) return { status: 'ok', lista: resultados };
-            if (temPendente) return { status: 'pending', lista: resultados };
-            return { status: 'blocked', lista: resultados };
         }
+    }
+    return false;
+}
 
-        // 2.11 Obtém todas as optativas (BMAT + BCET)
-        function getTodasOptativas() {
-            const todas = [];
-            const codigosVistos = new Set();
+/**
+ * Obtem todas as disciplinas de um curso (obrigatorias + optativas)
+ */
+function getTodasDisciplinasDoCurso(curso) {
+    const curriculo = getCurriculo(curso);
+    const resultado = [];
+    const codigosVistos = new Set();
 
-            for (const opt of CONFIG.optativasBMAT.opt1) {
-                if (!codigosVistos.has(opt.codigo)) {
-                    todas.push({ ...opt, origem: 'bmat' });
-                    codigosVistos.add(opt.codigo);
-                }
+    // Obrigatorias
+    for (const semestre of curriculo) {
+        for (const disc of semestre.disciplinas) {
+            if (!disc.isOptativa && !codigosVistos.has(disc.codigo)) {
+                resultado.push({
+                    codigo: disc.codigo,
+                    nome: getNomeDisciplina(disc.codigo),
+                    tipo: 'obrigatoria',
+                    origem: curso,
+                    horas: disc.horas || '68h'
+                });
+                codigosVistos.add(disc.codigo);
             }
-            for (const opt of CONFIG.optativasBMAT.outras) {
-                if (!codigosVistos.has(opt.codigo)) {
-                    todas.push({ ...opt, origem: 'bmat' });
-                    codigosVistos.add(opt.codigo);
-                }
-            }
-            for (const opt of CONFIG.optativasBCET) {
-                if (!codigosVistos.has(opt.codigo)) {
-                    todas.push({ ...opt, origem: 'bcet' });
-                    codigosVistos.add(opt.codigo);
-                }
-            }
-
-            return todas;
         }
+    }
 
-        // 2.12 Obtém currículo do curso atual
-        function getCurriculo(curso) {
-            return curso === 'bmat' ? CONFIG.curriculoBMAT : CONFIG.curriculoBCET;
+    // Optativas
+    const todasOptativas = getTodasOptativas();
+    for (const opt of todasOptativas) {
+        if (opt.origem === curso && !codigosVistos.has(opt.codigo)) {
+            resultado.push({
+                codigo: opt.codigo,
+                nome: opt.nome,
+                tipo: 'optativa',
+                origem: curso,
+                pre: opt.pre || 'Nenhum',
+                horas: '68h'
+            });
+            codigosVistos.add(opt.codigo);
         }
+    }
 
-        // 2.13 Obtém slots de optativa do curso atual
-        function getSlotsOptativa(curso) {
-            if (curso === 'bmat') return ['OPT1', 'OPT2', 'OPT3', 'OPT4', 'OPT5'];
-            return ['OPT_BCET_1', 'OPT_BCET_2'];
+    return resultado;
+}
+
+/**
+ * Obtem disciplinas que estao em um curso mas nao no outro
+ */
+function getDisciplinasForaDoCurriculo(cursoAluno) {
+    const outroCurso = cursoAluno === 'bmat' ? 'bcet' : 'bmat';
+    const disciplinasAluno = getTodasDisciplinasDoCurso(cursoAluno);
+    const disciplinasOutro = getTodasDisciplinasDoCurso(outroCurso);
+
+    const codigosAluno = new Set();
+    for (const disc of disciplinasAluno) {
+        codigosAluno.add(disc.codigo);
+    }
+
+    const resultado = [];
+    for (const disc of disciplinasOutro) {
+        if (!codigosAluno.has(disc.codigo)) {
+            resultado.push(disc);
         }
+    }
+
+    return resultado;
+}
