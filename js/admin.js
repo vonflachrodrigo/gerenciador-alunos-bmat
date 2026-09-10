@@ -708,10 +708,10 @@ function showToast(msg, type) {
 }
 
 // ============================================================
-// INICIALIZAÇÃO AUTOMÁTICA (sem login)
+// INICIALIZAÇÃO AUTOMÁTICA (CORRIGIDA)
 // ============================================================
 
-document.addEventListener('DOMContentLoaded', function() {
+function inicializarAdmin() {
     console.log('🚀 Inicializando Admin...');
     
     try {
@@ -744,7 +744,14 @@ document.addEventListener('DOMContentLoaded', function() {
         console.error('❌ Erro:', error);
         showToast('❌ Erro: ' + error.message, 'error');
     }
-});
+}
+
+// CORREÇÃO: Verifica se o DOM já está pronto antes de inicializar
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', inicializarAdmin);
+} else {
+    inicializarAdmin();
+}
 
 // ============================================================
 // RENDER - LISTA DE ALUNOS
@@ -1288,6 +1295,13 @@ function gerarRelatorioConsolidado() {
 function importarRelatoriosHandler(event) {
     var files = event.target.files;
     if (!files || files.length === 0) return;
+
+    // VERIFICAÇÃO DE SEGURANÇA: garante que o gerenciador existe
+    if (!gerenciador) {
+        console.error('❌ ERRO: gerenciador é null! Inicializando...');
+        showToast('⚠️ Sistema não inicializado. Recarregue a página.', 'error');
+        return;
+    }
 
     var preview = document.getElementById('relatorioPreview');
     preview.style.display = 'block';
