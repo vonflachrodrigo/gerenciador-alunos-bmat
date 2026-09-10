@@ -1,15 +1,14 @@
 // ============================================================
-// ADMIN - VERSÃO COMPLETA COM AGRUPAMENTO E OCULTAR BÁSICAS
+// ADMIN - VERSÃO SEM LOGIN, COM AGRUPAMENTO E OCULTAR BÁSICAS
 // ============================================================
 
 console.log('🚀 admin.js carregado!');
 
-const ADMIN_SENHA = 'admin123';
 let gerenciador = null;
 let toastTimeout = null;
 let ofertas = {};
 let ofertasOptativas = {};
-let ocultarBasicas = false;  // ← NOVO: controla se oculta básicas
+let ocultarBasicas = false;
 
 // ============================================================
 // LISTA DE DISCIPLINAS BÁSICAS (não precisam aparecer no consolidador)
@@ -32,10 +31,8 @@ const DISCIPLINAS_BASICAS = [
  * Verifica se uma disciplina (ou grupo) é básica
  */
 function isDisciplinaBasica(codigo) {
-    // Verifica o código direto
     if (DISCIPLINAS_BASICAS.indexOf(codigo) !== -1) return true;
     
-    // Verifica se algum código do grupo está na lista
     if (typeof codigo === 'string' && codigo.indexOf('|') !== -1) {
         var codigos = codigo.split('|');
         for (var i = 0; i < codigos.length; i++) {
@@ -51,7 +48,6 @@ function isDisciplinaBasica(codigo) {
 // ============================================================
 
 const EQUIVALENCIAS_SIMPLES = {
-    // BMAT -> BCET
     'GCET146': 'GCET987', 'GCET147': 'GCET992', 'GCET148': 'GCET993',
     'GCET149': 'GCET1046', 'GCET061': 'GCET986', 'GCET065': 'GCET991',
     'GCET175': 'GCET1044', 'GCET172': 'GCET1048', 'GCET178': 'GCET1052',
@@ -698,41 +694,6 @@ function getOptativasConsolidadas() {
 }
 
 // ============================================================
-// LOGIN / LOGOUT
-// ============================================================
-
-function fazerLogin() {
-    console.log('🔐 fazerLogin chamado');
-    
-    var senhaInput = document.getElementById('loginSenha');
-    var erroEl = document.getElementById('loginErro');
-    var senha = senhaInput.value.trim();
-
-    if (senha === ADMIN_SENHA) {
-        console.log('✅ Login correto!');
-        document.getElementById('loginOverlay').classList.add('hidden');
-        document.getElementById('adminApp').style.display = 'block';
-        erroEl.textContent = '';
-        senhaInput.value = '';
-        inicializarAdmin();
-    } else {
-        console.log('❌ Senha incorreta');
-        erroEl.textContent = '❌ Senha incorreta. Tente novamente.';
-        senhaInput.value = '';
-        senhaInput.focus();
-        setTimeout(function() { erroEl.textContent = ''; }, 3000);
-    }
-}
-
-function fazerLogout() {
-    if (!confirm('Tem certeza que deseja sair?')) return;
-    document.getElementById('loginOverlay').classList.remove('hidden');
-    document.getElementById('adminApp').style.display = 'none';
-    document.getElementById('loginSenha').value = '';
-    document.getElementById('loginErro').textContent = '';
-}
-
-// ============================================================
 // TOAST
 // ============================================================
 
@@ -747,10 +708,10 @@ function showToast(msg, type) {
 }
 
 // ============================================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO AUTOMÁTICA (sem login)
 // ============================================================
 
-function inicializarAdmin() {
+document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Inicializando Admin...');
     
     try {
@@ -783,7 +744,7 @@ function inicializarAdmin() {
         console.error('❌ Erro:', error);
         showToast('❌ Erro: ' + error.message, 'error');
     }
-}
+});
 
 // ============================================================
 // RENDER - LISTA DE ALUNOS
@@ -866,6 +827,52 @@ function removerAlunoHandler(id) {
 }
 
 // ============================================================
+// APAGAR TODOS OS ALUNOS
+// ============================================================
+
+function apagarTodosAlunos() {
+    var total = gerenciador.getTotalAlunos();
+    
+    if (total === 0) {
+        showToast('⚠️ Nenhum aluno para apagar.', 'warning');
+        return;
+    }
+    
+    var msg = '⚠️ Tem certeza que deseja apagar TODOS os ' + total + ' aluno(s) importado(s)?\n\n' +
+              'Esta ação não pode ser desfeita.';
+    
+    if (!confirm(msg)) return;
+    
+    try {
+        gerenciador.alunos = {};
+        gerenciador.nextId = 1;
+        gerenciador.alunoAtivoId = null;
+        
+        localStorage.removeItem('gerenciador_simples');
+        
+        ofertas = {};
+        ofertasOptativas = {};
+        
+        renderAlunoList();
+        updateAlunoCount();
+        renderConsolidacao();
+        updateConsolidacaoBadge();
+        
+        var preview = document.getElementById('relatorioPreview');
+        if (preview) {
+            preview.style.display = 'none';
+            preview.innerHTML = '';
+        }
+        
+        showToast('🗑️ Todos os alunos foram apagados!', 'info');
+        
+    } catch (error) {
+        showToast('❌ Erro ao apagar: ' + error.message, 'error');
+        console.error('Erro ao apagar alunos:', error);
+    }
+}
+
+// ============================================================
 // TOGGLE OCULTAR BÁSICAS
 // ============================================================
 
@@ -925,9 +932,6 @@ function renderConsolidacao() {
 
     var html = '';
 
-    // ============================================================
-    // BOTÃO DE OCULTAR BÁSICAS
-    // ============================================================
     var btnClass = ocultarBasicas ? 'btn-ocultar-basicas ativo' : 'btn-ocultar-basicas inativo';
     var btnText = ocultarBasicas ? '👁️ Mostrar disciplinas básicas' : '👁️ Ocultar disciplinas básicas';
 
@@ -946,9 +950,6 @@ function renderConsolidacao() {
             '</div>' +
         '</div>';
 
-    // ============================================================
-    // SEPARA BÁSICAS E NÃO-BÁSICAS
-    // ============================================================
     var obrigatoriasNormais = [];
     var obrigatoriasBasicas = [];
 
@@ -960,9 +961,6 @@ function renderConsolidacao() {
         }
     }
 
-    // ============================================================
-    // TABELA 1: OBRIGATÓRIAS PLANEJADAS
-    // ============================================================
     if (obrigatorias.length > 0) {
         html += 
             '<div style="margin-bottom:16px;">' +
@@ -975,12 +973,10 @@ function renderConsolidacao() {
                         '<div style="text-align:center;">Oferecer?</div>' +
                     '</div>';
 
-        // Renderiza as não-básicas primeiro
         for (var i = 0; i < obrigatoriasNormais.length; i++) {
             html += renderLinhaObrigatoria(obrigatoriasNormais[i], false);
         }
 
-        // Renderiza as básicas (ocultas) por último
         if (ocultarBasicas && obrigatoriasBasicas.length > 0) {
             for (var i = 0; i < obrigatoriasBasicas.length; i++) {
                 html += renderLinhaObrigatoria(obrigatoriasBasicas[i], true);
@@ -994,9 +990,6 @@ function renderConsolidacao() {
         html += '</div></div>';
     }
 
-    // ============================================================
-    // TABELA 2: OPTATIVAS PLANEJADAS
-    // ============================================================
     if (optativas.length > 0) {
         html += 
             '<div style="margin-bottom:16px;">' +
@@ -1046,9 +1039,6 @@ function renderConsolidacao() {
             '</div>';
     }
 
-    // ============================================================
-    // RESUMO
-    // ============================================================
     var totalSelecionadas = 0;
     var totalNaoSelecionadas = 0;
     for (var c in ofertas) {
@@ -1071,9 +1061,6 @@ function renderConsolidacao() {
     container.innerHTML = html;
 }
 
-/**
- * Renderiza uma linha de disciplina obrigatória
- */
 function renderLinhaObrigatoria(disc, isOculta) {
     var isOfertada = ofertas[disc.chave] !== false;
     var bgColor = isOfertada ? '#e8f5e9' : '#ffebee';
@@ -1134,14 +1121,13 @@ function toggleAllOfertas(status) {
 }
 
 // ============================================================
-// GERAR RELATÓRIO PDF (SEM EMOJIS, COM AGRUPAMENTO E FILTRO)
+// GERAR RELATÓRIO PDF
 // ============================================================
 
 function gerarRelatorioConsolidado() {
     var obrigatorias = getDisciplinasConsolidadas();
     var optativas = getOptativasConsolidadas();
 
-    // Filtra básicas se estiver ocultando
     if (ocultarBasicas) {
         var obrigatoriasFiltradas = [];
         for (var i = 0; i < obrigatorias.length; i++) {
@@ -1163,9 +1149,6 @@ function gerarRelatorioConsolidado() {
     texto += 'Data: ' + new Date().toLocaleString('pt-BR') + '\n';
     texto += 'Total de alunos: ' + gerenciador.getTotalAlunos() + '\n\n';
 
-    // ============================================================
-    // OBRIGATÓRIAS SELECIONADAS PARA OFERTA
-    // ============================================================
     texto += 'OBRIGATORIAS SELECIONADAS PARA OFERTA\n';
     texto += '-'.repeat(80) + '\n\n';
 
@@ -1189,9 +1172,6 @@ function gerarRelatorioConsolidado() {
     }
     if (!temSelecionadas) texto += 'Nenhuma obrigatoria selecionada.\n\n';
 
-    // ============================================================
-    // OBRIGATÓRIAS NÃO OFERTADAS
-    // ============================================================
     texto += 'OBRIGATORIAS NAO OFERTADAS\n';
     texto += '-'.repeat(80) + '\n\n';
 
@@ -1215,9 +1195,6 @@ function gerarRelatorioConsolidado() {
     }
     if (!temNaoOfertadas) texto += 'Todas as obrigatorias planejadas foram selecionadas.\n\n';
 
-    // ============================================================
-    // OPTATIVAS OFERTADAS
-    // ============================================================
     if (optativas.length > 0) {
         texto += 'OPTATIVAS OFERTADAS\n';
         texto += '-'.repeat(80) + '\n\n';
@@ -1269,9 +1246,6 @@ function gerarRelatorioConsolidado() {
     texto += '='.repeat(80) + '\n';
     texto += 'Relatorio gerado em ' + new Date().toLocaleString('pt-BR') + '\n';
 
-    // ============================================================
-    // GERAR PDF
-    // ============================================================
     try {
         var { jsPDF } = window.jspdf;
         var pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
@@ -1512,8 +1486,6 @@ function importarRelatoriosHandler(event) {
 // EXPOSIÇÃO GLOBAL
 // ============================================================
 
-window.fazerLogin = fazerLogin;
-window.fazerLogout = fazerLogout;
 window.importarRelatoriosHandler = importarRelatoriosHandler;
 window.toggleOferta = toggleOferta;
 window.toggleOfertaOptativa = toggleOfertaOptativa;
@@ -1522,5 +1494,6 @@ window.toggleOcultarBasicas = toggleOcultarBasicas;
 window.gerarRelatorioConsolidado = gerarRelatorioConsolidado;
 window.showToast = showToast;
 window.removerAlunoHandler = removerAlunoHandler;
+window.apagarTodosAlunos = apagarTodosAlunos;
 
-console.log('✅ admin.js completo (com agrupamento e ocultar básicas) carregado!');
+console.log('✅ admin.js completo (sem login, com agrupamento, ocultar básicas e apagar todos) carregado!');
